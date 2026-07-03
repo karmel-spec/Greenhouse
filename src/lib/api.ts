@@ -5,7 +5,11 @@ export type EveEndpoint =
   | "seed-advice"
   | "diagnose"
   | "shopping-list"
-  | "weekly-review";
+  | "weekly-review"
+  | "recent-photos"
+  | "zones"
+  | "today-tasks"
+  | "log-observation";
 
 export async function callEve(endpoint: EveEndpoint, payload: Record<string, unknown>) {
   const response = await fetch(`/api/eve/${endpoint}`, {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRecentPhotos, getTasksForToday, getZones, logObservation } from "@/lib/eve-tools";
 
 type DiagnoseImage = {
   fileName: string;
@@ -18,6 +19,10 @@ const supportedActions = new Set([
   "diagnose",
   "shopping-list",
   "weekly-review",
+  "recent-photos",
+  "zones",
+  "today-tasks",
+  "log-observation",
 ]);
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ action: string }> }) {
@@ -31,6 +36,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (action === "diagnose") {
     return diagnosePlants(body as DiagnoseRequest);
+  }
+
+  if (action === "recent-photos") {
+    const count = typeof body.count === "number" ? body.count : 5;
+    return NextResponse.json(getRecentPhotos(count));
+  }
+
+  if (action === "zones") {
+    return NextResponse.json(getZones());
+  }
+
+  if (action === "today-tasks") {
+    return NextResponse.json(getTasksForToday());
+  }
+
+  if (action === "log-observation") {
+    return NextResponse.json(logObservation(body));
   }
 
   return NextResponse.json({
