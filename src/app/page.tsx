@@ -211,6 +211,8 @@ function renderSection(active: SectionKey) {
       return <ZonesSection />;
     case "seeds":
       return <SeedLibrary />;
+    case "seed-vault":
+      return <SeedVaultRedirect />;
     case "saving":
       return <SeedSaving />;
     case "wishlist":
@@ -899,6 +901,36 @@ function CardCollection({ title, subtitle, items, compact = false }: { title: st
             <ChevronRight size={16} />
           </article>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function SeedVaultRedirect() {
+  return (
+    <div className="section-stack">
+      <SectionIntro 
+        title="Seed Vault" 
+        subtitle="Complete seed inventory with detailed growing guides, Utah climate recommendations, and heirloom tracking." 
+      />
+      <div style={{padding: "2rem", textAlign: "center", background: "#f0fdf4", borderRadius: "8px"}}>
+        <p style={{marginBottom: "1rem", fontSize: "16px"}}>
+          Viewing the Seed Vault in a dedicated page with advanced search and filtering...
+        </p>
+        <a 
+          href="/seed-vault" 
+          style={{
+            display: "inline-block",
+            padding: "10px 20px",
+            background: "#16a34a",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "6px",
+            fontWeight: "bold"
+          }}
+        >
+          Open Seed Vault →
+        </a>
       </div>
     </div>
   );

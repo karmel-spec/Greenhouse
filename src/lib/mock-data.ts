@@ -31,6 +31,7 @@ export type SectionKey =
   | "microgreens"
   | "apothecary"
   | "seeds"
+  | "seed-vault"
   | "saving"
   | "photos"
   | "wishlist"
@@ -50,7 +51,8 @@ export const navItems = [
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
-  { key: "saving", label: "Seed Saving", icon: GalleryHorizontalEnd },
+  { key: "seed-vault", label: "Seed Vault", icon: GalleryHorizontalEnd },
+  { key: "saving", label: "Seed Saving", icon: Images },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "landscape", label: "Edible Landscape", icon: SunMedium },
