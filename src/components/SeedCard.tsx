@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { SeedPacket } from "@/lib/seed-vault-types";
 import { cropPhotos } from "@/lib/crop-photos";
 import { nextPlanting } from "@/lib/planting";
+import { recipeIdeas } from "@/lib/culinary";
 import {
   Leaf,
   Calendar,
@@ -122,7 +123,7 @@ export function SeedCard({ seed }: SeedCardProps) {
     overview: { photo: seed.maturePlantPhoto ?? seed.seedPacketPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
     growing: { photo: seed.seedlingPhoto ?? stockPhotos.seedling ?? stockPhotos.plant, emoji: "🌱" },
     harvest: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
-    culinary: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
+    culinary: { photo: stockPhotos.dish ?? seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
     history: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
     notes: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📝" },
   };
@@ -408,6 +409,25 @@ export function SeedCard({ seed }: SeedCardProps) {
                 </ul>
               </div>
             )}
+            <div>
+              <h4 className="font-semibold text-sm text-[#3a4430] mb-2 flex items-center gap-1">
+                <ChefHat size={15} /> Top Ways to Cook It
+              </h4>
+              <ul className="space-y-1">
+                {recipeIdeas(seed.commonName).map((recipe) => (
+                  <li key={recipe.title}>
+                    <a
+                      href={recipe.url}
+                      className="text-sm text-[#4c7a3d] hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      → {recipe.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 

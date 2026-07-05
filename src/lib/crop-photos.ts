@@ -1,15 +1,16 @@
 /**
- * Generated from public/crops. Plant photos: iNaturalist taxon default photos
- * (CC-licensed). Harvest photos: Wikipedia article lead images.
- * Keys are lowercase common names.
+ * Generated from public/crops. Plant: iNaturalist taxon photos. Harvest &
+ * dish ("ready to eat"): Wikipedia article lead images. All CC-licensed,
+ * stored locally. Keys are lowercase common names.
  */
 
-export type CropPhotoSet = { seed?: string; seedling?: string; plant?: string; harvest?: string };
+export type CropPhotoSet = { seed?: string; seedling?: string; plant?: string; harvest?: string; dish?: string };
 
 export const cropPhotos: Record<string, CropPhotoSet> = {
   "pumpkin": {
     "plant": "/crops/cucurbita-pepo-plant.jpg",
-    "harvest": "/crops/pumpkin-harvest.jpg"
+    "harvest": "/crops/pumpkin-harvest.jpg",
+    "dish": "/crops/pumpkin-pie-dish.jpg"
   },
   "squash": {
     "plant": "/crops/cucurbita-maxima-plant.jpg",
@@ -17,15 +18,18 @@ export const cropPhotos: Record<string, CropPhotoSet> = {
   },
   "bean, green snap": {
     "plant": "/crops/phaseolus-vulgaris-plant.jpg",
-    "harvest": "/crops/green-bean-harvest.jpg"
+    "harvest": "/crops/green-bean-harvest.jpg",
+    "dish": "/crops/green-bean-casserole-dish.jpg"
   },
   "bean, fava (broad bean)": {
     "plant": "/crops/vicia-faba-plant.jpg",
-    "harvest": "/crops/vicia-faba-harvest.jpg"
+    "harvest": "/crops/vicia-faba-harvest.jpg",
+    "dish": "/crops/ful-medames-dish.jpg"
   },
   "bean, lima (butter bean)": {
     "plant": "/crops/phaseolus-lunatus-plant.jpg",
-    "harvest": "/crops/lima-bean-harvest.jpg"
+    "harvest": "/crops/lima-bean-harvest.jpg",
+    "dish": "/crops/succotash-dish.jpg"
   },
   "chicory": {
     "plant": "/crops/cichorium-intybus-plant.jpg",
@@ -33,51 +37,64 @@ export const cropPhotos: Record<string, CropPhotoSet> = {
   },
   "corn, sweet": {
     "plant": "/crops/zea-mays-plant.jpg",
-    "harvest": "/crops/sweet-corn-harvest.jpg"
+    "harvest": "/crops/sweet-corn-harvest.jpg",
+    "dish": "/crops/corn-on-the-cob-dish.jpg"
   },
   "tomato": {
     "plant": "/crops/solanum-lycopersicum-plant.jpg",
-    "harvest": "/crops/tomato-harvest.jpg"
+    "harvest": "/crops/tomato-harvest.jpg",
+    "dish": "/crops/tomato-soup-dish.jpg"
   },
   "carrot": {
     "plant": "/crops/daucus-carota-plant.jpg",
-    "harvest": "/crops/carrot-harvest.jpg"
+    "harvest": "/crops/carrot-harvest.jpg",
+    "dish": "/crops/carrot-cake-dish.jpg"
   },
   "okra": {
     "plant": "/crops/abelmoschus-esculentus-plant.jpg",
-    "harvest": "/crops/okra-harvest.jpg"
+    "harvest": "/crops/okra-harvest.jpg",
+    "dish": "/crops/gumbo-dish.jpg"
   },
   "pepper, hot": {
     "plant": "/crops/capsicum-annuum-plant.jpg",
-    "harvest": "/crops/chili-pepper-harvest.jpg"
+    "harvest": "/crops/chili-pepper-harvest.jpg",
+    "dish": "/crops/hot-sauce-dish.jpg"
   },
   "lettuce": {
     "plant": "/crops/lactuca-sativa-plant.jpg",
-    "harvest": "/crops/lettuce-harvest.jpg"
+    "harvest": "/crops/lettuce-harvest.jpg",
+    "dish": "/crops/caesar-salad-dish.jpg"
   },
   "asparagus": {
-    "plant": "/crops/asparagus-officinalis-plant.jpg"
+    "plant": "/crops/asparagus-officinalis-plant.jpg",
+    "dish": "/crops/cream-of-asparagus-soup-dish.jpg"
   },
   "spinach": {
     "plant": "/crops/spinacia-oleracea-plant.jpg",
-    "harvest": "/crops/spinach-harvest.jpg"
+    "harvest": "/crops/spinach-harvest.jpg",
+    "dish": "/crops/creamed-spinach-dish.jpg"
   },
   "kohlrabi": {
-    "harvest": "/crops/kohlrabi-harvest.jpg"
+    "harvest": "/crops/kohlrabi-harvest.jpg",
+    "dish": "/crops/kohlrabi-dish.jpg"
   },
   "parsnip": {
     "plant": "/crops/pastinaca-sativa-plant.jpg",
-    "harvest": "/crops/parsnip-harvest.jpg"
+    "harvest": "/crops/parsnip-harvest.jpg",
+    "dish": "/crops/parsnip-dish.jpg"
   },
   "swiss chard": {
-    "harvest": "/crops/chard-harvest.jpg"
+    "harvest": "/crops/chard-harvest.jpg",
+    "dish": "/crops/torta-pasqualina-dish.jpg"
   },
   "coriander": {
     "plant": "/crops/coriandrum-sativum-plant.jpg",
-    "harvest": "/crops/coriander-harvest.jpg"
+    "harvest": "/crops/coriander-harvest.jpg",
+    "dish": "/crops/chutney-dish.jpg"
   },
   "kale": {
-    "harvest": "/crops/kale-harvest.jpg"
+    "harvest": "/crops/kale-harvest.jpg",
+    "dish": "/crops/caldo-verde-dish.jpg"
   },
   "amaranth": {
     "plant": "/crops/amaranthus-cruentus-plant.jpg",
@@ -85,103 +102,129 @@ export const cropPhotos: Record<string, CropPhotoSet> = {
   },
   "watermelon": {
     "plant": "/crops/citrullus-lanatus-plant.jpg",
-    "harvest": "/crops/watermelon-harvest.jpg"
+    "harvest": "/crops/watermelon-harvest.jpg",
+    "dish": "/crops/watermelon-dish.jpg"
   },
   "beet": {
     "plant": "/crops/beta-vulgaris-plant.jpg",
-    "harvest": "/crops/beetroot-harvest.jpg"
+    "harvest": "/crops/beetroot-harvest.jpg",
+    "dish": "/crops/borscht-dish.jpg"
   },
   "mustard": {
     "plant": "/crops/brassica-juncea-plant.jpg",
-    "harvest": "/crops/mustard-plant-harvest.jpg"
+    "harvest": "/crops/mustard-plant-harvest.jpg",
+    "dish": "/crops/mustard-condiment-dish.jpg"
   },
   "onion": {
     "plant": "/crops/allium-cepa-plant.jpg",
-    "harvest": "/crops/onion-harvest.jpg"
+    "harvest": "/crops/onion-harvest.jpg",
+    "dish": "/crops/french-onion-soup-dish.jpg"
   },
   "lentil": {
     "plant": "/crops/lens-culinaris-plant.jpg",
-    "harvest": "/crops/lentil-harvest.jpg"
+    "harvest": "/crops/lentil-harvest.jpg",
+    "dish": "/crops/lentil-soup-dish.jpg"
   },
   "corn, dent": {
     "plant": "/crops/zea-mays-plant.jpg",
-    "harvest": "/crops/dent-corn-harvest.jpg"
+    "harvest": "/crops/dent-corn-harvest.jpg",
+    "dish": "/crops/cornbread-dish.jpg"
   },
   "melon": {
     "plant": "/crops/cucumis-melo-plant.jpg",
-    "harvest": "/crops/cantaloupe-harvest.jpg"
+    "harvest": "/crops/cantaloupe-harvest.jpg",
+    "dish": "/crops/fruit-salad-dish.jpg"
   },
   "radish": {
     "plant": "/crops/raphanus-sativus-plant.jpg",
-    "harvest": "/crops/radish-harvest.jpg"
+    "harvest": "/crops/radish-harvest.jpg",
+    "dish": "/crops/radish-dish.jpg"
   },
   "fennel": {
     "plant": "/crops/foeniculum-vulgare-plant.jpg",
-    "harvest": "/crops/fennel-harvest.jpg"
+    "harvest": "/crops/fennel-harvest.jpg",
+    "dish": "/crops/fennel-dish.jpg"
   },
   "cucumber": {
     "plant": "/crops/cucumis-sativus-plant.jpg",
-    "harvest": "/crops/cucumber-harvest.jpg"
+    "harvest": "/crops/cucumber-harvest.jpg",
+    "dish": "/crops/tzatziki-dish.jpg"
   },
   "sweet corn": {
     "plant": "/crops/zea-mays-plant.jpg",
-    "harvest": "/crops/sweet-corn-harvest.jpg"
+    "harvest": "/crops/sweet-corn-harvest.jpg",
+    "dish": "/crops/corn-on-the-cob-dish.jpg"
   },
   "pea": {
     "plant": "/crops/pisum-sativum-plant.jpg",
-    "harvest": "/crops/pea-harvest.jpg"
+    "harvest": "/crops/pea-harvest.jpg",
+    "dish": "/crops/pea-soup-dish.jpg"
   },
   "bean, green": {
     "plant": "/crops/phaseolus-vulgaris-plant.jpg",
-    "harvest": "/crops/green-bean-harvest.jpg"
+    "harvest": "/crops/green-bean-harvest.jpg",
+    "dish": "/crops/green-bean-casserole-dish.jpg"
   },
   "bean": {
     "plant": "/crops/phaseolus-vulgaris-plant.jpg",
-    "harvest": "/crops/phaseolus-vulgaris-harvest.jpg"
+    "harvest": "/crops/phaseolus-vulgaris-harvest.jpg",
+    "dish": "/crops/baked-beans-dish.jpg"
   },
   "bean, lima": {
     "plant": "/crops/phaseolus-lunatus-plant.jpg",
-    "harvest": "/crops/lima-bean-harvest.jpg"
+    "harvest": "/crops/lima-bean-harvest.jpg",
+    "dish": "/crops/succotash-dish.jpg"
   },
   "bean, pinto": {
     "plant": "/crops/phaseolus-vulgaris-plant.jpg",
-    "harvest": "/crops/pinto-bean-harvest.jpg"
+    "harvest": "/crops/pinto-bean-harvest.jpg",
+    "dish": "/crops/refried-beans-dish.jpg"
   },
   "almond": {
     "plant": "/crops/prunus-dulcis-plant.jpg",
-    "harvest": "/crops/almond-harvest.jpg"
+    "harvest": "/crops/almond-harvest.jpg",
+    "dish": "/crops/marzipan-dish.jpg"
   },
   "bean, kidney": {
     "plant": "/crops/phaseolus-vulgaris-plant.jpg",
-    "harvest": "/crops/kidney-bean-harvest.jpg"
+    "harvest": "/crops/kidney-bean-harvest.jpg",
+    "dish": "/crops/chili-con-carne-dish.jpg"
   },
   "collard": {
-    "harvest": "/crops/collard-plant-harvest.jpg"
+    "harvest": "/crops/collard-plant-harvest.jpg",
+    "dish": "/crops/collard-greens-dish.jpg"
   },
   "celery": {
     "plant": "/crops/apium-graveolens-plant.jpg",
-    "harvest": "/crops/celery-harvest.jpg"
+    "harvest": "/crops/celery-harvest.jpg",
+    "dish": "/crops/waldorf-salad-dish.jpg"
   },
   "turnip": {
     "plant": "/crops/brassica-rapa-plant.jpg",
-    "harvest": "/crops/turnip-harvest.jpg"
+    "harvest": "/crops/turnip-harvest.jpg",
+    "dish": "/crops/neeps-and-tatties-dish.jpg"
   },
   "pepper, bell": {
     "plant": "/crops/capsicum-annuum-plant.jpg",
-    "harvest": "/crops/bell-pepper-harvest.jpg"
+    "harvest": "/crops/bell-pepper-harvest.jpg",
+    "dish": "/crops/stuffed-peppers-dish.jpg"
   },
   "cabbage": {
-    "harvest": "/crops/cabbage-harvest.jpg"
+    "harvest": "/crops/cabbage-harvest.jpg",
+    "dish": "/crops/coleslaw-dish.jpg"
   },
   "brussels sprouts": {
-    "harvest": "/crops/brussels-sprout-harvest.jpg"
+    "harvest": "/crops/brussels-sprout-harvest.jpg",
+    "dish": "/crops/brussels-sprout-dish.jpg"
   },
   "poppy": {
     "plant": "/crops/papaver-rhoeas-plant.jpg",
-    "harvest": "/crops/papaver-somniferum-harvest.jpg"
+    "harvest": "/crops/papaver-somniferum-harvest.jpg",
+    "dish": "/crops/poppy-seed-roll-dish.jpg"
   },
   "broccoli": {
-    "harvest": "/crops/broccoli-harvest.jpg"
+    "harvest": "/crops/broccoli-harvest.jpg",
+    "dish": "/crops/cream-of-broccoli-soup-dish.jpg"
   },
   "lavender": {
     "plant": "/crops/lavandula-angustifolia-plant.jpg"
