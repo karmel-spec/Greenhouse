@@ -900,3 +900,340 @@ button { font: inherit; }
   .metric-strip { grid-template-columns: 1fr; position: static; margin: 7.5rem 0.75rem 0.75rem; }
   .greenhouse-scene { min-height: 17rem; }
 }
+
+/* --- Live dashboard additions (tasks, sensor note, Eve chat) --- */
+.task-row.done > span:not(.task-meta) { text-decoration: line-through; opacity: 0.55; }
+.task-check {
+  border: 1.5px solid var(--sage);
+  background: transparent;
+  border-radius: 999px;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  color: var(--moss);
+}
+.task-check.checked { border-color: var(--moss); }
+.task-meta { display: inline-flex; align-items: center; gap: 0.35rem; }
+.task-delete {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  padding: 0.1rem;
+  display: inline-flex;
+}
+.task-row:hover .task-delete { opacity: 0.7; }
+.task-delete:hover { color: var(--terracotta); }
+.task-add { display: flex; gap: 0.45rem; margin-top: 0.7rem; }
+.task-add input {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.task-add input:focus { outline: 2px solid var(--sage); outline-offset: 1px; }
+.task-add button {
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--moss);
+  color: #fff;
+  width: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.empty-note { color: var(--muted); font-size: 0.85rem; padding: 0.4rem 0; }
+.sensor-note { color: var(--muted); font-size: 0.75rem; margin-top: 0.55rem; }
+
+.chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 17rem;
+  overflow-y: auto;
+  margin: 0.7rem 0;
+  padding-right: 0.2rem;
+}
+.chat-bubble {
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.8rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-width: 92%;
+}
+.chat-bubble.user {
+  align-self: flex-end;
+  background: var(--moss);
+  color: #fff;
+  border-bottom-right-radius: 0.25rem;
+}
+.chat-bubble.assistant {
+  align-self: flex-start;
+  background: rgba(127, 149, 101, 0.16);
+  color: var(--ink);
+  border-bottom-left-radius: 0.25rem;
+}
+.chat-bubble.typing { font-style: italic; color: var(--muted); }
+.chat-box input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  padding: 0.55rem 0;
+}
+.chat-box input:focus { outline: none; }
+.chat-box button {
+  border: 0;
+  background: transparent;
+  color: var(--moss);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.chat-box button:disabled { opacity: 0.4; cursor: default; }
+.prompt-list button:disabled { opacity: 0.5; cursor: default; }
+
+/* --- Rebrand, aerial map, apothecary, and live plant library --- */
+.brand h2 { font-size: 1.22rem; line-height: 1.2; }
+
+.map-embed {
+  border-radius: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  background: #dfe6d8;
+}
+.map-embed iframe { display: block; width: 100%; height: 30rem; border: 0; }
+
+.apothecary-subhead {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  margin: 1.4rem 0 0.7rem;
+}
+.herb-source { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+.wishlist-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.wishlist-chip {
+  border: 1px dashed var(--sage);
+  color: var(--moss);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+  background: rgba(146, 226, 193, 0.08);
+}
+.apothecary-note { color: var(--muted); font-size: 0.8rem; margin: 0.6rem 0 1.2rem; }
+
+.empty-library {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed var(--sage);
+  border-radius: 0.9rem;
+  padding: 1.6rem;
+  text-align: center;
+  color: var(--muted);
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  max-width: 34rem;
+}
+.empty-library h3 { margin: 0; color: var(--ink); font-family: Georgia, serif; }
+.plant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.9rem;
+}
+.plant-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(42, 35, 22, 0.07);
+}
+.plant-card img, .plant-photo-placeholder {
+  width: 100%;
+  height: 9rem;
+  object-fit: cover;
+  display: block;
+}
+.plant-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(127, 149, 101, 0.15);
+  color: var(--moss);
+}
+.plant-card-body { padding: 0.7rem 0.8rem 0.9rem; }
+.plant-card-body h3 { margin: 0 0 0.2rem; font-size: 0.98rem; }
+.plant-card-body p {
+  margin: 0 0 0.45rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.plant-card .health-pill { font-size: 0.72rem; }
+.plant-remove {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  border: 0;
+  border-radius: 999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.plant-remove:hover { color: var(--terracotta); }
+.library-save { margin-top: 0.6rem; }
+.library-save:disabled { opacity: 0.6; cursor: default; }
+
+/* Apothecary children stack vertically; the journal-card span-6 is for the dashboard grid only */
+.apothecary-mode > * { grid-column: 1 / -1; }
+
+/* Aerial tile grid */
+.aerial-figure { margin: 0; }
+.aerial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-radius: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  line-height: 0;
+}
+.aerial-grid img { width: 100%; height: auto; display: block; }
+.aerial-figure figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 0.55rem;
+}
+.aerial-links { display: inline-flex; gap: 1rem; }
+.aerial-links a { color: var(--moss); text-decoration: none; font-weight: 600; }
+.aerial-links a:hover { text-decoration: underline; }
+
+/* Propagation lab */
+.propagation-list { display: grid; gap: 0.9rem; }
+.prop-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--sage);
+  border-radius: 0.8rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 22px rgba(42, 35, 22, 0.06);
+}
+.prop-card.ready { border-left-color: #50a35b; }
+.prop-card.soon { border-left-color: var(--gold); }
+.prop-card.wait { border-left-color: #b9b2a4; }
+.prop-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
+.prop-card h3 { margin: 0; font-family: Georgia, serif; font-size: 1.15rem; }
+.prop-card header p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem; }
+.prop-badge {
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.prop-badge.ready { background: rgba(80, 163, 91, 0.15); color: #2f7a39; }
+.prop-badge.soon { background: rgba(201, 154, 69, 0.18); color: #8a6520; }
+.prop-badge.wait { background: rgba(118, 109, 92, 0.14); color: var(--muted); }
+.prop-reason { color: var(--muted); font-size: 0.85rem; margin: 0.5rem 0 0.4rem; }
+.prop-card ol { margin: 0.3rem 0 0.7rem; padding-left: 1.2rem; font-size: 0.88rem; line-height: 1.5; }
+.prop-card ol li { margin-bottom: 0.25rem; }
+.prop-card .soft-button:disabled { opacity: 0.6; cursor: default; }
+
+/* delete button needs an anchor on journal cards */
+.diagnosis-card { position: relative; }
+
+/* Wishlist detail cards */
+.wishlist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.9rem; }
+.wish-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 6px 18px rgba(42, 35, 22, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+.wish-card.focused {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px rgba(127, 149, 101, 0.35), 0 10px 24px rgba(42, 35, 22, 0.1);
+}
+.wish-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.wish-card h4 { margin: 0; font-family: Georgia, serif; font-size: 1.02rem; }
+.wish-card p { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
+.wish-card footer { color: var(--moss); font-weight: 700; font-size: 0.9rem; }
+.wishlist-chip { cursor: pointer; display: inline-flex; align-items: center; gap: 0.2rem; font: inherit; font-size: 0.82rem; }
+.wishlist-chip:hover { background: rgba(146, 226, 193, 0.25); }
+
+/* Zone cards are buttons now */
+.zone-card { cursor: pointer; font: inherit; text-align: left; width: 100%; }
+.zone-card:hover { border-color: var(--sage); }
+
+/* Microgreens live studio */
+.tray-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.7rem;
+  padding: 0.9rem 1rem;
+}
+.lab-mode .tray-form label { display: grid; gap: 0.3rem; font-size: 0.78rem; opacity: 0.9; }
+.lab-mode .tray-form input, .lab-mode .tray-form select {
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.92);
+  color: #1c2a1e;
+  min-width: 9rem;
+}
+.tray-actions { display: inline-flex; gap: 0.3rem; justify-content: flex-end; }
+.tray-btn {
+  border: 0;
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+  display: inline-flex;
+  align-items: center;
+}
+.tray-btn.harvest { background: rgba(80, 163, 91, 0.45); }
+.tray-btn:hover { background: rgba(255, 255, 255, 0.3); }
+.lab-note { color: inherit; opacity: 0.85; }
+.harvest-log p { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0; font-size: 0.88rem; }
+.lab-mode .apothecary-subhead { color: inherit; }
+
+/* Seed card header emoji swap */
+.seed-header-emoji { animation: seed-fade 0.35s ease; }
+@keyframes seed-fade { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }

@@ -92,6 +92,7 @@ export const zones = [
   "Shade Garden",
   "Sun Garden",
   "Vineyard/Garden Area",
+  "House Plants",
 ].map((name, index) => ({
   name,
   plants: [12, 7, 18, 10, 21, 9][index % 6],
@@ -190,11 +191,48 @@ export const reminderTypes = [
 ];
 
 export const wishlistItems = [
-  { name: "Garden arch", category: "Tea Garden", price: "$128.99", priority: "High" },
-  { name: "Solar fountain", category: "Gratitude Garden", price: "$89.00", priority: "High" },
-  { name: "Greenhouse shelf", category: "Greenhouse", price: "$64.09", priority: "Medium" },
-  { name: "Hanging basket hooks", category: "Outdoor Decor", price: "$12.99", priority: "Low" },
-  { name: "Compost tumbler", category: "Compost Area", price: "$126.09", priority: "Medium" },
+  { name: "Garden arch", category: "Tea Garden", price: "$128.99", priority: "High", note: "Entry arch for the tea garden path — train a climbing rose or honeysuckle over it." },
+  { name: "Solar fountain", category: "Gratitude Garden", price: "$89.00", priority: "High", note: "Gentle moving water for birds and a living-water moment in the gratitude garden." },
+  { name: "Greenhouse shelf", category: "Greenhouse", price: "$64.09", priority: "Medium", note: "One more tier of propagation space along the north wall." },
+  { name: "Hanging basket hooks", category: "Outdoor Decor", price: "$12.99", priority: "Low", note: "For trailing petunias and strawberry baskets on the patio." },
+  { name: "Compost tumbler", category: "Compost Area", price: "$126.09", priority: "Medium", note: "Faster, tidier compost than the open pile — finished in 4–8 weeks." },
+  // Apothecary herbs not yet in the garden or seed vault
+  { name: "Calendula seeds", category: "Apothecary Garden", price: "$3.99", priority: "High", note: "The workhorse skin herb: petals infuse into oil for salves and lip balm. Easy annual, blooms all season, self-sows. Direct sow after last frost." },
+  { name: "Echinacea (Purple Coneflower) seeds", category: "Apothecary Garden", price: "$4.49", priority: "High", note: "Immune-support root and flower; pollinators love it. Hardy Utah perennial — sow in fall or cold-stratify; roots harvestable in year 3." },
+  { name: "Lemon Balm plant", category: "Apothecary Garden", price: "$6.99", priority: "High", note: "Calming lemony tea herb for stress and sleep. Buy one plant — it spreads like mint, so give it its own pot or corner." },
+  { name: "Yarrow seeds", category: "Apothecary Garden", price: "$3.49", priority: "Medium", note: "Traditional first-aid herb (styptic poultice) and tough-as-nails drought-proof perennial for Utah heat." },
+  { name: "Holy Basil (Tulsi) seeds", category: "Apothecary Garden", price: "$4.99", priority: "Medium", note: "Adaptogenic daily tea herb, sacred in Ayurveda. Grow like sweet basil — warm greenhouse start, harvest leaves all summer." },
+  { name: "Bee Balm (Monarda) seeds", category: "Apothecary Garden", price: "$3.99", priority: "Medium", note: "Bergamot-scented tea flower that hummingbirds adore; leaves make a soothing sore-throat tea. Native perennial." },
+  { name: "Feverfew seeds", category: "Apothecary Garden", price: "$3.29", priority: "Medium", note: "Classic migraine-prevention herb with cheerful daisy flowers. Self-sows readily once established." },
+  { name: "Borage seeds", category: "Apothecary Garden", price: "$3.19", priority: "Low", note: "Cucumber-flavored edible blue flowers; the best bee plant in any garden. Direct sow — it hates transplanting." },
+  { name: "Valerian seeds", category: "Apothecary Garden", price: "$4.29", priority: "Low", note: "Sleep-support root herb, harvested in its second fall. Tall, sweet-scented flowers; give it a moist back corner." },
+  { name: "Comfrey crown", category: "Apothecary Garden", price: "$8.99", priority: "Low", note: "Bruise-and-sprain poultice leaf plus the best compost activator there is. Plant a crown where it can stay forever — it's permanent." },
+];
+
+// What Karmel already has with apothecary value (from the plant list + seed vault)
+export const apothecaryHave = [
+  { name: "Lavender", source: "English — growing in the Apothecary Garden", uses: "Calming teas, sachets, salves" },
+  { name: "Chamomile", source: "German — growing in the Tea Garden", uses: "Sleep tea, skin soothers" },
+  { name: "Peppermint", source: "Growing in the Herb Garden", uses: "Digestion tea, cooling balms" },
+  { name: "Basil", source: "Genovese — rooting on the Propagation Shelf", uses: "Kitchen medicine, tinctures" },
+  { name: "Fennel", source: "Seeds in the vault", uses: "Digestion, seed teas" },
+  { name: "Coriander", source: "Seeds in the vault", uses: "Digestion, flavor medicine" },
+  { name: "Poppy", source: "Seeds in the vault", uses: "Pollinator borders, seed heads" },
+  { name: "Mustard", source: "Seeds in the vault", uses: "Warming poultices, spicy greens" },
+];
+
+// Classic apothecary plants not yet owned — mirrored in the Wishlist section
+export const apothecaryWishlist = [
+  "Calendula",
+  "Echinacea",
+  "Lemon Balm",
+  "Yarrow",
+  "Holy Basil (Tulsi)",
+  "Bee Balm",
+  "Feverfew",
+  "Borage",
+  "Valerian",
+  "Comfrey",
 ];
 
 export const quoteTopics = [

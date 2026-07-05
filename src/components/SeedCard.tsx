@@ -24,6 +24,64 @@ interface SeedCardProps {
   seed: SeedPacket;
 }
 
+// Per-crop artwork for the lifecycle strip (plant stage + harvest stage).
+const CROP_ART: { match: RegExp; plant: string; harvest: string }[] = [
+  { match: /tomato/i, plant: "🌿", harvest: "🍅" },
+  { match: /pepper, hot|hot pepper/i, plant: "🌿", harvest: "🌶️" },
+  { match: /pepper/i, plant: "🌿", harvest: "🫑" },
+  { match: /carrot|parsnip/i, plant: "☘️", harvest: "🥕" },
+  { match: /corn/i, plant: "🎋", harvest: "🌽" },
+  { match: /bean|lentil/i, plant: "🌿", harvest: "🫘" },
+  { match: /pea\b|pea,/i, plant: "🌿", harvest: "🫛" },
+  { match: /lettuce|spinach|kale|collard|chard|cabbage|mustard|chicory|celery|kohlrabi|turnip|brussels/i, plant: "🥬", harvest: "🥬" },
+  { match: /broccoli/i, plant: "🌿", harvest: "🥦" },
+  { match: /onion/i, plant: "🌱", harvest: "🧅" },
+  { match: /melon(?!.*water)/i, plant: "🌿", harvest: "🍈" },
+  { match: /watermelon/i, plant: "🌿", harvest: "🍉" },
+  { match: /cucumber/i, plant: "🌿", harvest: "🥒" },
+  { match: /pumpkin/i, plant: "🌿", harvest: "🎃" },
+  { match: /squash/i, plant: "🌿", harvest: "🎃" },
+  { match: /radish|beet/i, plant: "☘️", harvest: "🌰" },
+  { match: /almond/i, plant: "🌳", harvest: "🌰" },
+  { match: /poppy/i, plant: "🌿", harvest: "🌸" },
+  { match: /amaranth/i, plant: "🌾", harvest: "🌾" },
+  { match: /fennel|coriander|asparagus|okra/i, plant: "🌿", harvest: "🌿" },
+];
+
+function cropArt(commonName: string) {
+  const entry = CROP_ART.find((candidate) => candidate.match.test(commonName));
+  return entry ?? { plant: "🌿", harvest: "🧺" };
+}
+
+/** Four-stage lifecycle strip: real photos when set on the packet, artwork otherwise. */
+function LifecycleStrip({ seed }: { seed: SeedPacket }) {
+  const art = cropArt(seed.commonName);
+  const stages: { label: string; photo?: string; emoji: string }[] = [
+    { label: "Seed", photo: seed.seedCloseupPhoto, emoji: "🌰" },
+    { label: "Seedling", photo: seed.seedlingPhoto, emoji: "🌱" },
+    { label: "Plant", photo: seed.maturePlantPhoto, emoji: art.plant },
+    { label: "Harvest", photo: seed.harvestedProductPhoto, emoji: art.harvest },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 border-b bg-green-50/40">
+      {stages.map((stage, index) => (
+        <div
+          key={stage.label}
+          className={`flex flex-col items-center py-2 ${index < 3 ? "border-r border-green-100" : ""}`}
+        >
+          {stage.photo ? (
+            <img src={stage.photo} alt={`${seed.commonName} ${stage.label}`} className="h-10 w-10 rounded object-cover" />
+          ) : (
+            <span className="text-2xl leading-10">{stage.emoji}</span>
+          )}
+          <span className="text-[10px] uppercase tracking-wide text-gray-500">{stage.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type TabType = "overview" | "growing" | "harvest" | "culinary" | "history" | "notes";
 
 export function SeedCard({ seed }: SeedCardProps) {
@@ -45,31 +103,65 @@ export function SeedCard({ seed }: SeedCardProps) {
     return "text-orange-600";
   };
 
-  const isExpiring = () => {
-    const packagedYear = new Date(seed.packagedDate).getFullYear();
-    const currentYear = new Date().getFullYear();
-    return (seed.estimatedShelfLife ?? 5) && currentYear - packagedYear >= (seed.estimatedShelfLife ?? 5);
+  // Seeds don't die on a date — germination declines. "Viable through" is
+  // packaged year + the variety's estimated shelf life.
+  const packagedYear = new Date(seed.packagedDate).getFullYear();
+  const shelfLife = seed.estimatedShelfLife ?? 5;
+  const viableThrough = packagedYear + shelfLife;
+  const currentYear = new Date().getFullYear();
+  const pastViability = currentYear > viableThrough;
+  const nearViability = !pastViability && currentYear >= viableThrough - 1;
+
+  const headerArt = cropArt(seed.commonName);
+  const headerByTab: Record<TabType, { photo?: string; emoji: string }> = {
+    overview: { photo: seed.maturePlantPhoto ?? seed.seedPacketPhoto, emoji: headerArt.plant },
+    growing: { photo: seed.seedlingPhoto, emoji: "🌱" },
+    harvest: { photo: seed.harvestedProductPhoto, emoji: headerArt.harvest },
+    culinary: { photo: seed.harvestedProductPhoto, emoji: "🍽️" },
+    history: { photo: seed.seedPacketPhoto, emoji: "📜" },
+    notes: { photo: seed.seedPacketPhoto, emoji: "📝" },
   };
+  const headerVisual = headerByTab[activeTab];
 
   return (
     <div className="border rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white">
-      {/* Header with Image */}
+      {/* Header image follows the active tab: plant → seedling → harvest → ... */}
       <div className="relative h-48 bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center overflow-hidden">
-        {seed.seedPacketPhoto ? (
+        {headerVisual.photo ? (
           <img
-            src={seed.seedPacketPhoto}
-            alt={seed.variety}
+            key={activeTab}
+            src={headerVisual.photo}
+            alt={`${seed.commonName} — ${activeTab}`}
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="text-6xl text-green-200">🌱</div>
+          <div key={activeTab} className="text-7xl seed-header-emoji" aria-hidden>
+            {headerVisual.emoji}
+          </div>
         )}
-        {isExpiring() && (
-          <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
-            <AlertCircle size={14} /> Expiring
+        <div className="absolute bottom-2 left-2 bg-white/80 text-gray-600 px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
+          {activeTab}
+        </div>
+        {pastViability && (
+          <div
+            className="absolute top-2 right-2 bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
+            title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life. Germination is likely reduced — test before big plantings.`}
+          >
+            <AlertCircle size={14} /> Was viable through {viableThrough}
+          </div>
+        )}
+        {nearViability && (
+          <div
+            className="absolute top-2 right-2 bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
+            title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life.`}
+          >
+            <AlertCircle size={14} /> Viable through {viableThrough}
           </div>
         )}
       </div>
+
+      {/* Lifecycle: seed → seedling → plant → harvest */}
+      <LifecycleStrip seed={seed} />
 
       {/* Title Section */}
       <div className="p-4 border-b">
@@ -190,6 +282,15 @@ export function SeedCard({ seed }: SeedCardProps) {
                 </p>
               </div>
             )}
+            <div className={`rounded p-3 border ${pastViability ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-gray-200"}`}>
+              <p className={`text-sm ${pastViability ? "text-orange-900" : "text-gray-700"}`}>
+                <strong>Seed viability:</strong> packaged {packagedYear}, estimated {shelfLife}-year shelf
+                life → viable through <strong>{viableThrough}</strong>.
+                {pastViability
+                  ? " Past that window germination drops — sprout 10 seeds in a damp paper towel to test before relying on them."
+                  : " Store cool and dry to reach the full window."}
+              </p>
+            </div>
           </div>
         )}
 
