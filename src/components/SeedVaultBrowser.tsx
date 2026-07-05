@@ -59,46 +59,46 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
     <div>
       {showStats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <VaultStat value={String(stats.totalSeeds)} label="Varieties" tone="text-green-700" />
-          <VaultStat value={String(stats.totalSeedCount)} label="Total Seeds" tone="text-green-700" />
-          <VaultStat value={String(stats.heirloomCount)} label="Heirlooms" tone="text-amber-600" />
-          <VaultStat value={`${stats.avgGermination}%`} label="Avg Germination" tone="text-blue-600" />
+          <VaultStat value={String(stats.totalSeeds)} label="Varieties" tone="text-[#496331]" />
+          <VaultStat value={String(stats.totalSeedCount)} label="Total Seeds" tone="text-[#496331]" />
+          <VaultStat value={String(stats.heirloomCount)} label="Heirlooms" tone="text-[#c99a45]" />
+          <VaultStat value={`${stats.avgGermination}%`} label="Avg Germination" tone="text-[#b56e44]" />
         </div>
       )}
 
       <div className="mb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-3 text-[#a89f8d]" size={20} />
           <input
             type="text"
             placeholder="Search seeds by name or variety..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[#fffdf6] focus:outline-none focus:ring-2 focus:ring-[#7f9565]"
           />
         </div>
       </div>
 
       <div className="flex gap-2 flex-wrap items-center mb-6">
-        <span className="text-sm font-semibold text-gray-700 flex items-center gap-1">
+        <span className="text-sm font-semibold text-[#3a4430] flex items-center gap-1">
           <Filter size={16} /> Filters:
         </span>
 
         <FilterChip
           active={!!filter.heirloomOnly}
-          activeClass="bg-amber-100 text-amber-800 border border-amber-300"
+          activeClass="bg-[#f3e5c3] text-[#8a6520] border border-[#dfc794]"
           label="Heirlooms Only"
           onClick={() => setFilter((prev) => ({ ...prev, heirloomOnly: !prev.heirloomOnly }))}
         />
         <FilterChip
           active={!!filter.annualOnly}
-          activeClass="bg-blue-100 text-blue-800 border border-blue-300"
+          activeClass="bg-[#e3ead8] text-[#3f5c2e] border border-[#b9cba2]"
           label="Annuals Only"
           onClick={() => setFilter((prev) => ({ ...prev, annualOnly: !prev.annualOnly }))}
         />
         <FilterChip
           active={!!filter.readyToPlant}
-          activeClass="bg-green-100 text-green-800 border border-green-300"
+          activeClass="bg-[#dfeed2] text-[#33511f] border border-[#a9c48d]"
           label="Ready to Plant"
           onClick={() => setFilter((prev) => ({ ...prev, readyToPlant: !prev.readyToPlant }))}
         />
@@ -106,13 +106,13 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
         {Object.keys(filter).length > 0 && (
           <button
             onClick={() => setFilter({})}
-            className="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+            className="px-3 py-1 rounded-full text-sm bg-[#f2ecd9] text-[#3a4430] hover:bg-[#e9e1cb]"
           >
             Clear Filters
           </button>
         )}
 
-        <span className="ml-auto text-sm text-gray-600">
+        <span className="ml-auto text-sm text-[#766d5c]">
           {filteredSeeds.length} of {completeSeedVaultDatabase.length} seeds
         </span>
       </div>
@@ -125,9 +125,9 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
         </div>
       ) : (
         <div className="text-center py-12">
-          <Leaf size={48} className="mx-auto text-gray-300 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No seeds found</h3>
-          <p className="text-gray-600 mb-4">
+          <Leaf size={48} className="mx-auto text-[#d8cfba] mb-4" />
+          <h3 className="text-xl font-semibold text-[#3a4430] mb-2">No seeds found</h3>
+          <p className="text-[#766d5c] mb-4">
             Try adjusting your search or filters to find seeds you're looking for.
           </p>
           <button
@@ -135,7 +135,7 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
               setSearchTerm("");
               setFilter({});
             }}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            className="px-4 py-2 bg-[#496331] text-white rounded hover:bg-[#3a5228] transition-colors"
           >
             Clear Search
           </button>
@@ -147,9 +147,9 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
 
 function VaultStat({ value, label, tone }: { value: string; label: string; tone: string }) {
   return (
-    <div className="text-center bg-white rounded-lg border border-gray-200 py-3">
+    <div className="text-center bg-[#fffdf6] rounded-lg border border-[#ded3b8] py-3">
       <div className={`text-2xl font-bold ${tone}`}>{value}</div>
-      <div className="text-sm text-gray-600">{label}</div>
+      <div className="text-sm text-[#766d5c]">{label}</div>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function FilterChip({
     <button
       onClick={onClick}
       className={`px-3 py-1 rounded-full text-sm transition-colors ${
-        active ? activeClass : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+        active ? activeClass : "bg-[#f2ecd9] text-[#3a4430] hover:bg-[#e9e1cb]"
       }`}
     >
       {label}

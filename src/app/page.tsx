@@ -11,6 +11,7 @@ import {
   CloudSun,
   Droplets,
   Leaf,
+  LibraryBig,
   MapPin,
   Menu,
   MessageCircle,
@@ -45,6 +46,32 @@ import {
   zones,
 } from "@/lib/mock-data";
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
+import { plantPhoto } from "@/lib/crop-photos";
+import { Lesson, lessons, lessonOfTheDay } from "@/lib/lessons";
+
+function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void }) {
+  return (
+    <div className="lesson-backdrop" onClick={onClose}>
+      <article className="lesson-reader" onClick={(event) => event.stopPropagation()}>
+        <button className="icon-button lesson-close" onClick={onClose} aria-label="Close lesson">
+          <X size={18} />
+        </button>
+        <p className="eyebrow">Beginner lesson • about {lesson.minutes} min</p>
+        <h2>{lesson.title}</h2>
+        <p className="lesson-tagline">{lesson.tagline}</p>
+        <ol className="lesson-steps">
+          {lesson.steps.map((step) => (
+            <li key={step.heading}>
+              <strong>{step.heading}</strong>
+              <p>{step.body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="lesson-tip"><Sparkles size={14} /> {lesson.tip}</p>
+      </article>
+    </div>
+  );
+}
 
 type OutdoorWeather = {
   ok: boolean;
@@ -443,6 +470,8 @@ function TodaySection({ env }: { env: Environment }) {
   const now = useNow();
   const { tasks, loaded, toggle, add, remove } = useTasks();
   const [newTask, setNewTask] = useState("");
+  const [openLesson, setOpenLesson] = useState<Lesson | null>(null);
+  const todaysLesson = lessonOfTheDay(now ?? new Date(2026, 6, 1));
 
   const hour = now?.getHours() ?? 9;
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -543,22 +572,40 @@ function TodaySection({ env }: { env: Environment }) {
           <div className="lesson-card">
             <Sprout size={42} />
             <div>
-              <h3>How to transplant seedlings</h3>
-              <p>Gentle steps for roots, timing, and aftercare.</p>
-              <button className="soft-button">Start Lesson</button>
+              <h3>{todaysLesson.title}</h3>
+              <p>{todaysLesson.tagline}</p>
+              <button className="soft-button" onClick={() => setOpenLesson(todaysLesson)}>Start Lesson</button>
             </div>
           </div>
         </JournalCard>
 
         <JournalCard title="Plant of the Day">
-          <div className="plant-feature">
-            <div>
-              <h3>Lavender</h3>
-              <em>Lavandula angustifolia</em>
-              <p>Calming, fragrant, pollinator-friendly, and perfect for the apothecary border.</p>
-            </div>
-            <div className="pressed-plant" />
-          </div>
+          {(() => {
+            const featured = [
+              { name: "Lavender", botanical: "Lavandula angustifolia", blurb: "Calming, fragrant, pollinator-friendly, and perfect for the apothecary border." },
+              { name: "Chamomile", botanical: "Matricaria chamomilla", blurb: "Gentle sleep-tea flowers; harvest heads in the morning as petals flatten." },
+              { name: "Tomato", botanical: "Solanum lycopersicum", blurb: "Feed weekly once fruit sets; midsummer suckers make free fall plants." },
+              { name: "Peppermint", botanical: "Mentha × piperita", blurb: "Cooling digestion tea; contain the roots or it will wander everywhere." },
+              { name: "Basil", botanical: "Ocimum basilicum", blurb: "Pinch flower spikes to keep leaves sweet; cuttings root in a week of water." },
+              { name: "Echinacea", botanical: "Echinacea purpurea", blurb: "Immune-support blooms the bees adore; leave seed heads for winter finches." },
+              { name: "Calendula", botanical: "Calendula officinalis", blurb: "The skin-salve flower — the more you pick, the more it blooms." },
+            ];
+            const dayIndex = now
+              ? Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86_400_000) % featured.length
+              : 0;
+            const plant = featured[dayIndex];
+            const photo = plantPhoto(plant.name);
+            return (
+              <div className="plant-feature">
+                <div>
+                  <h3>{plant.name}</h3>
+                  <em>{plant.botanical}</em>
+                  <p>{plant.blurb}</p>
+                </div>
+                {photo ? <img className="plant-feature-photo" src={photo} alt={plant.name} /> : <div className="pressed-plant" />}
+              </div>
+            );
+          })()}
         </JournalCard>
 
         <JournalCard title="Garden Zones at a Glance">
@@ -596,6 +643,7 @@ function TodaySection({ env }: { env: Environment }) {
           </div>
         </JournalCard>
       </div>
+      {openLesson && <LessonReader lesson={openLesson} onClose={() => setOpenLesson(null)} />}
     </div>
   );
 }
@@ -833,14 +881,17 @@ function ApothecarySection({ onOpenWishlist }: { onOpenWishlist: (itemName: stri
 
       <h3 className="apothecary-subhead">In your garden & seed vault now</h3>
       <div className="herb-grid">
-        {apothecaryHave.map((herb) => (
-          <div className="herb-card" key={herb.name}>
-            <div className="pressed-plant small" />
-            <h3>{herb.name}</h3>
-            <p className="herb-source">{herb.source}</p>
-            <p>Uses: {herb.uses}</p>
-          </div>
-        ))}
+        {apothecaryHave.map((herb) => {
+          const photo = plantPhoto(herb.name);
+          return (
+            <div className="herb-card" key={herb.name}>
+              {photo ? <img className="herb-photo" src={photo} alt={herb.name} /> : <div className="pressed-plant small" />}
+              <h3>{herb.name}</h3>
+              <p className="herb-source">{herb.source}</p>
+              <p>Uses: {herb.uses}</p>
+            </div>
+          );
+        })}
       </div>
 
       <h3 className="apothecary-subhead">Not yet growing — on the wishlist</h3>
@@ -1133,6 +1184,7 @@ type PropagationItem = {
   readinessReason: string;
   method: string;
   steps: string[];
+  photo?: string;
 };
 
 const READINESS_LABELS: Record<PropagationItem["readiness"], string> = {
@@ -1191,6 +1243,9 @@ function Propagation() {
         {items.map((item) => (
           <article className={`prop-card ${item.readiness}`} key={item.plant}>
             <header>
+              {(item.photo ?? plantPhoto(item.plant)) && (
+                <img className="prop-photo" src={item.photo ?? plantPhoto(item.plant)} alt={item.plant} />
+              )}
               <div>
                 <h3>{item.plant}</h3>
                 <p><MapPin size={13} /> {item.zone} • {item.method}</p>
@@ -1293,7 +1348,36 @@ function Quotes() {
 }
 
 function Learning() {
-  return <CardCollection title="Beginner Learning Center" subtitle="Short, encouraging, task-connected garden lessons for Karmel's real work." items={learningModules} />;
+  const [openLesson, setOpenLesson] = useState<Lesson | null>(null);
+  const written = new Set(lessons.map((lesson) => lesson.title.toLowerCase()));
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Beginner Learning Center"
+        subtitle="Short, encouraging, task-connected garden lessons. Tap one to read it — more are being written."
+      />
+      <div className="collection-grid">
+        {lessons.map((lesson) => (
+          <button className="collection-card zone-card" key={lesson.id} onClick={() => setOpenLesson(lesson)}>
+            <LibraryBig size={18} />
+            <span>{lesson.title} <em className="lesson-minutes">· {lesson.minutes} min read</em></span>
+            <ChevronRight size={16} />
+          </button>
+        ))}
+      </div>
+      <h3 className="apothecary-subhead">Coming soon</h3>
+      <div className="wishlist-chips">
+        {learningModules
+          .filter((module) => ![...written].some((title) => title.includes(module.toLowerCase().slice(0, 8))))
+          .slice(0, 12)
+          .map((module) => (
+            <span className="wishlist-chip coming-soon" key={module}>{module}</span>
+          ))}
+      </div>
+      {openLesson && <LessonReader lesson={openLesson} onClose={() => setOpenLesson(null)} />}
+    </div>
+  );
 }
 
 function Reminders() {
@@ -1418,7 +1502,10 @@ function Photos() {
 
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? "Diagnosis failed");
-        if (result.mode === "configured") analyzedForReal = true;
+        // Without a real vision provider the route returns placeholder drafts —
+        // don't overwrite our drafts (or mislabel the source) with those.
+        if (result.mode !== "configured") continue;
+        analyzedForReal = true;
 
         const diagnoses = Array.isArray(result.diagnoses) ? result.diagnoses : [];
         chunk.forEach(({ entry }, index) => {
@@ -1631,6 +1718,9 @@ function Photos() {
                     <>Add to Plant Library <PackagePlus size={14} /></>
                   )}
                 </button>
+                {!record.savedToLibrary && record.plant === "Unidentified plant" && (
+                  <p className="save-hint">Type the plant's name above first — then this button saves it (and its photo) to the Plant Library.</p>
+                )}
               </div>
             </article>
           ))

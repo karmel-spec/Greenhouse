@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { SeedPacket } from "@/lib/seed-vault-types";
+import { cropPhotos } from "@/lib/crop-photos";
 import {
   Leaf,
   Calendar,
@@ -53,29 +54,31 @@ function cropArt(commonName: string) {
   return entry ?? { plant: "🌿", harvest: "🧺" };
 }
 
-/** Four-stage lifecycle strip: real photos when set on the packet, artwork otherwise. */
+/** Lifecycle strip: real photos only (packet fields first, then the local crop photo set). */
 function LifecycleStrip({ seed }: { seed: SeedPacket }) {
-  const art = cropArt(seed.commonName);
-  const stages: { label: string; photo?: string; emoji: string }[] = [
-    { label: "Seed", photo: seed.seedCloseupPhoto, emoji: "🌰" },
-    { label: "Seedling", photo: seed.seedlingPhoto, emoji: "🌱" },
-    { label: "Plant", photo: seed.maturePlantPhoto, emoji: art.plant },
-    { label: "Harvest", photo: seed.harvestedProductPhoto, emoji: art.harvest },
-  ];
+  const set = cropPhotos[seed.commonName.toLowerCase()] ?? {};
+  const stages = [
+    { label: "Seed", photo: seed.seedCloseupPhoto ?? set.seed },
+    { label: "Seedling", photo: seed.seedlingPhoto ?? set.seedling },
+    { label: "Plant", photo: seed.maturePlantPhoto ?? set.plant },
+    { label: "Harvest", photo: seed.harvestedProductPhoto ?? set.harvest },
+  ].filter((stage) => !!stage.photo);
+
+  if (stages.length < 2) return null;
 
   return (
-    <div className="grid grid-cols-4 border-b bg-green-50/40">
+    <div className={`grid border-b bg-[#f7f1e2]`} style={{ gridTemplateColumns: `repeat(${stages.length}, 1fr)` }}>
       {stages.map((stage, index) => (
         <div
           key={stage.label}
-          className={`flex flex-col items-center py-2 ${index < 3 ? "border-r border-green-100" : ""}`}
+          className={`flex flex-col items-center ${index < stages.length - 1 ? "border-r border-[#e4dcc4]" : ""}`}
         >
-          {stage.photo ? (
-            <img src={stage.photo} alt={`${seed.commonName} ${stage.label}`} className="h-10 w-10 rounded object-cover" />
-          ) : (
-            <span className="text-2xl leading-10">{stage.emoji}</span>
-          )}
-          <span className="text-[10px] uppercase tracking-wide text-gray-500">{stage.label}</span>
+          <img
+            src={stage.photo}
+            alt={`${seed.commonName} ${stage.label}`}
+            className="h-16 w-full object-cover"
+          />
+          <span className="text-[10px] uppercase tracking-wide text-[#766d5c] py-1">{stage.label}</span>
         </div>
       ))}
     </div>
@@ -98,7 +101,7 @@ export function SeedCard({ seed }: SeedCardProps) {
   ];
 
   const getGerminationColor = (rate: number) => {
-    if (rate >= 90) return "text-green-600";
+    if (rate >= 90) return "text-[#4c7a3d]";
     if (rate >= 75) return "text-yellow-600";
     return "text-orange-600";
   };
@@ -112,21 +115,22 @@ export function SeedCard({ seed }: SeedCardProps) {
   const pastViability = currentYear > viableThrough;
   const nearViability = !pastViability && currentYear >= viableThrough - 1;
 
+  const stockPhotos = cropPhotos[seed.commonName.toLowerCase()] ?? {};
   const headerArt = cropArt(seed.commonName);
   const headerByTab: Record<TabType, { photo?: string; emoji: string }> = {
-    overview: { photo: seed.maturePlantPhoto ?? seed.seedPacketPhoto, emoji: headerArt.plant },
-    growing: { photo: seed.seedlingPhoto, emoji: "🌱" },
-    harvest: { photo: seed.harvestedProductPhoto, emoji: headerArt.harvest },
-    culinary: { photo: seed.harvestedProductPhoto, emoji: "🍽️" },
-    history: { photo: seed.seedPacketPhoto, emoji: "📜" },
-    notes: { photo: seed.seedPacketPhoto, emoji: "📝" },
+    overview: { photo: seed.maturePlantPhoto ?? seed.seedPacketPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
+    growing: { photo: seed.seedlingPhoto ?? stockPhotos.seedling ?? stockPhotos.plant, emoji: "🌱" },
+    harvest: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
+    culinary: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
+    history: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
+    notes: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📝" },
   };
   const headerVisual = headerByTab[activeTab];
 
   return (
-    <div className="border rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white">
+    <div className="border border-[#ded3b8] rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-[#fffdf6]">
       {/* Header image follows the active tab: plant → seedling → harvest → ... */}
-      <div className="relative h-48 bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center overflow-hidden">
+      <div className="relative h-48 bg-gradient-to-br from-[#f1e9d4] to-[#e6eedd] flex items-center justify-center overflow-hidden">
         {headerVisual.photo ? (
           <img
             key={activeTab}
@@ -139,7 +143,7 @@ export function SeedCard({ seed }: SeedCardProps) {
             {headerVisual.emoji}
           </div>
         )}
-        <div className="absolute bottom-2 left-2 bg-white/80 text-gray-600 px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
+        <div className="absolute bottom-2 left-2 bg-[#fffdf6]/80 text-[#766d5c] px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
           {activeTab}
         </div>
         {pastViability && (
@@ -152,7 +156,7 @@ export function SeedCard({ seed }: SeedCardProps) {
         )}
         {nearViability && (
           <div
-            className="absolute top-2 right-2 bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
+            className="absolute top-2 right-2 bg-[#f3e5c3] text-[#8a6520] px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
             title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life.`}
           >
             <AlertCircle size={14} /> Viable through {viableThrough}
@@ -167,20 +171,20 @@ export function SeedCard({ seed }: SeedCardProps) {
       <div className="p-4 border-b">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">
+            <h3 className="text-xl font-bold font-serif text-[#26301e]">
               {seed.commonName}
               {seed.variety && (
-                <span className="text-sm font-normal text-gray-600 ml-2">
+                <span className="text-sm font-normal text-[#766d5c] ml-2">
                   '{seed.variety}'
                 </span>
               )}
             </h3>
             {seed.botanicalName && (
-              <p className="text-xs italic text-gray-500">{seed.botanicalName}</p>
+              <p className="text-xs italic text-[#766d5c]">{seed.botanicalName}</p>
             )}
           </div>
           {seed.isHeirloom && (
-            <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-semibold">
+            <span className="bg-[#f3e5c3] text-[#8a6520] px-2 py-1 rounded text-xs font-semibold">
               Heirloom
             </span>
           )}
@@ -189,39 +193,39 @@ export function SeedCard({ seed }: SeedCardProps) {
         {/* Quick Info Row */}
         <div className="grid grid-cols-4 gap-2 text-sm">
           <div className="text-center">
-            <div className="font-semibold text-gray-800">{seed.seedCount}</div>
-            <div className="text-xs text-gray-600">Seeds</div>
+            <div className="font-semibold text-[#26301e]">{seed.seedCount}</div>
+            <div className="text-xs text-[#766d5c]">Seeds</div>
           </div>
           <div className={`text-center ${getGerminationColor(seed.germinationRate)}`}>
             <div className="font-semibold">{seed.germinationRate}%</div>
-            <div className="text-xs text-gray-600">Germ.</div>
+            <div className="text-xs text-[#766d5c]">Germ.</div>
           </div>
           <div className="text-center">
-            <div className="font-semibold text-gray-800">{seed.daysToMaturity}d</div>
-            <div className="text-xs text-gray-600">To Harvest</div>
+            <div className="font-semibold text-[#26301e]">{seed.daysToMaturity}d</div>
+            <div className="text-xs text-[#766d5c]">To Harvest</div>
           </div>
           <div className="text-center">
-            <div className="font-semibold text-gray-800">
+            <div className="font-semibold text-[#26301e]">
               {new Date(seed.packagedDate).getFullYear()}
             </div>
-            <div className="text-xs text-gray-600">Packaged</div>
+            <div className="text-xs text-[#766d5c]">Packaged</div>
           </div>
         </div>
 
         {/* Status Badge */}
         {seed.seedCount > 50 ? (
-          <div className="mt-2 text-xs flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded">
+          <div className="mt-2 text-xs flex items-center gap-1 text-[#3f5c2e] bg-[#edf3e3] px-2 py-1 rounded">
             <CheckCircle size={14} /> Ready to plant (abundant seeds)
           </div>
         ) : seed.seedCount > 0 ? (
-          <div className="mt-2 text-xs flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-1 rounded">
+          <div className="mt-2 text-xs flex items-center gap-1 text-[#6d5433] bg-[#f5edda] px-2 py-1 rounded">
             <CheckCircle size={14} /> Ready to plant (limited quantity)
           </div>
         ) : null}
       </div>
 
       {/* Tabs */}
-      <div className="border-b bg-gray-50">
+      <div className="border-b bg-[#f7f1e2]">
         <div className="flex gap-0 overflow-x-auto">
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
@@ -231,8 +235,8 @@ export function SeedCard({ seed }: SeedCardProps) {
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={`flex-shrink-0 px-4 py-2 border-b-2 font-medium text-sm flex items-center gap-1 transition-colors ${
                   activeTab === tab.id
-                    ? "border-green-500 text-green-700 bg-green-50"
-                    : "border-transparent text-gray-600 hover:text-gray-800"
+                    ? "border-[#496331] text-[#496331] bg-[#f2ecd9]"
+                    : "border-transparent text-[#766d5c] hover:text-[#26301e]"
                 }`}
               >
                 <IconComponent size={16} />
@@ -249,10 +253,10 @@ export function SeedCard({ seed }: SeedCardProps) {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2 flex items-center gap-2">
                   <Sun size={16} /> Light & Water
                 </h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-[#766d5c] space-y-1">
                   <li>
                     <strong>Light:</strong> {seed.lightRequirement?.replace("-", " ") || "Not specified"}
                   </li>
@@ -262,10 +266,10 @@ export function SeedCard({ seed }: SeedCardProps) {
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2 flex items-center gap-2">
                   <Calendar size={16} /> Utah Growing
                 </h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-[#766d5c] space-y-1">
                   <li>
                     <strong>Zone:</strong> {seed.utahZone || "N/A"}
                   </li>
@@ -276,14 +280,14 @@ export function SeedCard({ seed }: SeedCardProps) {
               </div>
             </div>
             {seed.utahSpecificNotes && (
-              <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                <p className="text-sm text-blue-900">
+              <div className="bg-[#eef3e7] border border-[#cfdabc] rounded p-3">
+                <p className="text-sm text-[#334224]">
                   <strong>Utah Tips:</strong> {seed.utahSpecificNotes}
                 </p>
               </div>
             )}
-            <div className={`rounded p-3 border ${pastViability ? "bg-orange-50 border-orange-200" : "bg-gray-50 border-gray-200"}`}>
-              <p className={`text-sm ${pastViability ? "text-orange-900" : "text-gray-700"}`}>
+            <div className={`rounded p-3 border ${pastViability ? "bg-orange-50 border-orange-200" : "bg-[#f7f1e2] border-[#ded3b8]"}`}>
+              <p className={`text-sm ${pastViability ? "text-orange-900" : "text-[#3a4430]"}`}>
                 <strong>Seed viability:</strong> packaged {packagedYear}, estimated {shelfLife}-year shelf
                 life → viable through <strong>{viableThrough}</strong>.
                 {pastViability
@@ -297,8 +301,8 @@ export function SeedCard({ seed }: SeedCardProps) {
         {activeTab === "growing" && (
           <div className="space-y-3">
             <div>
-              <h4 className="font-semibold text-sm text-gray-700 mb-2">Planting Details</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <h4 className="font-semibold text-sm text-[#3a4430] mb-2">Planting Details</h4>
+              <ul className="text-sm text-[#766d5c] space-y-1">
                 <li>
                   <strong>Start:</strong> {seed.startIndoors !== undefined ? (seed.startIndoors ? "Indoors" : "Direct sow") : "Not specified"}
                 </li>
@@ -318,8 +322,8 @@ export function SeedCard({ seed }: SeedCardProps) {
             </div>
             {seed.companionPlants && seed.companionPlants.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Companion Plants</h4>
-                <p className="text-sm text-gray-600">
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2">Companion Plants</h4>
+                <p className="text-sm text-[#766d5c]">
                   {seed.companionPlants.join(", ")}
                 </p>
               </div>
@@ -330,8 +334,8 @@ export function SeedCard({ seed }: SeedCardProps) {
         {activeTab === "harvest" && (
           <div className="space-y-3">
             <div>
-              <h4 className="font-semibold text-sm text-gray-700 mb-2">Harvesting</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <h4 className="font-semibold text-sm text-[#3a4430] mb-2">Harvesting</h4>
+              <ul className="text-sm text-[#766d5c] space-y-1">
                 <li>
                   <strong>Season:</strong> {seed.harvestSeason || "See planting calendar"}
                 </li>
@@ -367,20 +371,20 @@ export function SeedCard({ seed }: SeedCardProps) {
           <div className="space-y-3">
             {seed.flavorProfile && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-1">Flavor</h4>
-                <p className="text-sm text-gray-600">{seed.flavorProfile}</p>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">Flavor</h4>
+                <p className="text-sm text-[#766d5c]">{seed.flavorProfile}</p>
               </div>
             )}
             {seed.cookingMethods && seed.cookingMethods.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-1">Cooking Methods</h4>
-                <p className="text-sm text-gray-600">{seed.cookingMethods.join(", ")}</p>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">Cooking Methods</h4>
+                <p className="text-sm text-[#766d5c]">{seed.cookingMethods.join(", ")}</p>
               </div>
             )}
             {seed.preservationMethods && seed.preservationMethods.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-1">Preservation</h4>
-                <p className="text-sm text-gray-600">{seed.preservationMethods.join(", ")}</p>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">Preservation</h4>
+                <p className="text-sm text-[#766d5c]">{seed.preservationMethods.join(", ")}</p>
               </div>
             )}
             {seed.nutritionHighlights && (
@@ -391,13 +395,13 @@ export function SeedCard({ seed }: SeedCardProps) {
             )}
             {seed.recipeLinks && seed.recipeLinks.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Recipes</h4>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2">Recipes</h4>
                 <ul className="space-y-1">
                   {seed.recipeLinks.map((recipe, idx) => (
                     <li key={idx}>
                       <a
                         href={recipe.url}
-                        className="text-sm text-green-600 hover:underline"
+                        className="text-sm text-[#4c7a3d] hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -415,30 +419,30 @@ export function SeedCard({ seed }: SeedCardProps) {
           <div className="space-y-3">
             {seed.plantingHistory && seed.plantingHistory.length > 0 ? (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">Planting Records</h4>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2">Planting Records</h4>
                 {seed.plantingHistory.map((record, idx) => (
-                  <div key={idx} className="border rounded p-2 mb-2 bg-gray-50 text-sm">
-                    <div className="font-semibold text-gray-800">{record.year}</div>
+                  <div key={idx} className="border rounded p-2 mb-2 bg-[#f7f1e2] text-sm">
+                    <div className="font-semibold text-[#26301e]">{record.year}</div>
                     {record.yieldObtained && (
-                      <div className="text-gray-700">
+                      <div className="text-[#3a4430]">
                         <strong>Yield:</strong> {record.yieldObtained}
                       </div>
                     )}
                     {record.gardenerNotes && (
-                      <div className="text-gray-600 italic">{record.gardenerNotes}</div>
+                      <div className="text-[#766d5c] italic">{record.gardenerNotes}</div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-600">No planting history yet.</p>
+              <p className="text-sm text-[#766d5c]">No planting history yet.</p>
             )}
             {seed.successStories && seed.successStories.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
-                  <CheckCircle size={16} className="text-green-600" /> Success Stories
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2 flex items-center gap-1">
+                  <CheckCircle size={16} className="text-[#4c7a3d]" /> Success Stories
                 </h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-[#766d5c] space-y-1">
                   {seed.successStories.map((story, idx) => (
                     <li key={idx}>✓ {story}</li>
                   ))}
@@ -447,10 +451,10 @@ export function SeedCard({ seed }: SeedCardProps) {
             )}
             {seed.challenges && seed.challenges.length > 0 && (
               <div>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2 flex items-center gap-1">
-                  <AlertCircle size={16} className="text-amber-600" /> Challenges
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-2 flex items-center gap-1">
+                  <AlertCircle size={16} className="text-[#c99a45]" /> Challenges
                 </h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <ul className="text-sm text-[#766d5c] space-y-1">
                   {seed.challenges.map((challenge, idx) => (
                     <li key={idx}>⚠ {challenge}</li>
                   ))}
@@ -463,11 +467,11 @@ export function SeedCard({ seed }: SeedCardProps) {
         {activeTab === "notes" && (
           <div className="space-y-3">
             {seed.notes && (
-              <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                <p className="text-sm text-blue-900">{seed.notes}</p>
+              <div className="bg-[#eef3e7] border border-[#cfdabc] rounded p-3">
+                <p className="text-sm text-[#334224]">{seed.notes}</p>
               </div>
             )}
-            <div className="text-xs text-gray-500 space-y-1">
+            <div className="text-xs text-[#766d5c] space-y-1">
               <p>
                 <strong>Created:</strong> {new Date(seed.createdAt).toLocaleDateString()}
               </p>
@@ -483,14 +487,14 @@ export function SeedCard({ seed }: SeedCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="border-t bg-gray-50 px-4 py-3 flex justify-between items-center">
+      <div className="border-t bg-[#f7f1e2] px-4 py-3 flex justify-between items-center">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-sm text-green-600 hover:text-green-700 font-medium"
+          className="text-sm text-[#4c7a3d] hover:text-[#496331] font-medium"
         >
           {expanded ? "Hide Details" : "Expand All"} →
         </button>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-[#766d5c]">
           ID: <code className="font-mono">{seed.id}</code>
         </div>
       </div>

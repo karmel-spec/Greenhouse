@@ -15,6 +15,7 @@ export type PropagationItem = {
   readinessReason: string;
   method: string;
   steps: string[];
+  photo?: string;
 };
 
 type KnowledgeEntry = {
@@ -176,19 +177,19 @@ export async function GET() {
 
   // Real plants first (library), then named journal plants not already in the library.
   const seen = new Set<string>();
-  const plants: { name: string; zone: string; health: string }[] = [];
+  const plants: { name: string; zone: string; health: string; photo?: string }[] = [];
 
   for (const plant of store.plants) {
     const key = plant.name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    plants.push({ name: plant.name, zone: plant.zone, health: plant.health });
+    plants.push({ name: plant.name, zone: plant.zone, health: plant.health, photo: plant.photo });
   }
   for (const entry of store.journal) {
     const key = entry.plant.toLowerCase();
     if (entry.plant === "Unidentified plant" || seen.has(key)) continue;
     seen.add(key);
-    plants.push({ name: entry.plant, zone: entry.zone, health: entry.health });
+    plants.push({ name: entry.plant, zone: entry.zone, health: entry.health, photo: entry.photo });
   }
 
   const usingStarters = plants.length === 0;
@@ -206,6 +207,10 @@ export async function GET() {
     try {
       const items = await aiPropagationPlan(plants);
       if (items.length) {
+        const photoByName = new Map(plants.map((plant) => [plant.name.toLowerCase(), plant.photo]));
+        for (const item of items) {
+          item.photo = photoByName.get(item.plant.toLowerCase()) ?? undefined;
+        }
         return NextResponse.json({ items, generatedBy: "anthropic", usingStarters });
       }
     } catch {
@@ -239,7 +244,7 @@ export async function GET() {
       readinessReason = "Nurse it back to health before taking cuttings; stressed cuttings rarely root.";
     }
 
-    return { plant: plant.name, zone: plant.zone, readiness, readinessReason, method, steps };
+    return { plant: plant.name, zone: plant.zone, readiness, readinessReason, method, steps, photo: plant.photo };
   });
 
   const order = { ready: 0, soon: 1, wait: 2 };
