@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { readStore } from "@/lib/store";
+import { wishlistItems } from "@/lib/mock-data";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -340,6 +341,10 @@ async function buildEveSystemPrompt() {
     plantLines
       ? `Karmel's plant library (from her own photo uploads):\n${plantLines}`
       : "Known plants: Lavender (English, Apothecary Garden), Basil (Genovese, rooting on Propagation Shelf), Chamomile (German, Tea Garden), Tomato (Brandywine, Greenhouse), Peppermint (Herb Garden).",
+    "",
+    `Wishlist (wanted, not yet owned): ${wishlistItems
+      .map((item) => `${item.name} (${item.price}, ${item.priority} priority, for ${item.category})`)
+      .join("; ")}.`,
   ].join("\n");
 }
 

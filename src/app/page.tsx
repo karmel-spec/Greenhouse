@@ -259,7 +259,7 @@ export default function Home() {
         </header>
 
         <div className="content-grid">
-          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus })}</section>
+          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection })}</section>
           <EvePanel />
         </div>
       </section>
@@ -327,10 +327,24 @@ function EvePanel() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
+  const sendRef = useRef<(text: string) => void>(() => {});
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, busy]);
+
+  // Other sections (e.g. "Eve Can Help With" cards) can hand Eve a prompt.
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const prompt = (event as CustomEvent<string>).detail;
+      if (typeof prompt === "string" && prompt) {
+        document.querySelector(".eve-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        sendRef.current(prompt);
+      }
+    };
+    window.addEventListener("eve-ask", listener);
+    return () => window.removeEventListener("eve-ask", listener);
+  }, []);
 
   const send = async (text: string) => {
     const content = text.trim();
@@ -362,6 +376,7 @@ function EvePanel() {
       setBusy(false);
     }
   };
+  sendRef.current = send;
 
   return (
     <aside className="eve-panel">
@@ -421,6 +436,7 @@ function EvePanel() {
 type SectionNav = {
   openWishlist: (itemName: string) => void;
   wishlistFocus: string | null;
+  openSection: (key: SectionKey) => void;
 };
 
 function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
@@ -460,7 +476,7 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
     case "landscape":
       return <Landscape />;
     case "eve":
-      return <EveHome />;
+      return <EveHome onOpenPhotos={() => nav.openSection("photos")} />;
     default:
       return <TodaySection env={env} />;
   }
@@ -1851,12 +1867,48 @@ function Landscape() {
   return <CardCollection title="Edible Landscape Planner" subtitle="Plan fruit, herbs, flowers, living water moments, vines, pollinator edges, paths, and harvest rhythms." items={["Sun Garden berries", "Vineyard pathway", "Tea garden border", "Pollinator flower bands", "Herb spiral", "Shade garden greens"]} />;
 }
 
-function EveHome() {
+const EVE_HELP_CARDS: { label: string; prompt?: string; opensPhotos?: boolean }[] = [
+  { label: "Daily plans", prompt: "Build me a garden plan for today based on my task list, my plants, and the weather in Orem." },
+  { label: "Plant advice", prompt: "Look at my plant library and tell me which plants need attention this week, and exactly what to do for each." },
+  { label: "Seed advice", prompt: "Which seeds should I be starting or direct sowing right now in Orem, and which should I get ready for the next window?" },
+  { label: "Diagnosis from photos", opensPhotos: true },
+  { label: "Shopping lists", prompt: "Make me a garden shopping list for the next month based on my wishlist, the season, and what I'm growing." },
+  { label: "Weekly reviews", prompt: "Give me a weekly review of my garden: what's going well, what to watch, and my top 5 priorities for next week." },
+  { label: "Sacred garden reflections", prompt: "Share a short scripture or reflection that fits today's work in my garden, and one thought to carry while I tend it." },
+];
+
+function askEve(prompt: string) {
+  window.dispatchEvent(new CustomEvent("eve-ask", { detail: prompt }));
+}
+
+function EveHome({ onOpenPhotos }: { onOpenPhotos: () => void }) {
   return (
     <div className="section-stack">
-      <SectionIntro title="Eve Assistant" subtitle="Garden teacher, daily coach, project manager, sacred garden companion, diagnostician, planner, and weekly reviewer." />
-      <div className="prompt-grid">{evePrompts.map((prompt) => <button key={prompt}>{prompt}</button>)}</div>
-      <CardCollection title="Eve Can Help With" subtitle="Placeholder-ready assistant roles." items={["Daily plans", "Plant advice", "Seed advice", "Diagnosis from photos", "Shopping lists", "Weekly reviews", "Sacred garden reflections"]} compact />
+      <SectionIntro
+        title="Eve Assistant"
+        subtitle="Garden teacher, daily coach, project manager, sacred garden companion, diagnostician, planner, and weekly reviewer. Tap anything below and Eve answers in the chat panel."
+      />
+      <div className="prompt-grid">
+        {evePrompts.map((prompt) => (
+          <button key={prompt} onClick={() => askEve(prompt)}>{prompt}</button>
+        ))}
+      </div>
+      <div className="section-stack">
+        <SectionIntro title="Eve Can Help With" subtitle="One tap sends the request straight to Eve." />
+        <div className="mini-card-grid">
+          {EVE_HELP_CARDS.map((card) => (
+            <button
+              className="collection-card zone-card"
+              key={card.label}
+              onClick={() => (card.opensPhotos ? onOpenPhotos() : card.prompt && askEve(card.prompt))}
+            >
+              <Leaf size={18} />
+              <span>{card.label}</span>
+              <ChevronRight size={16} />
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

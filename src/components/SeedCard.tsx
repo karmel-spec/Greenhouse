@@ -10,6 +10,7 @@ import { SeedPacket } from "@/lib/seed-vault-types";
 import { cropPhotos } from "@/lib/crop-photos";
 import { nextPlanting } from "@/lib/planting";
 import { recipeIdeas } from "@/lib/culinary";
+import { seedSavingGuide, STORAGE_DEFAULT } from "@/lib/seed-saving";
 import {
   Leaf,
   Calendar,
@@ -21,6 +22,7 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
+  Archive,
 } from "lucide-react";
 
 interface SeedCardProps {
@@ -87,7 +89,7 @@ function LifecycleStrip({ seed }: { seed: SeedPacket }) {
   );
 }
 
-type TabType = "overview" | "growing" | "harvest" | "culinary" | "history" | "notes";
+type TabType = "overview" | "growing" | "harvest" | "culinary" | "seedsaving" | "history" | "notes";
 
 export function SeedCard({ seed }: SeedCardProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -98,6 +100,7 @@ export function SeedCard({ seed }: SeedCardProps) {
     { id: "growing", label: "Growing", icon: Sprout },
     { id: "harvest", label: "Harvest", icon: Calendar },
     { id: "culinary", label: "Culinary", icon: ChefHat },
+    { id: "seedsaving", label: "Seed Saving", icon: Archive },
     { id: "history", label: "History", icon: TrendingUp },
     { id: "notes", label: "Notes", icon: BookOpen },
   ];
@@ -124,6 +127,7 @@ export function SeedCard({ seed }: SeedCardProps) {
     growing: { photo: seed.seedlingPhoto ?? stockPhotos.seedling ?? stockPhotos.plant, emoji: "🌱" },
     harvest: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
     culinary: { photo: stockPhotos.dish ?? seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
+    seedsaving: { photo: seed.seedCloseupPhoto ?? stockPhotos.seed ?? stockPhotos.plant, emoji: "🌰" },
     history: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
     notes: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📝" },
   };
@@ -430,6 +434,49 @@ export function SeedCard({ seed }: SeedCardProps) {
             </div>
           </div>
         )}
+
+        {activeTab === "seedsaving" && (() => {
+          const guide = seedSavingGuide(seed.commonName);
+          return (
+            <div className="space-y-3">
+              {seed.isHeirloom && seed.canSaveSeed ? (
+                <div className="text-xs flex items-center gap-1 text-[#3f5c2e] bg-[#edf3e3] px-2 py-1 rounded">
+                  <CheckCircle size={14} /> Heirloom — saved seeds grow true to type
+                </div>
+              ) : (
+                <div className="text-xs flex items-center gap-1 text-[#8a6520] bg-[#f3e5c3]/70 px-2 py-1 rounded">
+                  <AlertCircle size={14} /> Not a documented heirloom — saved seeds may not grow exactly true
+                </div>
+              )}
+              <div>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">1. When the seed is ready</h4>
+                <p className="text-sm text-[#766d5c]">{seed.seedMaturityIndicators ?? guide.collect}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">2. Collect &amp; dry</h4>
+                <p className="text-sm text-[#766d5c]">{seed.seedSavingInstructions ?? guide.process}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm text-[#3a4430] mb-1">3. Store for next year</h4>
+                <p className="text-sm text-[#766d5c]">
+                  {seed.seedStorageMethod
+                    ? `Store ${seed.seedStorageMethod.replace("-", ", ")}${
+                        seed.seedStorageTemperature
+                          ? ` at ${seed.seedStorageTemperature.min}–${seed.seedStorageTemperature.max}°F`
+                          : ""
+                      }${seed.seedStorageHumidity ? `, humidity ${seed.seedStorageHumidity}` : ""}. Label with variety and year.`
+                    : STORAGE_DEFAULT}{" "}
+                  Stored well, expect ~{seed.estimatedShelfLife ?? 5} years of good germination.
+                </p>
+              </div>
+              {guide.note && (
+                <div className="bg-[#eef3e7] border border-[#cfdabc] rounded p-3">
+                  <p className="text-sm text-[#334224]"><strong>Worth knowing:</strong> {guide.note}</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {activeTab === "history" && (
           <div className="space-y-3">
