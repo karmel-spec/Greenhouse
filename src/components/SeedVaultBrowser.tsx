@@ -11,11 +11,13 @@ import React, { useState, useMemo } from "react";
 import { SeedCard } from "@/components/SeedCard";
 import completeSeedVaultDatabase from "@/lib/seed-vault-complete-database";
 import { SeedVaultFilter } from "@/lib/seed-vault-types";
-import { Search, Filter, Leaf } from "lucide-react";
+import { plantingSortKey } from "@/lib/planting";
+import { Search, Filter, Leaf, CalendarClock, ArrowDownAZ } from "lucide-react";
 
 export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<SeedVaultFilter>({});
+  const [sortBy, setSortBy] = useState<"planting" | "name">("planting");
 
   const stats = useMemo(() => {
     const totalSeeds = completeSeedVaultDatabase.length;
@@ -54,6 +56,22 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
       return true;
     });
   }, [searchTerm, filter]);
+
+  const sortedSeeds = useMemo(() => {
+    const seeds = [...filteredSeeds];
+    if (sortBy === "name") {
+      seeds.sort((a, b) => a.commonName.localeCompare(b.commonName) || (a.variety ?? "").localeCompare(b.variety ?? ""));
+    } else {
+      const today = new Date();
+      const keys = new Map(seeds.map((seed) => [seed.id, plantingSortKey(seed, today)]));
+      seeds.sort(
+        (a, b) =>
+          (keys.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (keys.get(b.id) ?? Number.MAX_SAFE_INTEGER) ||
+          a.commonName.localeCompare(b.commonName),
+      );
+    }
+    return seeds;
+  }, [filteredSeeds, sortBy]);
 
   return (
     <div>
@@ -112,14 +130,42 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
           </button>
         )}
 
+        <span className="mx-2 text-[#d8cfba]">|</span>
+        <button
+          onClick={() => setSortBy("planting")}
+          className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 transition-colors ${
+            sortBy === "planting"
+              ? "bg-[#e3ead8] text-[#3f5c2e] border border-[#b9cba2]"
+              : "bg-[#f2ecd9] text-[#3a4430] hover:bg-[#e9e1cb]"
+          }`}
+        >
+          <CalendarClock size={14} /> Planting date
+        </button>
+        <button
+          onClick={() => setSortBy("name")}
+          className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 transition-colors ${
+            sortBy === "name"
+              ? "bg-[#e3ead8] text-[#3f5c2e] border border-[#b9cba2]"
+              : "bg-[#f2ecd9] text-[#3a4430] hover:bg-[#e9e1cb]"
+          }`}
+        >
+          <ArrowDownAZ size={14} /> A–Z
+        </button>
+
         <span className="ml-auto text-sm text-[#766d5c]">
           {filteredSeeds.length} of {completeSeedVaultDatabase.length} seeds
         </span>
       </div>
 
-      {filteredSeeds.length > 0 ? (
+      {sortBy === "planting" && (
+        <p className="text-xs text-[#766d5c] -mt-4 mb-4">
+          Ordered by planting date for Orem — what you can plant right now comes first, soonest-closing window at the top.
+        </p>
+      )}
+
+      {sortedSeeds.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSeeds.map((seed) => (
+          {sortedSeeds.map((seed) => (
             <SeedCard key={seed.id} seed={seed} />
           ))}
         </div>

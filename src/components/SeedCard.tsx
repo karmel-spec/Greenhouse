@@ -8,6 +8,7 @@
 import React, { useState } from "react";
 import { SeedPacket } from "@/lib/seed-vault-types";
 import { cropPhotos } from "@/lib/crop-photos";
+import { nextPlanting } from "@/lib/planting";
 import {
   Leaf,
   Calendar,
@@ -86,67 +87,6 @@ function LifecycleStrip({ seed }: { seed: SeedPacket }) {
 }
 
 type TabType = "overview" | "growing" | "harvest" | "culinary" | "history" | "notes";
-
-/**
- * Next planting date for Utah zone 6b. Uses the packet's Utah windows when
- * present; otherwise estimates from frost hardiness (last frost ~May 15,
- * estimates marked with "~").
- */
-function nextPlanting(seed: SeedPacket, today: Date): { text: string; now: boolean } | null {
-  const explicit = seed.utahPlantingWindows
-    ? ([seed.utahPlantingWindows.spring, seed.utahPlantingWindows.summer, seed.utahPlantingWindows.fall].filter(
-        Boolean,
-      ) as { start: string; end: string }[])
-    : [];
-
-  let windows = explicit;
-  let estimated = false;
-  if (!windows.length) {
-    estimated = true;
-    windows =
-      seed.frostHardiness === "frost-sensitive"
-        ? [{ start: "05-15", end: "06-30" }]
-        : seed.frostHardiness === "cold-hardy" || seed.frostHardiness === "frost-tolerant"
-          ? [
-              { start: "03-20", end: "05-01" },
-              { start: "08-01", end: "09-01" },
-            ]
-          : [{ start: "04-15", end: "06-15" }];
-  }
-
-  const year = today.getFullYear();
-  const parse = (mmdd: string, y: number) => {
-    const [month, day] = mmdd.split("-").map(Number);
-    if (!month || !day) return null;
-    return new Date(y, month - 1, day);
-  };
-  const format = (date: Date) =>
-    date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      ...(date.getFullYear() !== year ? { year: "numeric" } : {}),
-    });
-  const approx = estimated ? "~" : "";
-
-  for (const window of windows) {
-    const start = parse(window.start, year);
-    const end = parse(window.end, year);
-    if (!start || !end || end < start) continue;
-    if (today >= start && today <= end) {
-      return { text: `Plant now — thru ${approx}${format(end)}`, now: true };
-    }
-  }
-
-  let next: Date | null = null;
-  for (const window of windows) {
-    for (const y of [year, year + 1]) {
-      const start = parse(window.start, y);
-      if (start && start > today && (!next || start < next)) next = start;
-    }
-  }
-
-  return next ? { text: `Ready to plant: ${approx}${format(next)}`, now: false } : null;
-}
 
 export function SeedCard({ seed }: SeedCardProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
