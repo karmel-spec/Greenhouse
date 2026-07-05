@@ -87,6 +87,67 @@ function LifecycleStrip({ seed }: { seed: SeedPacket }) {
 
 type TabType = "overview" | "growing" | "harvest" | "culinary" | "history" | "notes";
 
+/**
+ * Next planting date for Utah zone 6b. Uses the packet's Utah windows when
+ * present; otherwise estimates from frost hardiness (last frost ~May 15,
+ * estimates marked with "~").
+ */
+function nextPlanting(seed: SeedPacket, today: Date): { text: string; now: boolean } | null {
+  const explicit = seed.utahPlantingWindows
+    ? ([seed.utahPlantingWindows.spring, seed.utahPlantingWindows.summer, seed.utahPlantingWindows.fall].filter(
+        Boolean,
+      ) as { start: string; end: string }[])
+    : [];
+
+  let windows = explicit;
+  let estimated = false;
+  if (!windows.length) {
+    estimated = true;
+    windows =
+      seed.frostHardiness === "frost-sensitive"
+        ? [{ start: "05-15", end: "06-30" }]
+        : seed.frostHardiness === "cold-hardy" || seed.frostHardiness === "frost-tolerant"
+          ? [
+              { start: "03-20", end: "05-01" },
+              { start: "08-01", end: "09-01" },
+            ]
+          : [{ start: "04-15", end: "06-15" }];
+  }
+
+  const year = today.getFullYear();
+  const parse = (mmdd: string, y: number) => {
+    const [month, day] = mmdd.split("-").map(Number);
+    if (!month || !day) return null;
+    return new Date(y, month - 1, day);
+  };
+  const format = (date: Date) =>
+    date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      ...(date.getFullYear() !== year ? { year: "numeric" } : {}),
+    });
+  const approx = estimated ? "~" : "";
+
+  for (const window of windows) {
+    const start = parse(window.start, year);
+    const end = parse(window.end, year);
+    if (!start || !end || end < start) continue;
+    if (today >= start && today <= end) {
+      return { text: `Plant now — thru ${approx}${format(end)}`, now: true };
+    }
+  }
+
+  let next: Date | null = null;
+  for (const window of windows) {
+    for (const y of [year, year + 1]) {
+      const start = parse(window.start, y);
+      if (start && start > today && (!next || start < next)) next = start;
+    }
+  }
+
+  return next ? { text: `Ready to plant: ${approx}${format(next)}`, now: false } : null;
+}
+
 export function SeedCard({ seed }: SeedCardProps) {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [expanded, setExpanded] = useState(false);
@@ -126,6 +187,7 @@ export function SeedCard({ seed }: SeedCardProps) {
     notes: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📝" },
   };
   const headerVisual = headerByTab[activeTab];
+  const planting = nextPlanting(seed, new Date());
 
   return (
     <div className="border border-[#ded3b8] rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-[#fffdf6]">
@@ -146,20 +208,14 @@ export function SeedCard({ seed }: SeedCardProps) {
         <div className="absolute bottom-2 left-2 bg-[#fffdf6]/80 text-[#766d5c] px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
           {activeTab}
         </div>
-        {pastViability && (
+        {planting && (
           <div
-            className="absolute top-2 right-2 bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
-            title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life. Germination is likely reduced — test before big plantings.`}
+            className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 ${
+              planting.now ? "bg-[#dfeed2] text-[#33511f]" : "bg-[#fffdf6]/90 text-[#496331]"
+            }`}
+            title="Utah zone 6b planting window (~ = estimated from frost hardiness)"
           >
-            <AlertCircle size={14} /> Was viable through {viableThrough}
-          </div>
-        )}
-        {nearViability && (
-          <div
-            className="absolute top-2 right-2 bg-[#f3e5c3] text-[#8a6520] px-2 py-1 rounded text-xs font-semibold flex items-center gap-1"
-            title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life.`}
-          >
-            <AlertCircle size={14} /> Viable through {viableThrough}
+            {planting.now ? <CheckCircle size={14} /> : <Calendar size={14} />} {planting.text}
           </div>
         )}
       </div>
@@ -485,6 +541,21 @@ export function SeedCard({ seed }: SeedCardProps) {
           </div>
         )}
       </div>
+
+      {/* Viability notice lives at the bottom of the card */}
+      {(pastViability || nearViability) && (
+        <div
+          className={`border-t px-4 py-2 text-xs font-medium flex items-center gap-1.5 ${
+            pastViability ? "bg-orange-50 text-orange-800" : "bg-[#f3e5c3]/60 text-[#8a6520]"
+          }`}
+          title={`Packaged ${packagedYear}, ~${shelfLife}-year shelf life.`}
+        >
+          <AlertCircle size={13} />
+          {pastViability
+            ? `Was viable through ${viableThrough} — test germination before big plantings`
+            : `Viable through ${viableThrough}`}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t bg-[#f7f1e2] px-4 py-3 flex justify-between items-center">
