@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  ArrowRight,
   Bell,
   Bot,
   Camera,
@@ -219,6 +220,7 @@ export default function Home() {
   const [active, setActive] = useState<SectionKey>("today");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wishlistFocus, setWishlistFocus] = useState<string | null>(null);
+  const [zoneFocus, setZoneFocus] = useState<string | null>(null);
   const env = useEnvironment();
   const current = useMemo(() => navItems.find((item) => item.key === active), [active]);
 
@@ -226,11 +228,18 @@ export default function Home() {
     setActive(key);
     setDrawerOpen(false);
     if (key !== "wishlist") setWishlistFocus(null);
+    if (key !== "zones") setZoneFocus(null);
   };
 
   const openWishlist = (itemName: string) => {
     setWishlistFocus(itemName);
     setActive("wishlist");
+    setDrawerOpen(false);
+  };
+
+  const openZone = (zoneName: string) => {
+    setZoneFocus(zoneName);
+    setActive("zones");
     setDrawerOpen(false);
   };
 
@@ -259,7 +268,7 @@ export default function Home() {
         </header>
 
         <div className="content-grid">
-          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection })}</section>
+          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection, openZone, zoneFocus })}</section>
           <EvePanel />
         </div>
       </section>
@@ -437,12 +446,14 @@ type SectionNav = {
   openWishlist: (itemName: string) => void;
   wishlistFocus: string | null;
   openSection: (key: SectionKey) => void;
+  openZone: (zoneName: string) => void;
+  zoneFocus: string | null;
 };
 
 function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
   switch (active) {
     case "today":
-      return <TodaySection env={env} />;
+      return <TodaySection env={env} nav={nav} />;
     case "operations":
       return <OperationsSection />;
     case "microgreens":
@@ -452,7 +463,7 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
     case "plants":
       return <PlantLibrary />;
     case "zones":
-      return <ZonesSection />;
+      return <ZonesSection focus={nav.zoneFocus} />;
     case "seeds":
       return <SeedLibrary />;
     case "seed-vault":
@@ -478,16 +489,107 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
     case "eve":
       return <EveHome onOpenPhotos={() => nav.openSection("photos")} />;
     default:
-      return <TodaySection env={env} />;
+      return <TodaySection env={env} nav={nav} />;
   }
 }
 
-function TodaySection({ env }: { env: Environment }) {
+const DAILY_PLAN_PROMPT =
+  "Build me a garden plan for today. Base it on my open tasks, the plants my photo diagnosis flagged as needing attention, " +
+  "today's Orem weather, which seeds' planting windows are open right now, and any propagation, transplanting, or microgreens " +
+  "tray-starting I could do today. Return a single prioritized list (most important first), each item one line with a short reason. " +
+  "Keep it to the things I can actually do today.";
+
+// Renders a simple subset of markdown (headings, bold, bullets) as plain React.
+function PlanText({ text }: { text: string }) {
+  return (
+    <div className="plan-text">
+      {text.split("\n").map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+        const heading = /^#{1,6}\s+/.test(trimmed);
+        const bullet = /^[-*•]\s+/.test(trimmed) || /^\d+[.)]\s+/.test(trimmed);
+        const clean = trimmed
+          .replace(/^#{1,6}\s+/, "")
+          .replace(/^[-*•]\s+/, "")
+          .replace(/^\d+[.)]\s+/, "");
+        const parts = clean.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+          part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part,
+        );
+        if (heading) return <h4 key={index}>{parts}</h4>;
+        if (bullet) return <p className="plan-bullet" key={index}>{parts}</p>;
+        return <p key={index}>{parts}</p>;
+      })}
+    </div>
+  );
+}
+
+function EveDailyPlan() {
+  const [plan, setPlan] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const build = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/eve/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", content: DAILY_PLAN_PROMPT }] }),
+      });
+      const data = await response.json();
+      if (data.reply) setPlan(data.reply);
+      else setError(data.error ?? "Eve couldn't build a plan right now.");
+    } catch {
+      setError("Couldn't reach Eve just now — try again in a moment.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <article className="eve-plan-card">
+      <div className="eve-plan-head">
+        <div className="eve-avatar">E</div>
+        <div>
+          <p className="eyebrow">Eve's Plan for Today</p>
+          <h3>What should I focus on today?</h3>
+        </div>
+        <button className="primary-button" onClick={build} disabled={busy}>
+          <Sparkles size={16} /> {busy ? "Thinking..." : plan ? "Rebuild plan" : "Build my plan"}
+        </button>
+      </div>
+      {!plan && !busy && !error && (
+        <p className="eve-plan-hint">
+          Eve reads your tasks, your plants' diagnosed needs, today's Orem weather, which seeds are in their planting
+          window, and your trays — then gives you a prioritized to-do list for today.
+        </p>
+      )}
+      {busy && <p className="eve-plan-hint">Eve is reading your garden and building a prioritized plan...</p>}
+      {error && <p className="eve-plan-hint error">{error}</p>}
+      {plan && <PlanText text={plan} />}
+    </article>
+  );
+}
+
+function TodaySection({ env, nav }: { env: Environment; nav: SectionNav }) {
   const now = useNow();
   const { tasks, loaded, toggle, add, remove } = useTasks();
   const [newTask, setNewTask] = useState("");
   const [openLesson, setOpenLesson] = useState<Lesson | null>(null);
+  const taskInputRef = useRef<HTMLInputElement>(null);
   const todaysLesson = lessonOfTheDay(now ?? new Date(2026, 6, 1));
+
+  const quickAction = (label: string) => {
+    if (label === "Add task") {
+      taskInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      taskInputRef.current?.focus();
+    } else if (label === "Add plant" || label === "Upload photo") {
+      nav.openSection("photos");
+    } else if (label === "Ask Eve") {
+      nav.openSection("eve");
+    }
+  };
 
   const hour = now?.getHours() ?? 9;
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -532,6 +634,8 @@ function TodaySection({ env }: { env: Environment }) {
         <SunMedium className="sun-icon" size={34} />
       </div>
 
+      <EveDailyPlan />
+
       <div className="dashboard-grid">
         <JournalCard title="Today's Garden Plan" className="task-card">
           {tasks.map((task) => (
@@ -555,6 +659,7 @@ function TodaySection({ env }: { env: Environment }) {
           {loaded && !tasks.length && <p className="empty-note">Nothing planned yet — add your first task below.</p>}
           <form className="task-add" onSubmit={submitTask}>
             <input
+              ref={taskInputRef}
               value={newTask}
               onChange={(event) => setNewTask(event.target.value)}
               placeholder="Add a task..."
@@ -636,11 +741,14 @@ function TodaySection({ env }: { env: Environment }) {
             .map((name) => zones.find((zone) => zone.name === name))
             .filter((zone): zone is (typeof zones)[number] => !!zone)
             .map((zone) => (
-              <div className="zone-line" key={zone.name}>
+              <button className="zone-line zone-line-button" key={zone.name} onClick={() => nav.openZone(zone.name)}>
                 <span>{zone.name}</span>
-                <strong>{zone.plants}</strong>
-              </div>
+                <span className="zone-line-end"><strong>{zone.plants}</strong><ChevronRight size={14} /></span>
+              </button>
             ))}
+          <button className="text-link" onClick={() => nav.openSection("zones")}>
+            View all zones <ArrowRight size={14} />
+          </button>
         </JournalCard>
 
         <JournalCard title="Today's Inspiration" className="quote-card">
@@ -651,7 +759,7 @@ function TodaySection({ env }: { env: Environment }) {
         <JournalCard title="Quick Add">
           <div className="quick-actions">
             {magicActions.map((action) => (
-              <button key={action.label}>
+              <button key={action.label} onClick={() => quickAction(action.label)}>
                 <action.icon size={17} />
                 {action.label}
               </button>
@@ -939,17 +1047,117 @@ type LibraryPlant = {
   photo?: string;
   notes?: string;
   addedAt: string;
+  sourceJournalId?: string;
 };
+
+type PlantDetail = {
+  id: string;
+  name: string;
+  variety?: string;
+  zone: string;
+  health: string;
+  photo?: string;
+  notes?: string;
+  source?: string;
+  signal?: string;
+  water?: string;
+  sun?: string;
+  pruning?: string;
+  recommendation?: string;
+  origin: string;
+};
+
+function PlantDetailModal({ plant, onClose }: { plant: PlantDetail; onClose: () => void }) {
+  const care = [
+    { label: "Water", value: plant.water },
+    { label: "Sun", value: plant.sun },
+    { label: "Pruning", value: plant.pruning },
+  ].filter((c) => c.value);
+
+  return (
+    <div className="lesson-backdrop" onClick={onClose}>
+      <article className="plant-detail" onClick={(event) => event.stopPropagation()}>
+        <button className="icon-button lesson-close" onClick={onClose} aria-label="Close">
+          <X size={18} />
+        </button>
+        {plant.photo ? (
+          <img className="plant-detail-photo" src={plant.photo} alt={plant.name} />
+        ) : (
+          <div className="plant-detail-photo placeholder"><Leaf size={40} /></div>
+        )}
+        <div className="plant-detail-body">
+          <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+          <h2>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h2>
+          <p className="plant-detail-meta"><MapPin size={14} /> {plant.zone} · {plant.origin}</p>
+          {plant.signal && (
+            <div className="plant-detail-section">
+              <h4>What Eve sees</h4>
+              <p>{plant.signal}</p>
+            </div>
+          )}
+          {care.length > 0 && (
+            <div className="plant-detail-care">
+              {care.map((c) => (
+                <div key={c.label}>
+                  <strong>{c.label}</strong>
+                  <span>{c.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {(plant.recommendation || plant.notes) && (
+            <div className="plant-detail-section">
+              <h4>Recommended next steps</h4>
+              <p>{plant.recommendation || plant.notes}</p>
+            </div>
+          )}
+          {plant.source && <p className="plant-detail-source">Identified via {plant.source}</p>}
+        </div>
+      </article>
+    </div>
+  );
+}
+
+// Joins a library plant with its source journal entry's diagnosis (by id).
+function enrichPlant(
+  plant: LibraryPlant,
+  journalById: Map<string, PlantPhotoRecord>,
+): PlantDetail {
+  const j = plant.sourceJournalId ? journalById.get(plant.sourceJournalId) : undefined;
+  return {
+    id: plant.id,
+    name: plant.name,
+    variety: plant.variety,
+    zone: plant.zone,
+    health: plant.health,
+    photo: plant.photo,
+    notes: plant.notes,
+    source: j?.source,
+    signal: j?.signal,
+    water: j?.water,
+    sun: j?.sun,
+    pruning: j?.pruning,
+    recommendation: j?.recommendation ?? plant.notes,
+    origin: "Plant Library",
+  };
+}
 
 function PlantLibrary() {
   const [libraryPlants, setLibraryPlants] = useState<LibraryPlant[]>([]);
+  const [journalById, setJournalById] = useState<Map<string, PlantPhotoRecord>>(new Map());
   const [loaded, setLoaded] = useState(false);
+  const [detail, setDetail] = useState<PlantDetail | null>(null);
 
   useEffect(() => {
-    fetch("/api/plants")
-      .then((response) => response.json())
-      .then((data) => setLibraryPlants(Array.isArray(data.plants) ? data.plants : []))
-      .catch(() => {})
+    Promise.all([
+      fetch("/api/plants").then((r) => r.json()).catch(() => ({ plants: [] })),
+      fetch("/api/journal").then((r) => r.json()).catch(() => ({ entries: [] })),
+    ])
+      .then(([plantsData, journalData]) => {
+        setLibraryPlants(Array.isArray(plantsData.plants) ? plantsData.plants : []);
+        const entries: PlantPhotoRecord[] = Array.isArray(journalData.entries) ? journalData.entries : [];
+        setJournalById(new Map(entries.map((e) => [e.id, e])));
+      })
       .finally(() => setLoaded(true));
   }, []);
 
@@ -962,7 +1170,7 @@ function PlantLibrary() {
     <div className="section-stack">
       <SectionIntro
         title="Plant Library"
-        subtitle="Your real plants — populated from Photo Journal uploads, with photo, zone, and health for each one."
+        subtitle="Your real plants — populated from Photo Journal uploads. Tap any plant for its full diagnosis and care notes."
       />
       {loaded && !libraryPlants.length && (
         <div className="empty-library">
@@ -978,30 +1186,38 @@ function PlantLibrary() {
       <div className="plant-grid">
         {libraryPlants.map((plant) => (
           <article className="plant-card" key={plant.id}>
-            {plant.photo ? (
-              <img src={plant.photo} alt={plant.name} />
-            ) : (
-              <div className="plant-photo-placeholder"><Leaf size={26} /></div>
-            )}
-            <div className="plant-card-body">
-              <h3>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h3>
-              <p><MapPin size={13} /> {plant.zone}</p>
-              <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
-            </div>
+            <button className="plant-card-open" onClick={() => setDetail(enrichPlant(plant, journalById))}>
+              {plant.photo ? (
+                <img src={plant.photo} alt={plant.name} />
+              ) : (
+                <div className="plant-photo-placeholder"><Leaf size={26} /></div>
+              )}
+              <div className="plant-card-body">
+                <h3>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h3>
+                <p><MapPin size={13} /> {plant.zone}</p>
+                <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+              </div>
+            </button>
             <button className="plant-remove" onClick={() => removePlant(plant.id)} aria-label={`Remove ${plant.name}`}>
               <X size={14} />
             </button>
           </article>
         ))}
       </div>
+      {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
     </div>
   );
 }
 
-function ZonesSection() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [zonePlants, setZonePlants] = useState<{ id: string; name: string; health: string; photo?: string; fromJournal?: boolean }[]>([]);
+function ZonesSection({ focus }: { focus: string | null }) {
+  const [selected, setSelected] = useState<string | null>(focus);
+  const [zonePlants, setZonePlants] = useState<PlantDetail[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [detail, setDetail] = useState<PlantDetail | null>(null);
+
+  useEffect(() => {
+    if (focus) setSelected(focus);
+  }, [focus]);
 
   useEffect(() => {
     if (!selected) return;
@@ -1012,23 +1228,32 @@ function ZonesSection() {
           (await fetch("/api/plants")).json(),
           (await fetch("/api/journal")).json(),
         ]);
-        const library = (Array.isArray(plantsData.plants) ? plantsData.plants : []).filter(
-          (plant: LibraryPlant) => plant.zone === selected,
-        );
-        const seen = new Set(library.map((plant: LibraryPlant) => plant.name.toLowerCase()));
-        const fromJournal = (Array.isArray(journalData.entries) ? journalData.entries : [])
+        const entries: PlantPhotoRecord[] = Array.isArray(journalData.entries) ? journalData.entries : [];
+        const journalById = new Map(entries.map((e) => [e.id, e]));
+        const library: PlantDetail[] = (Array.isArray(plantsData.plants) ? plantsData.plants : [])
+          .filter((plant: LibraryPlant) => plant.zone === selected)
+          .map((plant: LibraryPlant) => enrichPlant(plant, journalById));
+        const seen = new Set(library.map((plant) => plant.name.toLowerCase()));
+        const fromJournal: PlantDetail[] = entries
           .filter(
-            (entry: PlantPhotoRecord) =>
+            (entry) =>
               entry.zone === selected &&
               entry.plant !== "Unidentified plant" &&
               !seen.has(entry.plant.toLowerCase()),
           )
-          .map((entry: PlantPhotoRecord) => ({
+          .map((entry) => ({
             id: entry.id,
             name: entry.plant,
+            zone: entry.zone,
             health: entry.health,
             photo: entry.photo,
-            fromJournal: true,
+            source: entry.source,
+            signal: entry.signal,
+            water: entry.water,
+            sun: entry.sun,
+            pruning: entry.pruning,
+            recommendation: entry.recommendation,
+            origin: "From Photo Journal",
           }));
         setZonePlants([...library, ...fromJournal]);
       } catch {
@@ -1060,19 +1285,23 @@ function ZonesSection() {
         <div className="plant-grid">
           {zonePlants.map((plant) => (
             <article className="plant-card" key={plant.id}>
-              {plant.photo ? (
-                <img src={plant.photo} alt={plant.name} />
-              ) : (
-                <div className="plant-photo-placeholder"><Leaf size={26} /></div>
-              )}
-              <div className="plant-card-body">
-                <h3>{plant.name}</h3>
-                <p>{plant.fromJournal ? "From Photo Journal" : "Plant Library"}</p>
-                <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
-              </div>
+              <button className="plant-card-open" onClick={() => setDetail(plant)}>
+                {plant.photo ? (
+                  <img src={plant.photo} alt={plant.name} />
+                ) : (
+                  <div className="plant-photo-placeholder"><Leaf size={26} /></div>
+                )}
+                <div className="plant-card-body">
+                  <h3>{plant.name}</h3>
+                  <p>{plant.origin}</p>
+                  <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+                </div>
+              </button>
             </article>
           ))}
         </div>
+
+        {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
 
         <h3 className="apothecary-subhead">Wishlist for this zone</h3>
         {zoneWishlist.length ? (
@@ -1141,19 +1370,58 @@ function SeedSaving() {
   );
 }
 
+type WishItem = {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  priority: "High" | "Medium" | "Low";
+  note?: string;
+};
+
 function Wishlist({ focus }: { focus: string | null }) {
   const highlightRef = useRef<HTMLElement | null>(null);
+  const [items, setItems] = useState<WishItem[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "" });
 
-  const isFocused = (name: string) =>
-    !!focus && name.toLowerCase().includes(focus.toLowerCase());
+  useEffect(() => {
+    fetch("/api/wishlist")
+      .then((r) => r.json())
+      .then((data) => setItems(Array.isArray(data.items) ? data.items : []))
+      .catch(() => {});
+  }, []);
+
+  const isFocused = (name: string) => !!focus && name.toLowerCase().includes(focus.toLowerCase());
 
   useEffect(() => {
     if (focus && highlightRef.current) {
       highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [focus]);
+  }, [focus, items]);
 
-  const categories = Array.from(new Set(wishlistItems.map((item) => item.category)));
+  const addItem = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim()) return;
+    const response = await fetch("/api/wishlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const data = await response.json();
+    if (Array.isArray(data.items)) setItems(data.items);
+    setForm({ name: "", category: form.category, price: "", priority: "Medium", note: "" });
+    setShowForm(false);
+  };
+
+  const removeItem = async (id: string) => {
+    setItems((current) => current.filter((item) => item.id !== id));
+    await fetch(`/api/wishlist?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+  };
+
+  const categories = Array.from(new Set(items.map((item) => item.category)));
+  const zoneNames = zones.map((z) => z.name);
+  const categoryOptions = Array.from(new Set([...zoneNames, "Outdoor Decor", "Compost Area", "Tools", "General"]));
 
   return (
     <div className="section-stack">
@@ -1161,18 +1429,55 @@ function Wishlist({ focus }: { focus: string | null }) {
         title="Wishlist & Garden Dreams Board"
         subtitle="Everything on the someday list — what it's for, what it costs, and how much you want it."
       />
+      <div className="toolbar">
+        <button className="primary-button" onClick={() => setShowForm((v) => !v)}>
+          <Plus size={16} /> Add wishlist item
+        </button>
+      </div>
+
+      {showForm && (
+        <form className="wish-form" onSubmit={addItem}>
+          <label>
+            Item
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Raised bed kit" autoFocus />
+          </label>
+          <label>
+            Zone / category
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
+          <label>
+            Price
+            <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="$0.00" />
+          </label>
+          <label>
+            Priority
+            <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+              {["High", "Medium", "Low"].map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="wish-form-note">
+            Note (what it's for)
+            <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Optional" />
+          </label>
+          <button className="primary-button" type="submit">Add to wishlist</button>
+        </form>
+      )}
+
       {categories.map((category) => (
         <div key={category}>
           <h3 className="apothecary-subhead">{category}</h3>
           <div className="wishlist-grid">
-            {wishlistItems
+            {items
               .filter((item) => item.category === category)
               .map((item) => {
                 const focused = isFocused(item.name);
+                const deletable = !item.id.startsWith("default-");
                 return (
                   <article
                     className={`wish-card ${focused ? "focused" : ""}`}
-                    key={item.name}
+                    key={item.id}
                     ref={focused ? (node) => { highlightRef.current = node; } : undefined}
                   >
                     <header>
@@ -1182,7 +1487,14 @@ function Wishlist({ focus }: { focus: string | null }) {
                       </span>
                     </header>
                     {item.note && <p>{item.note}</p>}
-                    <footer>{item.price}</footer>
+                    <footer>
+                      <span>{item.price}</span>
+                      {deletable && (
+                        <button className="wish-delete" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`}>
+                          <X size={13} />
+                        </button>
+                      )}
+                    </footer>
                   </article>
                 );
               })}

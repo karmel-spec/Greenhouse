@@ -1312,3 +1312,71 @@ button { font: inherit; }
 
 /* Photo journal batch buttons */
 .batch-buttons { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+/* Eve's daily plan card (Today) */
+.eve-plan-card {
+  background: linear-gradient(135deg, rgba(146,226,193,0.14), rgba(255,255,255,0.65));
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 1.1rem 1.3rem;
+  box-shadow: var(--shadow);
+}
+.eve-plan-head { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.eve-plan-head .eve-avatar {
+  width: 2.3rem; height: 2.3rem; border-radius: 999px; background: var(--moss); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; flex: 0 0 auto;
+}
+.eve-plan-head h3 { margin: 0; font-family: Georgia, serif; font-size: 1.15rem; }
+.eve-plan-head .primary-button { margin-left: auto; }
+.eve-plan-hint { color: var(--muted); font-size: 0.88rem; margin: 0.8rem 0 0; line-height: 1.5; }
+.eve-plan-hint.error { color: var(--terracotta); }
+.plan-text { margin-top: 0.9rem; font-size: 0.92rem; line-height: 1.55; }
+.plan-text h4 { font-family: Georgia, serif; font-size: 1rem; margin: 0.9rem 0 0.35rem; }
+.plan-text p { margin: 0.25rem 0; }
+.plan-text .plan-bullet { padding-left: 1rem; position: relative; }
+.plan-text .plan-bullet::before { content: "•"; position: absolute; left: 0.15rem; color: var(--sage); }
+
+/* Clickable dashboard zone rows */
+.zone-line-button {
+  width: 100%; border: 0; background: transparent; font: inherit; cursor: pointer;
+  text-align: left; padding: 0.42rem 0; border-bottom: 1px solid rgba(73,99,49,0.1);
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+}
+.zone-line-button:hover { color: var(--moss); }
+.zone-line-end { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--muted); }
+
+/* Plant Library clickable cards + detail modal */
+.plant-card-open { width: 100%; border: 0; background: transparent; padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; display: block; }
+.plant-detail {
+  position: relative; background: var(--paper); border-radius: 1rem; max-width: 32rem; width: 100%;
+  max-height: 88vh; overflow-y: auto; box-shadow: 0 30px 80px rgba(20,26,15,0.4);
+}
+.plant-detail-photo { width: 100%; height: 15rem; object-fit: cover; display: block; border-radius: 1rem 1rem 0 0; }
+.plant-detail-photo.placeholder { display: flex; align-items: center; justify-content: center; background: rgba(127,149,101,0.15); color: var(--moss); }
+.plant-detail-body { padding: 1.1rem 1.4rem 1.4rem; }
+.plant-detail-body h2 { font-family: Georgia, serif; margin: 0.4rem 0 0.2rem; }
+.plant-detail-meta { color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.3rem; margin: 0 0 0.6rem; }
+.plant-detail-section { margin-top: 0.9rem; }
+.plant-detail-section h4 { margin: 0 0 0.25rem; font-size: 0.92rem; }
+.plant-detail-section p { margin: 0; color: #4a4437; font-size: 0.9rem; line-height: 1.5; }
+.plant-detail-care { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 0.5rem; margin-top: 0.9rem; }
+.plant-detail-care div { background: rgba(127,149,101,0.1); border-radius: 0.5rem; padding: 0.5rem 0.6rem; }
+.plant-detail-care strong { display: block; font-size: 0.78rem; color: var(--moss); }
+.plant-detail-care span { font-size: 0.82rem; }
+.plant-detail-source { margin-top: 0.9rem; font-size: 0.76rem; color: var(--muted); font-style: italic; }
+
+/* Wishlist add form + delete */
+.wish-form {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.7rem; align-items: end;
+  background: rgba(255,255,255,0.6); border: 1px solid var(--line); border-radius: 0.8rem; padding: 1rem 1.1rem;
+}
+.wish-form label { display: grid; gap: 0.3rem; font-size: 0.78rem; color: var(--muted); }
+.wish-form input, .wish-form select {
+  font: inherit; font-size: 0.85rem; padding: 0.4rem 0.55rem; border: 1px solid var(--line);
+  border-radius: 0.45rem; background: #fff; color: var(--ink);
+}
+.wish-form .wish-form-note { grid-column: 1 / -1; }
+.wish-form .primary-button { height: fit-content; }
+.wish-card footer { display: flex; justify-content: space-between; align-items: center; }
+.wish-delete { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0.15rem; display: inline-flex; }
+.wish-delete:hover { color: var(--terracotta); }

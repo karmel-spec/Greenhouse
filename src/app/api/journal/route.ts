@@ -73,6 +73,16 @@ export async function PATCH(request: NextRequest) {
         (entry as Record<string, unknown>)[key] = updates[key];
       }
     }
+    // Keep any library plant created from this photo in sync (zone/health/name),
+    // so relabeling a journal entry updates it everywhere.
+    const linked = store.plants.find((plant) => plant.sourceJournalId === id);
+    if (linked) {
+      if ("zone" in updates && typeof updates.zone === "string") linked.zone = updates.zone;
+      if ("health" in updates && typeof updates.health === "string") linked.health = updates.health;
+      if ("plant" in updates && typeof updates.plant === "string" && updates.plant !== "Unidentified plant") {
+        linked.name = updates.plant;
+      }
+    }
     return entry;
   });
 

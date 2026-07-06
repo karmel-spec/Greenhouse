@@ -43,7 +43,7 @@ export type SectionKey =
 
 export const navItems = [
   { key: "today", label: "Today", icon: Home },
-  { key: "eve", label: "Eve Assistant", icon: Bot },
+  { key: "eve", label: "Ask Eve", icon: Bot },
   { key: "plants", label: "Plant Library", icon: Leaf },
   { key: "zones", label: "Garden Zones", icon: Trees },
   { key: "operations", label: "Operations", icon: PanelTop },
@@ -51,8 +51,6 @@ export const navItems = [
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
-  { key: "seed-vault", label: "Seed Vault", icon: GalleryHorizontalEnd },
-  { key: "saving", label: "Seed Saving", icon: Images },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "landscape", label: "Edible Landscape", icon: SunMedium },

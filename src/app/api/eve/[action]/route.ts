@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { readStore } from "@/lib/store";
 import { wishlistItems } from "@/lib/mock-data";
 import { diagnoseImages } from "@/lib/vision";
+import completeSeedVaultDatabase from "@/lib/seed-vault-complete-database";
+import { nextPlanting } from "@/lib/planting";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -111,7 +113,7 @@ async function chatWithEve(body: ChatRequest) {
       const anthropic = new Anthropic();
       const response = await anthropic.messages.create({
         model: process.env.EVE_ANTHROPIC_MODEL ?? "claude-opus-4-8",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system,
         messages,
       });
@@ -193,6 +195,8 @@ async function buildEveSystemPrompt() {
 
   let taskLines = "";
   let plantLines = "";
+  let needsAttentionLines = "";
+  let trayLines = "";
   try {
     const store = await readStore();
     taskLines = store.tasks
@@ -204,28 +208,85 @@ async function buildEveSystemPrompt() {
           `- ${plant.name}${plant.variety ? ` (${plant.variety})` : ""} — ${plant.zone}, health: ${plant.health}`,
       )
       .join("\n");
+    // Plants flagged by photo diagnosis as needing attention, with the specifics.
+    needsAttentionLines = store.journal
+      .filter((entry) => entry.plant !== "Unidentified plant" && entry.health !== "Thriving")
+      .slice(0, 20)
+      .map(
+        (entry) =>
+          `- ${entry.plant} (${entry.zone}, ${entry.health}): ${[entry.signal, entry.water, entry.sun, entry.pruning]
+            .filter(Boolean)
+            .join(" ")
+            .slice(0, 240)}`,
+      )
+      .join("\n");
+    trayLines = store.trays
+      .filter((tray) => tray.status === "active")
+      .map((tray) => {
+        const days = Math.floor((Date.now() - Date.parse(tray.startedAt)) / 86_400_000);
+        const remaining = Math.ceil(tray.harvestDays - days);
+        return `- ${tray.name}: day ${days} of ${tray.harvestDays} (${remaining <= 0 ? "ready to harvest" : `${remaining} days to harvest`})`;
+      })
+      .join("\n");
   } catch {
     taskLines = "(task list unavailable)";
   }
 
+  // Seeds whose Utah planting window is open right now.
+  const now = new Date();
+  const plantableNow = completeSeedVaultDatabase
+    .map((seed) => ({ seed, info: nextPlanting(seed, now) }))
+    .filter((x) => x.info?.now)
+    .slice(0, 20)
+    .map((x) => `${x.seed.commonName}${x.seed.variety ? ` '${x.seed.variety}'` : ""}`)
+    .join(", ");
+
+  const weather = await getOremWeather();
+
   return [
     "You are Eve, the garden assistant inside Karmel's Greenhouse Growth Operating System.",
     "Karmel gardens in Orem, Utah (high desert, USDA zone ~6b) with a backyard greenhouse, microgreens trays, propagation shelf, and themed garden zones.",
-    "Be warm, encouraging, and practical. Keep answers short — a few sentences or a tight list. Ground advice in Utah seasonality and what's actually in the garden.",
+    "Be warm, encouraging, and practical. Ground advice in Utah seasonality and what's actually in the garden. When asked for a plan, put items in clear priority order with a short reason for each.",
     "If asked about plant identification from photos, point Karmel to the Photo Journal, which does real vision diagnosis.",
     "",
     `Today is ${today}.`,
-    "Current garden plan:",
-    taskLines,
+    weather ? `Current Orem weather: ${weather}.` : "",
+    "",
+    "Current task list:",
+    taskLines || "(no tasks yet)",
+    "",
+    needsAttentionLines ? `Plants your photo diagnosis flagged as needing attention:\n${needsAttentionLines}` : "",
+    "",
+    trayLines ? `Active microgreen trays:\n${trayLines}` : "",
     "",
     plantLines
       ? `Karmel's plant library (from her own photo uploads):\n${plantLines}`
       : "Known plants: Lavender (English, Apothecary Garden), Basil (Genovese, rooting on Propagation Shelf), Chamomile (German, Tea Garden), Tomato (Brandywine, Greenhouse), Peppermint (Herb Garden).",
     "",
+    plantableNow ? `Seeds whose Orem planting window is OPEN right now: ${plantableNow}.` : "",
+    "",
     `Wishlist (wanted, not yet owned): ${wishlistItems
       .map((item) => `${item.name} (${item.price}, ${item.priority} priority, for ${item.category})`)
       .join("; ")}.`,
-  ].join("\n");
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+}
+
+async function getOremWeather(): Promise<string | null> {
+  try {
+    const url =
+      "https://api.open-meteo.com/v1/forecast?latitude=40.2969&longitude=-111.6946" +
+      "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m" +
+      "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDenver";
+    const res = await fetch(url, { next: { revalidate: 600 } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const c = data.current ?? {};
+    return `${Math.round(c.temperature_2m)}°F (feels ${Math.round(c.apparent_temperature)}°F), ${Math.round(c.relative_humidity_2m)}% humidity, wind ${Math.round(c.wind_speed_10m)} mph`;
+  } catch {
+    return null;
+  }
 }
 
 async function getHermesGardenContext(context: unknown) {

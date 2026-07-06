@@ -120,6 +120,7 @@ export interface DiseaseIssue {
 export interface SeedVaultFilter {
   heirloomOnly?: boolean;
   annualOnly?: boolean;
+  perennialOnly?: boolean;
   readyToPlant?: boolean;
   plantingSeason?: "spring" | "summer" | "fall" | "winter";
   lightRequirement?: "full-sun" | "part-shade" | "shade";

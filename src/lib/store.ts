@@ -71,12 +71,23 @@ export type StoredTray = {
   notes?: string;
 };
 
+export type StoredWishlistItem = {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  priority: "High" | "Medium" | "Low";
+  note?: string;
+  createdAt: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
   plants: StoredPlant[];
   journal: StoredJournalEntry[];
   trays: StoredTray[];
+  wishlist: StoredWishlistItem[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -104,6 +115,7 @@ export async function readStore(): Promise<GardenStore> {
       plants: Array.isArray(parsed.plants) ? parsed.plants : [],
       journal: Array.isArray(parsed.journal) ? parsed.journal : [],
       trays: Array.isArray(parsed.trays) ? parsed.trays : [],
+      wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -117,6 +129,7 @@ export async function readStore(): Promise<GardenStore> {
       plants: [],
       journal: [],
       trays: [],
+      wishlist: [],
     };
     await persist(initial);
     return initial;

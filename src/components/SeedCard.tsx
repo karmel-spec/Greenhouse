@@ -8,6 +8,7 @@
 import React, { useState } from "react";
 import { SeedPacket } from "@/lib/seed-vault-types";
 import { cropPhotos } from "@/lib/crop-photos";
+import { varietyPhoto } from "@/lib/variety-photos";
 import { nextPlanting } from "@/lib/planting";
 import { recipeIdeas } from "@/lib/culinary";
 import { seedSavingGuide, STORAGE_DEFAULT } from "@/lib/seed-saving";
@@ -61,11 +62,12 @@ function cropArt(commonName: string) {
 /** Lifecycle strip: real photos only (packet fields first, then the local crop photo set). */
 function LifecycleStrip({ seed }: { seed: SeedPacket }) {
   const set = cropPhotos[seed.commonName.toLowerCase()] ?? {};
+  const varPhoto = varietyPhoto(seed.commonName, seed.variety);
   const stages = [
     { label: "Seed", photo: seed.seedCloseupPhoto ?? set.seed },
     { label: "Seedling", photo: seed.seedlingPhoto ?? set.seedling },
     { label: "Plant", photo: seed.maturePlantPhoto ?? set.plant },
-    { label: "Harvest", photo: seed.harvestedProductPhoto ?? set.harvest },
+    { label: "Harvest", photo: seed.harvestedProductPhoto ?? varPhoto ?? set.harvest },
   ].filter((stage) => !!stage.photo);
 
   if (stages.length < 2) return null;
@@ -121,12 +123,14 @@ export function SeedCard({ seed }: SeedCardProps) {
   const nearViability = !pastViability && currentYear >= viableThrough - 1;
 
   const stockPhotos = cropPhotos[seed.commonName.toLowerCase()] ?? {};
+  // Variety-specific photo (e.g. Roma vs San Marzano) — usually the fruit.
+  const varPhoto = varietyPhoto(seed.commonName, seed.variety);
   const headerArt = cropArt(seed.commonName);
   const headerByTab: Record<TabType, { photo?: string; emoji: string }> = {
-    overview: { photo: seed.maturePlantPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
+    overview: { photo: seed.maturePlantPhoto ?? varPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
     growing: { photo: seed.seedlingPhoto ?? stockPhotos.seedling ?? stockPhotos.plant, emoji: "🌱" },
-    harvest: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
-    culinary: { photo: stockPhotos.dish ?? seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
+    harvest: { photo: seed.harvestedProductPhoto ?? varPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
+    culinary: { photo: stockPhotos.dish ?? seed.harvestedProductPhoto ?? varPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
     seedsaving: { photo: seed.seedCloseupPhoto ?? stockPhotos.seed ?? stockPhotos.plant, emoji: "🌰" },
     history: { photo: stockPhotos.history ?? seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
     notes: { photo: seed.seedPacketPhoto ?? stockPhotos.notes ?? stockPhotos.seed ?? stockPhotos.plant, emoji: "📝" },

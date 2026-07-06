@@ -47,6 +47,7 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
 
       if (filter.heirloomOnly && !seed.isHeirloom) return false;
       if (filter.annualOnly && !seed.isAnnual) return false;
+      if (filter.perennialOnly && seed.isAnnual) return false;
       if (filter.readyToPlant && seed.seedCount === 0) return false;
       if (filter.lightRequirement && seed.lightRequirement !== filter.lightRequirement) {
         return false;
@@ -112,7 +113,13 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
           active={!!filter.annualOnly}
           activeClass="bg-[#e3ead8] text-[#3f5c2e] border border-[#b9cba2]"
           label="Annuals Only"
-          onClick={() => setFilter((prev) => ({ ...prev, annualOnly: !prev.annualOnly }))}
+          onClick={() => setFilter((prev) => ({ ...prev, annualOnly: !prev.annualOnly, perennialOnly: false }))}
+        />
+        <FilterChip
+          active={!!filter.perennialOnly}
+          activeClass="bg-[#e3ead8] text-[#3f5c2e] border border-[#b9cba2]"
+          label="Perennials Only"
+          onClick={() => setFilter((prev) => ({ ...prev, perennialOnly: !prev.perennialOnly, annualOnly: false }))}
         />
         <FilterChip
           active={!!filter.readyToPlant}

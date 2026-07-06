@@ -3,6 +3,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import { newId, readStore, updateStore, StoredPlant } from "@/lib/store";
 import { diagnoseImages, DiagnoseImage } from "@/lib/vision";
+import { zones } from "@/lib/mock-data";
+
+const KNOWN_ZONES = new Set(zones.map((zone) => zone.name));
 
 const PHOTOS_DIR = path.join(process.cwd(), "data", "photos");
 const CHUNK = 6;
@@ -108,9 +111,11 @@ export async function POST(request: NextRequest) {
         // Trust a human label over vision — keep Karmel's name/zone, still apply diagnosis.
         const userLabeled = live.identificationStatus === "User labeled";
         const isIdentified = userLabeled || (!!best && confidence >= 0.55);
-        const name = userLabeled ? live.plant : best;
+        const name = userLabeled ? live.plant : cleanPlantName(best);
+        // Only trust a zone guess that matches a real zone; the model sometimes
+        // returns a sentence, which we must not store as a zone.
         const zone =
-          !userLabeled && diagnosis.zone_guess && diagnosis.zone_guess !== "Unassigned zone"
+          !userLabeled && diagnosis.zone_guess && KNOWN_ZONES.has(diagnosis.zone_guess)
             ? diagnosis.zone_guess
             : live.zone;
 
@@ -162,6 +167,15 @@ export async function POST(request: NextRequest) {
     entries: final.journal,
     message: `Analyzed ${processed} photos: identified ${identified}, added ${added} new plants to your library.`,
   });
+}
+
+/** Trim the model's verbose candidate to a tidy library name. */
+function cleanPlantName(raw: string | undefined): string {
+  if (!raw) return "Unidentified plant";
+  let name = raw.split(/, | such as | — | - like /i)[0].trim();
+  name = name.replace(/\s+or similar.*$/i, "").replace(/\s+likely.*$/i, "").trim();
+  if (name.length > 64) name = name.slice(0, 61).trimEnd() + "…";
+  return name || "Unidentified plant";
 }
 
 async function photoToDataUrl(publicPath: string): Promise<string | null> {
