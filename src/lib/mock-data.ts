@@ -59,8 +59,6 @@ export const navItems = [
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
-  { key: "seed-vault", label: "Seed Vault", icon: GalleryHorizontalEnd },
-  { key: "saving", label: "Seed Saving", icon: Images },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },
