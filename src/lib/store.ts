@@ -89,6 +89,26 @@ export type StoredSfgBed = {
   createdAt: string;
 };
 
+export type StoredPlotClaim = {
+  name: string;
+  crop?: string;
+  note?: string;
+};
+
+export type StoredCommunityGarden = {
+  plotSize: string; // key into PLOT_OPTIONS, e.g. "4x8"
+  pathFt: number;
+  claims: Record<string, StoredPlotClaim>; // keyed by layout plot id ("p2-3")
+  checklist: Record<string, boolean>; // keyed by COMMUNITY_CHECKLIST item key
+};
+
+export const DEFAULT_COMMUNITY_GARDEN: StoredCommunityGarden = {
+  plotSize: "4x8",
+  pathFt: 3,
+  claims: {},
+  checklist: {},
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -97,6 +117,7 @@ export type GardenStore = {
   trays: StoredTray[];
   wishlist: StoredWishlistItem[];
   sfgBeds: StoredSfgBed[];
+  communityGarden: StoredCommunityGarden;
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -126,6 +147,10 @@ export async function readStore(): Promise<GardenStore> {
       trays: Array.isArray(parsed.trays) ? parsed.trays : [],
       wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
       sfgBeds: Array.isArray(parsed.sfgBeds) ? parsed.sfgBeds : [],
+      communityGarden:
+        parsed.communityGarden && typeof parsed.communityGarden === "object"
+          ? { ...DEFAULT_COMMUNITY_GARDEN, ...parsed.communityGarden }
+          : { ...DEFAULT_COMMUNITY_GARDEN },
     };
   } catch {
     const initial: GardenStore = {
@@ -141,6 +166,7 @@ export async function readStore(): Promise<GardenStore> {
       trays: [],
       wishlist: [],
       sfgBeds: [],
+      communityGarden: { ...DEFAULT_COMMUNITY_GARDEN },
     };
     await persist(initial);
     return initial;

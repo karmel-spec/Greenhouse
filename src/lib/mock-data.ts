@@ -21,6 +21,7 @@ import {
   SunMedium,
   TestTube2,
   Trees,
+  Users,
   WandSparkles,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ export type SectionKey =
   | "apothecary"
   | "pest-management"
   | "sfg"
+  | "community"
   | "seeds"
   | "seed-vault"
   | "saving"
@@ -58,6 +60,7 @@ export const navItems = [
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
+  { key: "community", label: "Community Garden", icon: Users },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
   { key: "photos", label: "Photo Journal", icon: Camera },

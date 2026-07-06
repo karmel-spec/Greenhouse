@@ -52,6 +52,7 @@ import {
   zones,
 } from "@/lib/mock-data";
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
+import { CommunityGarden } from "@/components/CommunityGarden";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -472,6 +473,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <PestManagementSection />;
     case "sfg":
       return <SquareFootPlanner />;
+    case "community":
+      return <CommunityGarden />;
     case "plants":
       return <PlantLibrary />;
     case "zones":

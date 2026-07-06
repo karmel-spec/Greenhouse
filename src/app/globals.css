@@ -1543,3 +1543,232 @@ button { font: inherit; }
 .palette-item .plant-arrangement.n8 span { font-size: 0.5rem; }
 .palette-item .plant-arrangement.n9 span { font-size: 0.6rem; }
 .palette-item .plant-arrangement.n16 span { font-size: 0.44rem; }
+
+/* ---- Community Garden planner ---- */
+.community-hero {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) 1fr;
+  gap: 1.25rem;
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 18px;
+  padding: 1.1rem;
+}
+.community-photo { margin: 0; }
+.community-photo img {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  border: 1px solid rgba(43, 58, 42, 0.15);
+}
+.community-photo figcaption,
+.community-context figcaption {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+.community-facts h3 {
+  font-family: var(--font-display, serif);
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+}
+.community-fact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  padding: 0.28rem 0;
+  color: var(--ink);
+}
+.community-fact svg { color: var(--moss); flex-shrink: 0; }
+.community-source { font-size: 0.78rem; color: var(--muted); margin: 0.5rem 0 0.9rem; }
+.community-source a { color: var(--forest); }
+
+.community-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1rem;
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+}
+.community-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.community-toolbar select {
+  border: 1px solid rgba(43, 58, 42, 0.2);
+  border-radius: 8px;
+  padding: 0.35rem 0.5rem;
+  background: var(--cream);
+  font: inherit;
+  font-size: 0.88rem;
+}
+.community-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+  align-items: center;
+}
+.community-stats svg { vertical-align: -2px; }
+.community-stats strong { color: var(--forest); }
+
+.community-map-card {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 18px;
+  padding: 1rem;
+}
+.community-map {
+  width: 100%;
+  max-width: 560px;
+  display: block;
+  margin: 0 auto;
+}
+.cg-lot { fill: #ece5d3; stroke: var(--forest); stroke-width: 0.7; }
+.cg-dim { font-size: 3.2px; fill: var(--muted); text-anchor: middle; letter-spacing: 0.05em; }
+.cg-street { font-size: 3.4px; fill: var(--muted); text-anchor: middle; font-style: italic; }
+.cg-common { fill: #dde7d4; stroke: var(--moss); stroke-width: 0.25; }
+.cg-common.cg-water { fill: #d3e4e7; }
+.cg-common.cg-compost { fill: #e3d8c4; }
+.cg-common-label { font-size: 2.4px; fill: var(--forest); text-anchor: middle; }
+.cg-plot rect {
+  fill: var(--cream);
+  stroke: var(--moss);
+  stroke-width: 0.3;
+  cursor: pointer;
+  transition: fill 0.15s ease;
+}
+.cg-plot:hover rect { fill: #f2ecdb; }
+.cg-plot.claimed rect { fill: var(--terracotta); fill-opacity: 0.55; stroke: var(--terracotta); }
+.cg-plot.selected rect { stroke: var(--gold); stroke-width: 0.8; }
+.cg-plot-label {
+  font-size: 2.2px;
+  fill: var(--ink);
+  text-anchor: middle;
+  pointer-events: none;
+}
+.community-hint { font-size: 0.8rem; color: var(--muted); text-align: center; margin: 0.6rem 0 0; }
+
+.community-claim {
+  background: var(--paper);
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  padding: 1rem;
+}
+.community-claim-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.community-claim-head h3 { margin: 0; font-size: 1rem; }
+.community-claim-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.7rem;
+}
+.community-claim-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.community-claim-fields input {
+  border: 1px solid rgba(43, 58, 42, 0.2);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--cream);
+}
+.community-claim-actions { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+
+.community-roster {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 14px;
+  padding: 1rem;
+}
+.community-roster h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.community-roster ul { list-style: none; margin: 0; padding: 0; }
+.community-roster li + li { border-top: 1px dashed rgba(43, 58, 42, 0.15); }
+.community-roster button {
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  padding: 0.45rem 0.2rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.community-roster button:hover { color: var(--forest); }
+.roster-crop { color: var(--moss); }
+.roster-note { color: var(--muted); font-size: 0.82rem; }
+
+.community-checklist {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem;
+}
+.community-checklist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+.community-checklist-head h3 { margin: 0; font-size: 1.1rem; font-family: var(--font-display, serif); }
+.community-progress { font-size: 0.8rem; color: var(--moss); font-weight: 700; }
+.community-checklist ul { list-style: none; margin: 0; padding: 0; }
+.community-checklist li { padding: 0.65rem 0; border-top: 1px dashed rgba(43, 58, 42, 0.15); }
+.community-checklist li:first-child { border-top: none; }
+.community-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.community-check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--moss);
+  cursor: pointer;
+}
+.community-checklist li.done .community-check-title { text-decoration: line-through; color: var(--muted); }
+.community-checklist li p {
+  margin: 0.35rem 0 0 1.8rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.community-checklist li p a { color: var(--forest); }
+.community-checklist li p a svg { vertical-align: -1px; }
+
+.community-context { margin: 0; }
+.community-context img {
+  width: 100%;
+  border-radius: 14px;
+  display: block;
+  border: 1px solid rgba(43, 58, 42, 0.15);
+}
+
+@media (max-width: 760px) {
+  .community-hero { grid-template-columns: 1fr; }
+  .community-stats { margin-left: 0; }
+}
