@@ -39,6 +39,7 @@ import {
   learningModules,
   magicActions,
   microgreenTrays,
+  pestDatabase,
   navItems,
   plants,
   quoteTopics,
@@ -467,6 +468,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <MicrogreensSection env={env} />;
     case "apothecary":
       return <ApothecarySection onOpenWishlist={nav.openWishlist} />;
+    case "pest-management":
+      return <PestManagementSection />;
     case "sfg":
       return <SquareFootPlanner />;
     case "plants":
@@ -3031,6 +3034,284 @@ function SoilPrepSection() {
       <div className="bg-green-50 p-4 rounded border border-green-200">
         <p className="text-sm text-green-900">
           <strong>✅ Pro tip:</strong> Order all materials 1 week before you plan to fill beds. Most bags are heavy — recruit help for mixing!
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PestManagementSection() {
+  const [expandedPestId, setExpandedPestId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterBySeverity, setFilterBySeverity] = useState<number | null>(null);
+
+  const filteredPests = pestDatabase.filter((pest: any) => {
+    const matchesSearch =
+      pest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pest.identification.some((s: string) =>
+        s.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    const matchesSeverity =
+      filterBySeverity === null || pest.severity >= filterBySeverity;
+    return matchesSearch && matchesSeverity;
+  });
+
+  const getSeverityColor = (severity: number) => {
+    if (severity <= 2) return "bg-green-100 text-green-700";
+    if (severity <= 3) return "bg-yellow-100 text-yellow-700";
+    return "bg-red-100 text-red-700";
+  };
+
+  const getSeverityLabel = (severity: number) => {
+    if (severity <= 2) return "Low";
+    if (severity <= 3) return "Medium";
+    return "High";
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg p-6">
+        <h1 className="text-3xl font-bold mb-2">🐛 Pest Management & Education</h1>
+        <p className="text-green-50">
+          Common greenhouse pests, identification, treatments, and prevention strategies for Utah Zone 6a/6b.
+        </p>
+      </div>
+
+      {/* Search & Filter */}
+      <div className="space-y-3">
+        <input
+          type="text"
+          placeholder="Search pests (e.g., spider mites, powdery mildew)..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilterBySeverity(null)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filterBySeverity === null
+                ? "bg-gray-800 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            All Severities
+          </button>
+          <button
+            onClick={() => setFilterBySeverity(2)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filterBySeverity === 2
+                ? "bg-green-600 text-white"
+                : "bg-green-100 text-green-700 hover:bg-green-200"
+            }`}
+          >
+            Low
+          </button>
+          <button
+            onClick={() => setFilterBySeverity(3)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filterBySeverity === 3
+                ? "bg-yellow-600 text-white"
+                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+            }`}
+          >
+            Medium+
+          </button>
+          <button
+            onClick={() => setFilterBySeverity(4)}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filterBySeverity === 4
+                ? "bg-red-600 text-white"
+                : "bg-red-100 text-red-700 hover:bg-red-200"
+            }`}
+          >
+            High
+          </button>
+        </div>
+      </div>
+
+      {/* Pest Cards */}
+      <div className="space-y-3">
+        {filteredPests.map((pest: any) => (
+          <div key={pest.id} className="border rounded-lg overflow-hidden">
+            {/* Pest Header */}
+            <button
+              onClick={() =>
+                setExpandedPestId(expandedPestId === pest.id ? null : pest.id)
+              }
+              className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition flex items-center justify-between"
+            >
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{pest.emoji}</span>
+                  <div>
+                    <h3 className="font-bold text-lg">{pest.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      {pest.identification[0]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(pest.severity)}`}>
+                  {getSeverityLabel(pest.severity)} ({pest.severity}/5)
+                </span>
+                {expandedPestId === pest.id ? (
+                  <ChevronUp className="text-gray-600" />
+                ) : (
+                  <ChevronDown className="text-gray-600" />
+                )}
+              </div>
+            </button>
+
+            {/* Pest Details */}
+            {expandedPestId === pest.id && (
+              <div className="p-4 space-y-4 border-t bg-white">
+                {/* Identification */}
+                <div>
+                  <h4 className="font-bold text-green-700 mb-2">🔍 Identification Signs</h4>
+                  <ul className="space-y-1 text-sm">
+                    {pest.identification.map((sign: string, i: number) => (
+                      <li key={i} className="text-gray-700">
+                        • {sign}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Damage */}
+                <div>
+                  <h4 className="font-bold text-red-700 mb-2">⚠️ Damage Symptoms</h4>
+                  <ul className="space-y-1 text-sm">
+                    {pest.damageSymptoms.map((symptom: string, i: number) => (
+                      <li key={i} className="text-gray-700">
+                        • {symptom}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Natural Treatments */}
+                <div>
+                  <h4 className="font-bold text-blue-700 mb-2">🌿 Natural Treatments</h4>
+                  <div className="space-y-2">
+                    {pest.naturalTreatments.map((treatment: any, i: number) => (
+                      <div key={i} className="bg-blue-50 p-3 rounded text-sm">
+                        <div className="font-semibold text-blue-900">{treatment.name}</div>
+                        <p className="text-blue-800 mt-1">{treatment.description}</p>
+                        <div className="flex justify-between mt-2 text-xs text-blue-700">
+                          <span>Frequency: {treatment.frequency}</span>
+                          <span>Effectiveness: {treatment.effectiveness}/5</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chemical Treatments */}
+                {pest.chemicalTreatments.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-orange-700 mb-2">⚗️ Chemical Treatments (If Needed)</h4>
+                    <div className="space-y-2">
+                      {pest.chemicalTreatments.map((treatment: any, i: number) => (
+                        <div key={i} className="bg-orange-50 p-3 rounded text-sm border-l-4 border-orange-500">
+                          <div className="font-semibold text-orange-900">{treatment.name}</div>
+                          <p className="text-orange-800 mt-1">{treatment.description}</p>
+                          <div className="flex justify-between mt-2 text-xs text-orange-700">
+                            <span>Frequency: {treatment.frequency}</span>
+                            <span>Effectiveness: {treatment.effectiveness}/5</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Prevention */}
+                <div>
+                  <h4 className="font-bold text-purple-700 mb-2">✨ Prevention Tips</h4>
+                  <ul className="space-y-1 text-sm">
+                    {pest.prevention.map((tip: string, i: number) => (
+                      <li key={i} className="text-gray-700">
+                        • {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Utah Notes */}
+                <div className="bg-amber-50 p-3 rounded border border-amber-200">
+                  <h4 className="font-bold text-amber-900 mb-1">🏜️ Utah-Specific Notes</h4>
+                  <p className="text-sm text-amber-900">{pest.utahNotes}</p>
+                </div>
+
+                {/* Timeline & Safety */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gray-50 p-3 rounded">
+                    <h4 className="font-bold text-gray-700 mb-1">⏱️ Treatment Timeline</h4>
+                    <p className="text-sm text-gray-600">{pest.treatmentTimeline}</p>
+                  </div>
+                  <div className={`p-3 rounded ${pest.safeForEdibles ? "bg-green-50" : "bg-red-50"}`}>
+                    <h4 className={`font-bold mb-1 ${pest.safeForEdibles ? "text-green-700" : "text-red-700"}`}>
+                      🍅 Edibles Safety
+                    </h4>
+                    <p className={`text-sm ${pest.safeForEdibles ? "text-green-600" : "text-red-600"}`}>
+                      {pest.safeForEdibles ? "Safe for food crops" : "Use caution on edibles"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Affected Plants */}
+                <div>
+                  <h4 className="font-bold text-gray-700 mb-2">🌱 Commonly Affected Plants</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {pest.affectedPlants.map((plant: string, i: number) => (
+                      <span key={i} className="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-700">
+                        {plant}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Tips Section */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
+        <h3 className="font-bold text-blue-900 mb-3">💡 General Pest Management Tips</h3>
+        <ul className="space-y-2 text-sm text-blue-900">
+          <li>✓ Inspect new plants before bringing them into the greenhouse</li>
+          <li>✓ Quarantine infested plants immediately (separate area)</li>
+          <li>✓ Strong, healthy plants resist pests better than weak ones</li>
+          <li>✓ Keep greenhouse clean — remove dead leaves and debris</li>
+          <li>✓ Improve airflow with fans and ventilation (most pests hate moving air)</li>
+          <li>✓ Early detection is key — check plants regularly</li>
+          <li>✓ Start with natural treatments, escalate only if needed</li>
+          <li>✓ Utah heat (110°F+) favors spider mites — cool greenhouse = fewer problems</li>
+          <li>✓ Utah dry air requires humidity management (some pests love it, some hate it)</li>
+          <li>✓ Keep detailed treatment logs — what worked, what didn't, timeline</li>
+        </ul>
+      </div>
+
+      {/* Extension Resources */}
+      <div className="bg-gray-50 p-6 rounded">
+        <h3 className="font-bold text-gray-900 mb-3">📚 Utah Extension Resources</h3>
+        <p className="text-sm text-gray-700 mb-3">
+          For more detailed information, visit:{" "}
+          <a
+            href="https://utahpests.usu.edu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            Utah Pests (Utah State University Extension)
+          </a>
+        </p>
+        <p className="text-sm text-gray-700">
+          Local support: Contact your county extension office for free pest ID and treatment advice.
         </p>
       </div>
     </div>

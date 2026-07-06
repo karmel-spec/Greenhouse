@@ -1,6 +1,7 @@
 import {
   BookOpen,
   Bot,
+  Bug,
   CalendarDays,
   Camera,
   Flower2,
@@ -32,6 +33,7 @@ export type SectionKey =
   | "propagation"
   | "microgreens"
   | "apothecary"
+  | "pest-management"
   | "sfg"
   | "seeds"
   | "seed-vault"
@@ -54,6 +56,7 @@ export const navItems = [
   { key: "propagation", label: "Propagation", icon: Sprout },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
+  { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "seed-vault", label: "Seed Vault", icon: GalleryHorizontalEnd },
@@ -282,3 +285,5 @@ export const magicActions = [
   { label: "Upload photo", icon: Images },
   { label: "Ask Eve", icon: WandSparkles },
 ];
+
+export { pestDatabase } from "./pest-data";
