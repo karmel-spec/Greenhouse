@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CloudSun,
   Droplets,
+  LayoutGrid,
   Leaf,
   LibraryBig,
   MapPin,
@@ -49,7 +50,8 @@ import {
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
-import { Lesson, lessons, lessonOfTheDay } from "@/lib/lessons";
+import { Lesson, lessons, lessonOfTheDay, squareFootLesson } from "@/lib/lessons";
+import { SFG_PLANTS, SFG_BY_KEY, SfgCategory, analyzeBed } from "@/lib/sfg";
 
 function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void }) {
   return (
@@ -461,6 +463,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <MicrogreensSection env={env} />;
     case "apothecary":
       return <ApothecarySection onOpenWishlist={nav.openWishlist} />;
+    case "sfg":
+      return <SquareFootPlanner />;
     case "plants":
       return <PlantLibrary />;
     case "zones":
@@ -1374,6 +1378,223 @@ function ZonesSection({ focus }: { focus: string | null }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+type SfgBed = { id: string; name: string; squares: (string | null)[] };
+
+const EMPTY_SQUARES = (): (string | null)[] => Array(16).fill(null);
+const SFG_CATEGORIES: SfgCategory[] = ["Vegetable", "Herb", "Flower", "Fruit"];
+
+function SquareFootPlanner() {
+  const [beds, setBeds] = useState<SfgBed[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [brush, setBrush] = useState<string | null>(null); // selected palette plant (tap-to-place)
+  const [category, setCategory] = useState<SfgCategory>("Vegetable");
+  const [openLesson, setOpenLesson] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    fetch("/api/sfg")
+      .then((r) => r.json())
+      .then((data) => {
+        const list: SfgBed[] = Array.isArray(data.beds) ? data.beds : [];
+        setBeds(list);
+        if (list.length) setActiveId(list[0].id);
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const active = beds.find((bed) => bed.id === activeId) ?? null;
+
+  const persist = (bed: SfgBed) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      fetch("/api/sfg", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bed.id, squares: bed.squares, name: bed.name }),
+      }).catch(() => {});
+    }, 500);
+  };
+
+  const updateActive = (mutate: (bed: SfgBed) => SfgBed) => {
+    if (!active) return;
+    const next = mutate(active);
+    setBeds((current) => current.map((bed) => (bed.id === next.id ? next : bed)));
+    persist(next);
+  };
+
+  const newBed = async () => {
+    const response = await fetch("/api/sfg", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: `Bed ${beds.length + 1}`, squares: EMPTY_SQUARES() }),
+    });
+    const data = await response.json();
+    if (data.bed) {
+      setBeds((current) => [...current, data.bed]);
+      setActiveId(data.bed.id);
+    }
+  };
+
+  const deleteBed = async (id: string) => {
+    setBeds((current) => current.filter((bed) => bed.id !== id));
+    if (activeId === id) setActiveId((beds.find((b) => b.id !== id)?.id ?? null));
+    await fetch(`/api/sfg?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+  };
+
+  const placeAt = (index: number, key: string | null) => {
+    updateActive((bed) => {
+      const squares = bed.squares.slice();
+      squares[index] = key;
+      return { ...bed, squares };
+    });
+  };
+
+  const recs = active ? analyzeBed(active.squares) : [];
+  const paletteFor = (cat: SfgCategory) => SFG_PLANTS.filter((p) => p.category === cat);
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Square Foot Garden Planner"
+        subtitle="Design a 4×4 bed square by square. Pick a plant, drop it in, and get live spacing, height, and companion advice for Orem."
+      />
+
+      <div className="toolbar">
+        <button className="primary-button" onClick={newBed}><Plus size={16} /> New 4×4 bed</button>
+        <button className="secondary-button" onClick={() => setOpenLesson(true)}>
+          <LibraryBig size={16} /> How to build one
+        </button>
+      </div>
+
+      {loaded && !beds.length && (
+        <div className="empty-library">
+          <LayoutGrid size={30} />
+          <h3>Start your first bed</h3>
+          <p>Tap <strong>New 4×4 bed</strong> to open a planning grid. Then pick a plant from the palette and tap squares to fill them — the planner spaces them the square-foot way and flags companions, shading, and trellis needs as you go.</p>
+        </div>
+      )}
+
+      {beds.length > 0 && (
+        <div className="bed-tabs">
+          {beds.map((bed) => (
+            <button
+              key={bed.id}
+              className={`bed-tab ${bed.id === activeId ? "active" : ""}`}
+              onClick={() => setActiveId(bed.id)}
+            >
+              {bed.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {active && (
+        <div className="sfg-layout">
+          <div className="sfg-left">
+            <div className="bed-header">
+              <input
+                className="bed-name-input"
+                value={active.name}
+                onChange={(event) => updateActive((bed) => ({ ...bed, name: event.target.value }))}
+              />
+              <div className="bed-header-actions">
+                <button className="text-link" onClick={() => updateActive((bed) => ({ ...bed, squares: EMPTY_SQUARES() }))}>Clear</button>
+                <button className="task-delete" onClick={() => deleteBed(active.id)} aria-label="Delete bed"><X size={15} /></button>
+              </div>
+            </div>
+
+            <p className="bed-compass">↑ North (put tall plants here)</p>
+            <div
+              className="sfg-grid"
+              onDragOver={(event) => event.preventDefault()}
+            >
+              {active.squares.map((key, index) => {
+                const plant = key ? SFG_BY_KEY[key] : null;
+                return (
+                  <button
+                    key={index}
+                    className={`sfg-cell ${plant ? "filled" : ""}`}
+                    onClick={() => placeAt(index, brush)}
+                    onContextMenu={(event) => { event.preventDefault(); placeAt(index, null); }}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const dropped = event.dataTransfer.getData("text/plain");
+                      if (dropped) placeAt(index, dropped);
+                    }}
+                    title={plant ? `${plant.name} — ${plant.perSquare} per square. ${plant.note} (right-click to clear)` : brush ? `Place ${SFG_BY_KEY[brush]?.name}` : "Pick a plant from the palette first"}
+                  >
+                    {plant ? (
+                      <>
+                        <span className="sfg-emoji">{plant.emoji}</span>
+                        <span className="sfg-count">×{plant.perSquare}</span>
+                        <span className="sfg-name">{plant.name}</span>
+                      </>
+                    ) : (
+                      <span className="sfg-empty">{index + 1}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="bed-hint">Tap a plant in the palette, then tap squares to place it. Drag also works. Right-click a square to clear it.</p>
+          </div>
+
+          <div className="sfg-right">
+            <div className="sfg-palette">
+              <div className="palette-tabs">
+                {SFG_CATEGORIES.map((cat) => (
+                  <button key={cat} className={`palette-tab ${cat === category ? "active" : ""}`} onClick={() => setCategory(cat)}>
+                    {cat}s
+                  </button>
+                ))}
+              </div>
+              <div className="palette-grid">
+                <button
+                  className={`palette-item eraser ${brush === null ? "active" : ""}`}
+                  onClick={() => setBrush(null)}
+                  title="Eraser — tap squares to clear"
+                >
+                  <span className="sfg-emoji">🚫</span>
+                  <span className="sfg-name">Erase</span>
+                </button>
+                {paletteFor(category).map((plant) => (
+                  <button
+                    key={plant.key}
+                    className={`palette-item ${brush === plant.key ? "active" : ""}`}
+                    draggable
+                    onDragStart={(event) => event.dataTransfer.setData("text/plain", plant.key)}
+                    onClick={() => setBrush(plant.key)}
+                    title={`${plant.perSquare} per square. ${plant.note}`}
+                  >
+                    <span className="sfg-emoji">{plant.emoji}</span>
+                    <span className="sfg-name">{plant.name}</span>
+                    <span className="sfg-per">×{plant.perSquare}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sfg-recs">
+              <h3 className="apothecary-subhead">Recommendations</h3>
+              {recs.map((rec, index) => (
+                <p className={`sfg-rec ${rec.kind}`} key={index}>
+                  {rec.kind === "good" ? <CheckCircle2 size={15} /> : rec.kind === "warn" ? <AlertCircle size={15} /> : <Sparkles size={15} />}
+                  <span>{rec.text}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {openLesson && <LessonReader lesson={squareFootLesson} onClose={() => setOpenLesson(false)} />}
     </div>
   );
 }

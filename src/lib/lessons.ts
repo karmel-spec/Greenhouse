@@ -127,6 +127,22 @@ export const lessons: Lesson[] = [
   },
 ];
 
+export const squareFootLesson: Lesson = {
+  id: "square-foot-basics",
+  title: "How to build a square foot garden",
+  tagline: "Mel Bartholomew's method: more harvest, less work, no rows.",
+  minutes: 5,
+  steps: [
+    { heading: "Build a 4×4 box", body: "A 4-foot-by-4-foot bed, 6+ inches deep, is the sweet spot — you can reach the center from any side without stepping on the soil. Frame it with untreated lumber. In Utah, raised beds warm up faster in spring and drain our clay." },
+    { heading: "Fill with Mel's Mix, not garden dirt", body: "The classic recipe is 1/3 compost (blend several kinds), 1/3 peat or coco coir, 1/3 coarse vermiculite. It's light, holds moisture in our dry air, and never compacts — so roots and water move freely." },
+    { heading: "Grid it into 16 squares", body: "Lay a physical grid (lath strips, string) across the top to make sixteen 1×1-foot squares. The grid isn't decoration — it's what keeps you planting the right density instead of over-sowing." },
+    { heading: "Plant by square, not by row", body: "Each square holds a different crop at its own spacing: 1 tomato, 4 lettuce, 9 spinach, or 16 carrots/radishes per square. Big plants get 1; tiny ones get 16. No thinning, almost no wasted seed." },
+    { heading: "Go vertical and put tall plants north", body: "Trellis tomatoes, cucumbers, beans, and peas up the NORTH side so they don't shade shorter squares. Vertical growing is what makes a tiny bed absurdly productive." },
+    { heading: "Succession-plant every square", body: "The moment a square is harvested, replant it. A radish square (25 days) can become lettuce, then bush beans, in one season. In Orem, cool crops go spring and again from an August sowing; warm crops fill the summer." },
+  ],
+  tip: "Companion planting supercharges the grid: basil and marigold next to tomatoes, onions away from beans, dill near cabbage. The planner below flags these for you as you drag plants in.",
+};
+
 export function lessonOfTheDay(date: Date): Lesson {
   const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86_400_000);
   return lessons[dayOfYear % lessons.length];

@@ -8,6 +8,7 @@ import {
   Heart,
   Home,
   Images,
+  LayoutGrid,
   Leaf,
   LibraryBig,
   Map,
@@ -30,6 +31,7 @@ export type SectionKey =
   | "propagation"
   | "microgreens"
   | "apothecary"
+  | "sfg"
   | "seeds"
   | "seed-vault"
   | "saving"
@@ -50,6 +52,7 @@ export const navItems = [
   { key: "propagation", label: "Propagation", icon: Sprout },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
+  { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },

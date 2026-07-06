@@ -81,6 +81,14 @@ export type StoredWishlistItem = {
   createdAt: string;
 };
 
+export type StoredSfgBed = {
+  id: string;
+  name: string;
+  /** 16 entries (4x4, row-major, row 0 = north). Each is a palette plant key or null. */
+  squares: (string | null)[];
+  createdAt: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -88,6 +96,7 @@ export type GardenStore = {
   journal: StoredJournalEntry[];
   trays: StoredTray[];
   wishlist: StoredWishlistItem[];
+  sfgBeds: StoredSfgBed[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -116,6 +125,7 @@ export async function readStore(): Promise<GardenStore> {
       journal: Array.isArray(parsed.journal) ? parsed.journal : [],
       trays: Array.isArray(parsed.trays) ? parsed.trays : [],
       wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
+      sfgBeds: Array.isArray(parsed.sfgBeds) ? parsed.sfgBeds : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -130,6 +140,7 @@ export async function readStore(): Promise<GardenStore> {
       journal: [],
       trays: [],
       wishlist: [],
+      sfgBeds: [],
     };
     await persist(initial);
     return initial;
