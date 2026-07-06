@@ -37,6 +37,7 @@ export type StoredPlant = {
   photo?: string; // served via /api/photos/<file>
   notes?: string;
   addedAt: string;
+  sourceJournalId?: string; // journal entry this plant was created from (bulk add)
 };
 
 export type StoredJournalEntry = {
@@ -57,6 +58,7 @@ export type StoredJournalEntry = {
   recommendation: string;
   recordedAt: string;
   savedToLibrary?: boolean;
+  visionProcessed?: boolean; // has been through a real vision pass (bulk)
 };
 
 export type StoredTray = {

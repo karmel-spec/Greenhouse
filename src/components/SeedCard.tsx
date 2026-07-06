@@ -123,13 +123,13 @@ export function SeedCard({ seed }: SeedCardProps) {
   const stockPhotos = cropPhotos[seed.commonName.toLowerCase()] ?? {};
   const headerArt = cropArt(seed.commonName);
   const headerByTab: Record<TabType, { photo?: string; emoji: string }> = {
-    overview: { photo: seed.maturePlantPhoto ?? seed.seedPacketPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
+    overview: { photo: seed.maturePlantPhoto ?? stockPhotos.plant ?? stockPhotos.harvest, emoji: headerArt.plant },
     growing: { photo: seed.seedlingPhoto ?? stockPhotos.seedling ?? stockPhotos.plant, emoji: "🌱" },
     harvest: { photo: seed.harvestedProductPhoto ?? stockPhotos.harvest ?? stockPhotos.plant, emoji: headerArt.harvest },
     culinary: { photo: stockPhotos.dish ?? seed.harvestedProductPhoto ?? stockPhotos.harvest, emoji: "🍽️" },
     seedsaving: { photo: seed.seedCloseupPhoto ?? stockPhotos.seed ?? stockPhotos.plant, emoji: "🌰" },
-    history: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
-    notes: { photo: seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📝" },
+    history: { photo: stockPhotos.history ?? seed.seedPacketPhoto ?? stockPhotos.plant, emoji: "📜" },
+    notes: { photo: seed.seedPacketPhoto ?? stockPhotos.notes ?? stockPhotos.seed ?? stockPhotos.plant, emoji: "📝" },
   };
   const headerVisual = headerByTab[activeTab];
   const planting = nextPlanting(seed, new Date());

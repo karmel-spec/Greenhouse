@@ -1555,6 +1555,27 @@ function Photos() {
     await fetch(`/api/journal?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   };
 
+  const processAll = async () => {
+    setIsAnalyzing(true);
+    setBatchNote("Identifying and diagnosing every photo, then adding identified plants to your library. This can take a minute for a big batch...");
+    try {
+      const response = await fetch("/api/journal/process-all", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) {
+        setBatchNote(data.error ?? "Couldn't run the bulk analysis — try again.");
+        return;
+      }
+      if (Array.isArray(data.entries)) setRecords(data.entries);
+      setBatchNote(data.message ?? "Done.");
+    } catch {
+      setBatchNote("Couldn't reach the analyzer — check that the app is running and try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const needsIdCount = records.filter((record) => record.identificationStatus === "Needs ID").length;
+
   const saveToLibrary = async (record: PlantPhotoRecord) => {
     if (record.plant === "Unidentified plant") {
       setBatchNote(`Name the plant in "${record.fileName}" first (use the Plant name field), then add it to the library.`);
@@ -1645,9 +1666,17 @@ function Photos() {
             multiple
             onChange={(event) => analyzePhotos(event.target.files)}
           />
-          <button className="primary-button" disabled={isAnalyzing} onClick={() => inputRef.current?.click()}>
-            <Upload size={16} /> {isAnalyzing ? "Analyzing..." : "Upload photo batch"}
-          </button>
+          <div className="batch-buttons">
+            <button className="primary-button" disabled={isAnalyzing} onClick={() => inputRef.current?.click()}>
+              <Upload size={16} /> {isAnalyzing ? "Working..." : "Upload photo batch"}
+            </button>
+            {records.length > 0 && (
+              <button className="secondary-button" disabled={isAnalyzing} onClick={processAll}>
+                <Sparkles size={16} /> Identify &amp; diagnose all
+                {needsIdCount > 0 ? ` (${needsIdCount})` : ""}
+              </button>
+            )}
+          </div>
           <div className="diagnosis-tags">
             <span><AlertCircle size={15} /> Plant ID required</span>
             <span><CheckCircle2 size={15} /> Draft health notes</span>
