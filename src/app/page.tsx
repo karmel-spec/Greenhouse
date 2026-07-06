@@ -18,6 +18,7 @@ import {
   Menu,
   MessageCircle,
   PackagePlus,
+  Pencil,
   Plus,
   Search,
   Send,
@@ -50,6 +51,7 @@ import {
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
+import { propagationGuide } from "@/lib/propagation";
 import { Lesson, lessons, lessonOfTheDay, squareFootLesson } from "@/lib/lessons";
 import { SFG_PLANTS, SFG_BY_KEY, SfgCategory, analyzeBed } from "@/lib/sfg";
 
@@ -1129,6 +1131,23 @@ function PlantDetailModal({ plant, onClose }: { plant: PlantDetail; onClose: () 
               <p>{plant.recommendation || plant.notes}</p>
             </div>
           )}
+
+          {/* How to propagate this plant */}
+          {(() => {
+            const prop = propagationGuide(plant.name);
+            return (
+              <div className="plant-detail-section prop-section">
+                <h4><Sprout size={15} /> How to propagate — {prop.method}</h4>
+                {prop.seasonNote && <p className="prop-season">{prop.seasonNote}</p>}
+                <ol className="prop-steps">
+                  {prop.steps.map((step, index) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })()}
+
           {plant.source && <p className="plant-detail-source">Identified via {plant.source}</p>}
         </div>
       </article>
@@ -1487,10 +1506,12 @@ function SquareFootPlanner() {
               key={bed.id}
               className={`bed-tab ${bed.id === activeId ? "active" : ""}`}
               onClick={() => setActiveId(bed.id)}
+              title="Click to open; rename it with the pencil field above the grid"
             >
               {bed.name}
             </button>
           ))}
+          <button className="bed-tab ghost" onClick={newBed} title="Add another bed"><Plus size={14} /></button>
         </div>
       )}
 
@@ -1498,11 +1519,16 @@ function SquareFootPlanner() {
         <div className="sfg-layout">
           <div className="sfg-left">
             <div className="bed-header">
-              <input
-                className="bed-name-input"
-                value={active.name}
-                onChange={(event) => updateActive((bed) => ({ ...bed, name: event.target.value }))}
-              />
+              <label className="bed-name-field" title="Rename this bed">
+                <Pencil size={15} />
+                <input
+                  className="bed-name-input"
+                  value={active.name}
+                  onChange={(event) => updateActive((bed) => ({ ...bed, name: event.target.value }))}
+                  placeholder="Name this bed (e.g. Herb bed, Early-season #1)"
+                  aria-label="Bed name"
+                />
+              </label>
               <div className="bed-header-actions">
                 <button className="text-link" onClick={() => updateActive((bed) => ({ ...bed, squares: EMPTY_SQUARES() }))}>Clear</button>
                 <button className="task-delete" onClick={() => deleteBed(active.id)} aria-label="Delete bed"><X size={15} /></button>
@@ -1784,6 +1810,11 @@ function Propagation() {
   const [usingStarters, setUsingStarters] = useState(false);
   const [generatedBy, setGeneratedBy] = useState("");
   const [addedTasks, setAddedTasks] = useState<Set<string>>(new Set());
+  // Look up the full plant record so a prop card can open the detail modal.
+  const [libraryByName, setLibraryByName] = useState<Map<string, LibraryPlant>>(new Map());
+  const [journalByName, setJournalByName] = useState<Map<string, PlantPhotoRecord>>(new Map());
+  const [journalById, setJournalById] = useState<Map<string, PlantPhotoRecord>>(new Map());
+  const [detail, setDetail] = useState<PlantDetail | null>(null);
 
   useEffect(() => {
     fetch("/api/propagation")
@@ -1795,7 +1826,55 @@ function Propagation() {
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
+
+    Promise.all([
+      fetch("/api/plants").then((r) => r.json()).catch(() => ({ plants: [] })),
+      fetch("/api/journal").then((r) => r.json()).catch(() => ({ entries: [] })),
+    ]).then(([plantsData, journalData]) => {
+      const plants: LibraryPlant[] = Array.isArray(plantsData.plants) ? plantsData.plants : [];
+      const entries: PlantPhotoRecord[] = Array.isArray(journalData.entries) ? journalData.entries : [];
+      setLibraryByName(new Map(plants.map((p) => [p.name.toLowerCase(), p])));
+      setJournalByName(new Map(entries.filter((e) => e.plant !== "Unidentified plant").map((e) => [e.plant.toLowerCase(), e])));
+      setJournalById(new Map(entries.map((e) => [e.id, e])));
+    });
   }, []);
+
+  const openDetail = (item: PropagationItem) => {
+    const key = item.plant.toLowerCase();
+    const libraryPlant = libraryByName.get(key);
+    if (libraryPlant) {
+      setDetail(enrichPlant(libraryPlant, journalById));
+      return;
+    }
+    const entry = journalByName.get(key);
+    if (entry) {
+      setDetail({
+        id: entry.id,
+        name: entry.plant,
+        zone: entry.zone,
+        health: entry.health,
+        photo: entry.photo,
+        source: entry.source,
+        signal: entry.signal,
+        water: entry.water,
+        sun: entry.sun,
+        pruning: entry.pruning,
+        recommendation: entry.recommendation,
+        origin: "From Photo Journal",
+      });
+      return;
+    }
+    // Starter/sample plant with no photo record — show what we know.
+    setDetail({
+      id: item.plant,
+      name: item.plant,
+      zone: item.zone,
+      health: "Watch",
+      photo: item.photo,
+      recommendation: item.readinessReason,
+      origin: "Suggested plant",
+    });
+  };
 
   const addToPlan = async (item: PropagationItem) => {
     setAddedTasks((current) => new Set(current).add(item.plant));
@@ -1828,13 +1907,19 @@ function Propagation() {
         {items.map((item) => (
           <article className={`prop-card ${item.readiness}`} key={item.plant}>
             <header>
-              {(item.photo ?? plantPhoto(item.plant)) && (
-                <img className="prop-photo" src={item.photo ?? plantPhoto(item.plant)} alt={item.plant} />
-              )}
-              <div>
-                <h3>{item.plant}</h3>
-                <p><MapPin size={13} /> {item.zone} • {item.method}</p>
-              </div>
+              <button
+                className="prop-open"
+                onClick={() => openDetail(item)}
+                title={`Open ${item.plant} in the Plant Library`}
+              >
+                {(item.photo ?? plantPhoto(item.plant)) && (
+                  <img className="prop-photo" src={item.photo ?? plantPhoto(item.plant)} alt={item.plant} />
+                )}
+                <div>
+                  <h3>{item.plant}</h3>
+                  <p><MapPin size={13} /> {item.zone} • {item.method}</p>
+                </div>
+              </button>
               <span className={`prop-badge ${item.readiness}`}>{READINESS_LABELS[item.readiness]}</span>
             </header>
             <p className="prop-reason">{item.readinessReason}</p>
@@ -1859,6 +1944,7 @@ function Propagation() {
           </article>
         ))}
       </div>
+      {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
     </div>
   );
 }
