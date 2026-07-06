@@ -1380,3 +1380,50 @@ button { font: inherit; }
 .wish-card footer { display: flex; justify-content: space-between; align-items: center; }
 .wish-delete { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0.15rem; display: inline-flex; }
 .wish-delete:hover { color: var(--terracotta); }
+
+/* Task checks look like real checkboxes now */
+.task-check {
+  border-radius: 0.3rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid var(--sage);
+  background: #fff;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.task-check .task-dot { display: none; }
+.task-check:hover { border-color: var(--moss); box-shadow: 0 0 0 3px rgba(127, 149, 101, 0.18); }
+.task-check.checked { background: var(--moss); border-color: var(--moss); color: #fff; }
+
+/* Plant detail quick facts */
+.plant-detail-pills { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; }
+.category-pill {
+  background: rgba(201, 154, 69, 0.16);
+  color: #8a6520;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.quick-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.55rem;
+  margin: 0.9rem 0 0.3rem;
+}
+.quick-facts div {
+  background: #fffdf6;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.7rem;
+}
+.quick-facts strong {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--moss);
+  margin-bottom: 0.15rem;
+}
+.quick-facts span { font-size: 0.82rem; line-height: 1.45; }

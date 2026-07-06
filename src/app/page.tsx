@@ -48,6 +48,7 @@ import {
 } from "@/lib/mock-data";
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { plantPhoto } from "@/lib/crop-photos";
+import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { Lesson, lessons, lessonOfTheDay } from "@/lib/lessons";
 
 function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void }) {
@@ -1068,10 +1069,11 @@ type PlantDetail = {
 };
 
 function PlantDetailModal({ plant, onClose }: { plant: PlantDetail; onClose: () => void }) {
-  const care = [
-    { label: "Water", value: plant.water },
-    { label: "Sun", value: plant.sun },
-    { label: "Pruning", value: plant.pruning },
+  const facts = plantCare(plant.name);
+  const diagnosed = [
+    { label: "Water — right now", value: plant.water },
+    { label: "Sun — right now", value: plant.sun },
+    { label: "Pruning — right now", value: plant.pruning },
   ].filter((c) => c.value);
 
   return (
@@ -1086,18 +1088,30 @@ function PlantDetailModal({ plant, onClose }: { plant: PlantDetail; onClose: () 
           <div className="plant-detail-photo placeholder"><Leaf size={40} /></div>
         )}
         <div className="plant-detail-body">
-          <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+          <div className="plant-detail-pills">
+            <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+            <span className="category-pill">{facts.category}</span>
+          </div>
           <h2>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h2>
           <p className="plant-detail-meta"><MapPin size={14} /> {plant.zone} · {plant.origin}</p>
+
+          {/* Quick reference: evergreen facts about this kind of plant */}
+          <div className="quick-facts">
+            <div><strong>Type</strong><span>{facts.type}</span></div>
+            <div><strong>Watering plan</strong><span>{facts.water}</span></div>
+            <div><strong>Sun & placement</strong><span>{facts.sun}</span></div>
+            <div><strong>Propagatable?</strong><span>{facts.propagate}</span></div>
+          </div>
+
           {plant.signal && (
             <div className="plant-detail-section">
-              <h4>What Eve sees</h4>
+              <h4>What Eve sees{plant.health !== "Thriving" ? " — why it needs attention" : ""}</h4>
               <p>{plant.signal}</p>
             </div>
           )}
-          {care.length > 0 && (
+          {diagnosed.length > 0 && (
             <div className="plant-detail-care">
-              {care.map((c) => (
+              {diagnosed.map((c) => (
                 <div key={c.label}>
                   <strong>{c.label}</strong>
                   <span>{c.value}</span>
@@ -1183,27 +1197,49 @@ function PlantLibrary() {
           </p>
         </div>
       )}
-      <div className="plant-grid">
-        {libraryPlants.map((plant) => (
-          <article className="plant-card" key={plant.id}>
-            <button className="plant-card-open" onClick={() => setDetail(enrichPlant(plant, journalById))}>
-              {plant.photo ? (
-                <img src={plant.photo} alt={plant.name} />
-              ) : (
-                <div className="plant-photo-placeholder"><Leaf size={26} /></div>
-              )}
-              <div className="plant-card-body">
-                <h3>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h3>
-                <p><MapPin size={13} /> {plant.zone}</p>
-                <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+      {(() => {
+        // Group by care category, alphabetize within each group.
+        const groups = new Map<PlantCategory, LibraryPlant[]>();
+        for (const plant of libraryPlants) {
+          const category = plantCare(plant.name).category;
+          if (!groups.has(category)) groups.set(category, []);
+          groups.get(category)!.push(plant);
+        }
+        return CATEGORY_ORDER.filter((category) => groups.has(category)).map((category) => {
+          const members = groups
+            .get(category)!
+            .slice()
+            .sort((a, b) => a.name.localeCompare(b.name));
+          return (
+            <div key={category}>
+              <h3 className="apothecary-subhead">
+                {category} <em className="lesson-minutes">· {members.length} plant{members.length === 1 ? "" : "s"}</em>
+              </h3>
+              <div className="plant-grid">
+                {members.map((plant) => (
+                  <article className="plant-card" key={plant.id}>
+                    <button className="plant-card-open" onClick={() => setDetail(enrichPlant(plant, journalById))}>
+                      {plant.photo ? (
+                        <img src={plant.photo} alt={plant.name} />
+                      ) : (
+                        <div className="plant-photo-placeholder"><Leaf size={26} /></div>
+                      )}
+                      <div className="plant-card-body">
+                        <h3>{plant.name}{plant.variety ? ` — ${plant.variety}` : ""}</h3>
+                        <p><MapPin size={13} /> {plant.zone}</p>
+                        <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+                      </div>
+                    </button>
+                    <button className="plant-remove" onClick={() => removePlant(plant.id)} aria-label={`Remove ${plant.name}`}>
+                      <X size={14} />
+                    </button>
+                  </article>
+                ))}
               </div>
-            </button>
-            <button className="plant-remove" onClick={() => removePlant(plant.id)} aria-label={`Remove ${plant.name}`}>
-              <X size={14} />
-            </button>
-          </article>
-        ))}
-      </div>
+            </div>
+          );
+        });
+      })()}
       {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
     </div>
   );

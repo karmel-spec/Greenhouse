@@ -139,11 +139,14 @@ async function getGreenhouseReading() {
     const humidity = readCapability("sensorHumidity");
 
     if (temperature === null && humidity === null) {
+      const isBleOnly = /^H50/.test(device.sku);
       return {
         ok: false,
         configured: true,
         online: online === true,
-        message: `Device ${device.deviceName ?? device.sku} responded without sensor readings. It may be offline or not synced to the cloud.`,
+        message: isBleOnly
+          ? `Found "${device.deviceName ?? device.sku}" (${device.sku} — Bluetooth-only). Its readings reach the cloud only while your phone's Govee app is open near it, or via a Govee WiFi gateway (H5151). Open the app near the sensor to sync, then check back.`
+          : `Device ${device.deviceName ?? device.sku} responded without sensor readings. It may be offline or not synced to the cloud.`,
       };
     }
 
