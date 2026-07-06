@@ -1404,6 +1404,24 @@ function ZonesSection({ focus }: { focus: string | null }) {
 type SfgBed = { id: string; name: string; squares: (string | null)[] };
 
 const EMPTY_SQUARES = (): (string | null)[] => Array(16).fill(null);
+
+/** Renders a plant's per-square count as the actual SFG planting pattern:
+ *  1 big plant, 2×2 for four, 3×3 for nine, 4×4 for sixteen, etc. */
+function PlantArrangement({ plant }: { plant: (typeof SFG_PLANTS)[number] }) {
+  const count = plant.perSquare;
+  const cols = count === 1 ? 1 : count === 2 ? 2 : count === 4 ? 2 : count === 8 ? 4 : count === 9 ? 3 : 4;
+  return (
+    <span
+      className={`plant-arrangement n${count}`}
+      style={{ gridTemplateColumns: `repeat(${cols}, auto)` }}
+      aria-hidden
+    >
+      {Array.from({ length: count }, (_, i) => (
+        <span key={i}>{plant.emoji}</span>
+      ))}
+    </span>
+  );
+}
 const SFG_CATEGORIES: SfgCategory[] = ["Vegetable", "Herb", "Flower", "Fruit"];
 
 function SquareFootPlanner() {
@@ -1558,9 +1576,8 @@ function SquareFootPlanner() {
                   >
                     {plant ? (
                       <>
-                        <span className="sfg-emoji">{plant.emoji}</span>
-                        <span className="sfg-count">×{plant.perSquare}</span>
-                        <span className="sfg-name">{plant.name}</span>
+                        <PlantArrangement plant={plant} />
+                        <span className="sfg-name">{plant.name} <em className="sfg-count">×{plant.perSquare}</em></span>
                       </>
                     ) : (
                       <span className="sfg-empty">{index + 1}</span>
@@ -1599,7 +1616,7 @@ function SquareFootPlanner() {
                     onClick={() => setBrush(plant.key)}
                     title={`${plant.perSquare} per square. ${plant.note}`}
                   >
-                    <span className="sfg-emoji">{plant.emoji}</span>
+                    <PlantArrangement plant={plant} />
                     <span className="sfg-name">{plant.name}</span>
                     <span className="sfg-per">×{plant.perSquare}</span>
                   </button>

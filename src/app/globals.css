@@ -1525,3 +1525,21 @@ button { font: inherit; }
 }
 .bed-name-field .bed-name-input:focus { outline: none; }
 .bed-tab.ghost { color: var(--moss); display: inline-flex; align-items: center; padding: 0.35rem 0.55rem; }
+
+/* SFG planting-pattern arrangements: 1 big plant, 2x2 of four, 4x4 of sixteen */
+.plant-arrangement { display: grid; gap: 0; line-height: 1; justify-items: center; align-items: center; }
+.sfg-cell .plant-arrangement.n1 span { font-size: clamp(1.4rem, 4.5vw, 2.1rem); }
+.sfg-cell .plant-arrangement.n2 span { font-size: clamp(1rem, 3.2vw, 1.45rem); }
+.sfg-cell .plant-arrangement.n4 span { font-size: clamp(0.8rem, 2.6vw, 1.15rem); }
+.sfg-cell .plant-arrangement.n8 span { font-size: clamp(0.5rem, 1.7vw, 0.72rem); }
+.sfg-cell .plant-arrangement.n9 span { font-size: clamp(0.55rem, 1.9vw, 0.82rem); }
+.sfg-cell .plant-arrangement.n16 span { font-size: clamp(0.42rem, 1.5vw, 0.62rem); }
+.sfg-cell .sfg-count { font-style: normal; color: var(--moss); font-weight: 700; font-size: 0.58rem; }
+
+.palette-item .plant-arrangement { min-height: 2.1rem; }
+.palette-item .plant-arrangement.n1 span { font-size: 1.5rem; }
+.palette-item .plant-arrangement.n2 span { font-size: 1.05rem; }
+.palette-item .plant-arrangement.n4 span { font-size: 0.85rem; }
+.palette-item .plant-arrangement.n8 span { font-size: 0.5rem; }
+.palette-item .plant-arrangement.n9 span { font-size: 0.6rem; }
+.palette-item .plant-arrangement.n16 span { font-size: 0.44rem; }
