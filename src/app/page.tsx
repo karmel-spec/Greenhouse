@@ -13,6 +13,7 @@ import {
   ChevronUp,
   CloudSun,
   Droplets,
+  ExternalLink,
   LayoutGrid,
   Leaf,
   LibraryBig,
@@ -54,7 +55,9 @@ import {
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { CommunityGarden } from "@/components/CommunityGarden";
 import { CompostSection } from "@/components/CompostSection";
+import { SunMap } from "@/components/SunMap";
 import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
+import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -1760,13 +1763,55 @@ type WishItem = {
   price: string;
   priority: "High" | "Medium" | "Low";
   note?: string;
+  link?: string;
+  image?: string;
 };
 
 function Wishlist({ focus }: { focus: string | null }) {
   const highlightRef = useRef<HTMLElement | null>(null);
   const [items, setItems] = useState<WishItem[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "" });
+  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "", link: "", image: "" });
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importNote, setImportNote] = useState("");
+
+  const importFromLink = async () => {
+    const url = importUrl.trim();
+    if (!url || importing) return;
+    setImporting(true);
+    setImportNote("Reading the product page…");
+    try {
+      const response = await fetch("/api/wishlist/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+      if (data.preview) {
+        setForm({
+          name: data.preview.name ?? "",
+          category: data.preview.category ?? "General",
+          price: data.preview.price || "",
+          priority: "Medium",
+          note: "",
+          link: data.preview.link ?? url,
+          image: data.preview.image ?? "",
+        });
+        setShowForm(true);
+        setImportNote(data.preview.image ? "Details filled in below — adjust anything, then add it." : "Filled in what the page shared (no photo found) — adjust and add.");
+        setImportUrl("");
+      } else {
+        setImportNote(data.error ?? "Couldn't read that link — fill the form in manually below.");
+        setForm((current) => ({ ...current, link: url }));
+        setShowForm(true);
+      }
+    } catch {
+      setImportNote("Couldn't reach that page — fill the form in manually below.");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/wishlist")
@@ -1793,7 +1838,8 @@ function Wishlist({ focus }: { focus: string | null }) {
     });
     const data = await response.json();
     if (Array.isArray(data.items)) setItems(data.items);
-    setForm({ name: "", category: form.category, price: "", priority: "Medium", note: "" });
+    setForm({ name: "", category: form.category, price: "", priority: "Medium", note: "", link: "", image: "" });
+    setImportNote("");
     setShowForm(false);
   };
 
@@ -1817,6 +1863,20 @@ function Wishlist({ focus }: { focus: string | null }) {
           <Plus size={16} /> Add wishlist item
         </button>
       </div>
+
+      <div className="wish-import">
+        <input
+          type="url"
+          value={importUrl}
+          onChange={(e) => setImportUrl(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); importFromLink(); } }}
+          placeholder="Paste a product link (Amazon, anywhere) — item, photo, and price fill in automatically"
+        />
+        <button className="secondary-button" onClick={importFromLink} disabled={importing}>
+          {importing ? "Reading…" : "Fetch details"}
+        </button>
+      </div>
+      {importNote && <p className="wish-import-note">{importNote}</p>}
 
       {showForm && (
         <form className="wish-form" onSubmit={addItem}>
@@ -1844,6 +1904,19 @@ function Wishlist({ focus }: { focus: string | null }) {
             Note (what it's for)
             <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Optional" />
           </label>
+          <label className="wish-form-note">
+            Link to purchase
+            <input type="url" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://…" />
+          </label>
+          <label className="wish-form-note">
+            Photo (image URL)
+            <input type="url" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://…" />
+          </label>
+          {form.image && (
+            <span className="wish-form-preview">
+              <img src={form.image} alt="Item preview" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            </span>
+          )}
           <button className="primary-button" type="submit">Add to wishlist</button>
         </form>
       )}
@@ -1859,10 +1932,15 @@ function Wishlist({ focus }: { focus: string | null }) {
                 const deletable = !item.id.startsWith("default-");
                 return (
                   <article
-                    className={`wish-card ${focused ? "focused" : ""}`}
+                    className={`wish-card ${focused ? "focused" : ""} ${item.image ? "has-photo" : ""}`}
                     key={item.id}
                     ref={focused ? (node) => { highlightRef.current = node; } : undefined}
                   >
+                    {item.image && (
+                      <span className="wish-photo">
+                        <img src={item.image} alt={item.name} loading="lazy" onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }} />
+                      </span>
+                    )}
                     <header>
                       <h4>{item.name}</h4>
                       <span className={`prop-badge ${item.priority === "High" ? "ready" : item.priority === "Medium" ? "soon" : "wait"}`}>
@@ -1872,6 +1950,11 @@ function Wishlist({ focus }: { focus: string | null }) {
                     {item.note && <p>{item.note}</p>}
                     <footer>
                       <span>{item.price}</span>
+                      {item.link && (
+                        <a className="wish-buy" href={item.link} target="_blank" rel="noreferrer">
+                          Purchase <ExternalLink size={12} />
+                        </a>
+                      )}
                       {deletable && (
                         <button className="wish-delete" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`}>
                           <X size={13} />
@@ -2109,6 +2192,9 @@ function GardenMap() {
           </span>
         </figcaption>
       </figure>
+
+      <SunMap />
+
       <div className="map-canvas">{zones.slice(0, 12).map((zone) => <span key={zone.name}>{zone.name}</span>)}</div>
     </div>
   );
@@ -2667,7 +2753,61 @@ function CareNote({ label, value }: { label: string; value: string }) {
 }
 
 function Landscape() {
-  return <CardCollection title="Edible Landscape Planner" subtitle="Plan fruit, herbs, flowers, living water moments, vines, pollinator edges, paths, and harvest rhythms." items={["Sun Garden berries", "Vineyard pathway", "Tea garden border", "Pollinator flower bands", "Herb spiral", "Shade garden greens"]} />;
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const open = LANDSCAPE_PROJECTS.find((project) => project.key === openKey) ?? null;
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Edible Landscape Planner"
+        subtitle="Plan fruit, herbs, flowers, living water moments, vines, pollinator edges, paths, and harvest rhythms. Tap a project for plant picks, layout, and Orem timing."
+      />
+      <div className="collection-grid">
+        {LANDSCAPE_PROJECTS.map((project) => (
+          <button
+            className={`collection-card zone-card ${openKey === project.key ? "active" : ""}`}
+            key={project.key}
+            onClick={() => setOpenKey((current) => (current === project.key ? null : project.key))}
+          >
+            <Leaf size={18} />
+            <span>{project.name}</span>
+            <ChevronRight size={16} />
+          </button>
+        ))}
+      </div>
+
+      {open && (
+        <article className="landscape-guide">
+          <button className="plant-remove" onClick={() => setOpenKey(null)} aria-label="Close guide"><X size={14} /></button>
+          <div className="landscape-guide-photo">
+            <img src={plantPhoto(open.heroPlant) ?? undefined} alt={open.name} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          </div>
+          <div className="landscape-guide-body">
+            <h3>{open.name}</h3>
+            <p className="landscape-tagline">{open.tagline}</p>
+            <p>{open.why}</p>
+            <h4>What to plant</h4>
+            <ul className="landscape-plants">
+              {open.plants.map((plant) => (
+                <li key={plant.name}><strong>{plant.name}</strong> — {plant.note}</li>
+              ))}
+            </ul>
+            <h4>How to lay it out</h4>
+            <ol className="landscape-layout">
+              {open.layout.map((step) => <li key={step}>{step}</li>)}
+            </ol>
+            <p className="landscape-timing"><strong>Orem timing:</strong> {open.oremTiming}</p>
+            <button
+              className="secondary-button"
+              onClick={() => askEve(`Design the "${open.name}" project for my Orem yard: ${open.tagline.toLowerCase()}. Use my existing plants and seed library where possible, give me a shopping list for the rest, and a step-by-step plan for the next month.`)}
+            >
+              <Bot size={15} /> Ask Eve to plan this for my yard
+            </button>
+          </div>
+        </article>
+      )}
+    </div>
+  );
 }
 
 const EVE_HELP_CARDS: { label: string; prompt?: string; opensPhotos?: boolean }[] = [
@@ -2812,334 +2952,163 @@ function SeedVaultRedirect() {
 }
 
 function SoilPrepSection() {
-  const [expandedTab, setExpandedTab] = useState<
-    "recipe" | "calculator" | "tips" | "lowes" | "mixing"
-  >("recipe");
   const [selectedBed, setSelectedBed] = useState(0);
 
-  const melsMixRecipe = {
-    name: "Mel's Mix",
-    ratio: "1/3 : 1/3 : 1/3",
-    ingredients: [
-      {
-        name: "Compost",
-        portion: "1/3",
-        description: "High-quality finished compost (dark, crumbly, earthy)",
-        notes: "Use mushroom compost, homemade, or premium bagged compost. NOT fresh manure or garden soil.",
-      },
-      {
-        name: "Peat Moss or Coco Coir",
-        portion: "1/3",
-        description: "Moisture-holding medium",
-        notes: "Peat Moss: traditional, slightly acidic. Coco Coir: sustainable, neutral pH (better for Utah's alkaline water)",
-      },
-      {
-        name: "Vermiculite",
-        portion: "1/3",
-        description: "Expanded mica mineral for aeration and water retention",
-        notes: "Holds water & nutrients. Use Vermiculite over Perlite for Utah's dry climate.",
-      },
-    ],
-    benefits: [
-      "Perfect drainage — water drains quickly but doesn't dry instantly",
-      "Lightweight — easy to work with, no compaction",
-      "Fluffy texture — roots grow easily with no resistance",
-      "Balanced nutrients — compost feeds, vermiculite holds them",
-      "Disease-free — clean ingredients reduce soil diseases",
-      "Reusable — refresh with compost each year, lasts 3+ years",
-    ],
-  };
-
-  const bedCalculations = [
+  const beds = [
     {
-      bedSize: "4×4×6\" (Square Foot Garden bed)",
+      label: "4×4 SFG bed",
+      size: "4×4 ft, 6 in deep",
       totalCuFt: 8,
-      compost: 2.7,
-      pestCoir: 2.7,
-      vermiculite: 2.7,
-      lowesShoppingList: [
+      perPart: 2.7,
+      shopping: [
         "3 bags compost (2.8 cu ft each)",
-        "1-2 coco coir blocks (expands to ~5 cu ft) OR 2 bags peat moss",
+        "1–2 coco coir blocks (expands to ~5 cu ft) or 2 bags peat moss",
         "3 bags vermiculite (0.9 cu ft each)",
       ],
-      estimatedCost: "$25-35",
+      cost: "$25–35",
     },
     {
-      bedSize: "4×8×6\" (Raised bed)",
+      label: "4×8 raised bed",
+      size: "4×8 ft, 6 in deep",
       totalCuFt: 16,
-      compost: 5.3,
-      pestCoir: 5.3,
-      vermiculite: 5.3,
-      lowesShoppingList: [
+      perPart: 5.3,
+      shopping: [
         "6 bags compost (2.8 cu ft each)",
-        "2 coco coir blocks OR 3 bags peat moss (2 cu ft each)",
+        "2 coco coir blocks or 3 bags peat moss (2 cu ft each)",
         "6 bags vermiculite (0.9 cu ft each)",
       ],
-      estimatedCost: "$60-80",
+      cost: "$60–80",
     },
     {
-      bedSize: "Microgreens tray (10×20 flat)",
+      label: "Microgreens tray",
+      size: "10×20 flat",
       totalCuFt: 0.67,
-      compost: 0.22,
-      pestCoir: 0.22,
-      vermiculite: 0.22,
-      lowesShoppingList: [
-        "1 small bag compost (share with other trays)",
-        "Use remaining coco coir from blocks",
-        "Use remaining vermiculite",
+      perPart: 0.22,
+      shopping: [
+        "1 small bag compost (shares across many trays)",
+        "Leftover coco coir from the blocks",
+        "Leftover vermiculite",
       ],
-      estimatedCost: "$2-3 per tray",
+      cost: "$2–3 per tray",
     },
   ];
+  const bed = beds[selectedBed];
 
-  const utahSpecificTips = [
-    {
-      topic: "Peat Moss vs. Coco Coir",
-      recommendation: "Choose Coco Coir",
-      reason: "Utah's water is alkaline; coco coir has neutral pH and balances alkalinity.",
-    },
-    {
-      topic: "Vermiculite is Critical",
-      recommendation: "Do not substitute with Perlite",
-      reason: "Utah's air is very dry. Vermiculite retains water 3-4x better than Perlite.",
-    },
-    {
-      topic: "Compost Quality",
-      recommendation: "Use finished compost only",
-      reason: "Avoid fresh manure (too hot for seedlings). Age homemade compost 6+ months.",
-    },
-  ];
-
-  const mixingInstructions = [
-    {
-      step: 1,
-      task: "Gather materials",
-      details: "Have all compost, coco coir/peat moss, and vermiculite ready.",
-    },
-    {
-      step: 2,
-      task: "Layer compost",
-      details: "Spread compost evenly across bed (~2 inches deep).",
-    },
-    {
-      step: 3,
-      task: "Add peat moss or coco coir",
-      details: "Spread evenly on top of compost (~2 inches).",
-    },
-    {
-      step: 4,
-      task: "Add vermiculite",
-      details: "Top layer of vermiculite (~2 inches).",
-    },
-    {
-      step: 5,
-      task: "Mix thoroughly",
-      details: "Use shovel or garden fork to turn mixture 5-6 times.",
-    },
-    {
-      step: 6,
-      task: "Water lightly",
-      details: "Helps settle and activates beneficial microbes.",
-    },
-    {
-      step: 7,
-      task: "Let it rest (optional)",
-      details: "Wait 1 week before planting if possible.",
-    },
-  ];
-
-  const lowesShoppingTips = [
-    "Call ahead to confirm vermiculite in stock (often overlooked, may need to ask)",
-    "Buy compost in spring/summer when prices are lowest",
-    "Check bag sizes — different brands vary (2 cu ft vs. 2.8 cu ft)",
-    "Coco coir blocks are cheaper than bagged peat moss when you do the math",
-    "Ask for help loading bags — they're heavy!",
+  const steps = [
+    { task: "Gather materials", details: "Have all compost, coco coir or peat moss, and vermiculite on hand before you open a bag." },
+    { task: "Layer compost", details: "Spread it evenly across the bed, about 2 inches deep." },
+    { task: "Add coco coir", details: "An even 2-inch layer on top of the compost." },
+    { task: "Add vermiculite", details: "The final 2-inch layer." },
+    { task: "Mix thoroughly", details: "Turn the whole bed 5–6 times with a fork — the mix should look uniform, no streaks." },
+    { task: "Water lightly", details: "Settles the mix and wakes up the compost's microbes." },
+    { task: "Rest a week if you can", details: "Optional, but the mix mellows and settles before seeds go in." },
   ];
 
   return (
     <div className="section-stack">
-      <SectionIntro 
-        title="Soil Prep: Mel's Mix" 
-        subtitle="The proven recipe for square foot gardening. Equal parts compost, coco coir, and vermiculite." 
+      <SectionIntro
+        title="Soil Prep — Mel's Mix"
+        subtitle="The square-foot-gardening soil recipe: equal parts compost, coco coir, and vermiculite — with Utah substitutions and per-bed shopping math."
       />
 
-      {/* Recipe Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("recipe")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>📋 The Recipe: {melsMixRecipe.ratio}</span>
-          {expandedTab === "recipe" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
+      {/* The recipe, told like the compost card */}
+      <div className="compost-recipe">
+        <div className="compost-recipe-col greens">
+          <h3>Compost <span>· 1/3 · the food</span></h3>
+          <p>Dark, crumbly, finished compost — mushroom, homemade, or premium bagged. Never fresh manure or garden soil.</p>
+        </div>
+        <div className="compost-recipe-plus">+</div>
+        <div className="compost-recipe-col browns">
+          <h3>Coco coir <span>· 1/3 · the sponge</span></h3>
+          <p>Holds moisture between waterings. Choose coir over peat here — neutral pH balances Utah&apos;s alkaline water.</p>
+        </div>
+        <div className="compost-recipe-plus">+</div>
+        <div className="compost-recipe-col extras">
+          <h3>Vermiculite <span>· 1/3 · the lungs</span></h3>
+          <p>Expanded mica that aerates and holds water. In Orem&apos;s dry air, don&apos;t substitute perlite — it dries out 3–4× faster.</p>
+        </div>
+      </div>
 
-        {expandedTab === "recipe" && (
-          <div className="p-4 space-y-4 border-t">
-            {melsMixRecipe.ingredients.map((ingredient, i) => (
-              <div key={i} className="border-l-4 border-amber-600 pl-3">
-                <h4 className="font-semibold text-amber-900">
-                  {ingredient.portion} — {ingredient.name}
-                </h4>
-                <p className="text-sm text-gray-700 mt-1">{ingredient.description}</p>
-                <p className="text-xs text-gray-600 mt-1">💡 {ingredient.notes}</p>
-              </div>
-            ))}
+      <div className="soil-why">
+        <h3>Why the mix works</h3>
+        <ul>
+          <li>Drains fast but never dries instantly — the balance beds need in a high desert.</li>
+          <li>Light and fluffy: roots meet no resistance and the bed never compacts.</li>
+          <li>Clean ingredients mean almost no soil disease or weed seed.</li>
+          <li>Reusable for 3+ years — just refresh each spring with a few inches of compost (your new piles have a job).</li>
+        </ul>
+      </div>
 
-            <div className="bg-emerald-50 p-3 rounded mt-4 border border-emerald-200">
-              <h4 className="font-semibold text-emerald-900 mb-2">✅ Why Mel's Mix Works</h4>
-              <ul className="text-sm space-y-1 text-emerald-800">
-                {melsMixRecipe.benefits.map((benefit, i) => (
-                  <li key={i}>• {benefit}</li>
-                ))}
-              </ul>
+      {/* Calculator */}
+      <div className="soil-calc">
+        <h3>How much do I need?</h3>
+        <div className="pest-filters soil-bed-tabs">
+          {beds.map((entry, index) => (
+            <button key={entry.label} className={`pest-filter ${selectedBed === index ? "active" : ""}`} onClick={() => setSelectedBed(index)}>
+              {entry.label}
+            </button>
+          ))}
+        </div>
+        <div className="soil-calc-grid">
+          <div className="soil-calc-numbers">
+            <p className="soil-calc-size">{bed.size} — <strong>{bed.totalCuFt} cu ft</strong> of mix</p>
+            <div className="micro-timing">
+              <span><strong>{bed.perPart} cu ft</strong> compost</span>
+              <span><strong>{bed.perPart} cu ft</strong> coco coir</span>
+              <span><strong>{bed.perPart} cu ft</strong> vermiculite</span>
             </div>
+            <p className="soil-calc-cost">Estimated cost: <strong>{bed.cost}</strong></p>
           </div>
-        )}
+          <div className="soil-calc-list">
+            <h4>Shopping list</h4>
+            <ul>
+              {bed.shopping.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+            <p className="soil-shopping-note">
+              Store tips: call ahead for vermiculite (often back-of-store), check bag sizes between brands (2 vs 2.8 cu ft),
+              and coir blocks beat bagged peat on price every time.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Calculator Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("calculator")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>📐 Bed Calculator</span>
-          {expandedTab === "calculator" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "calculator" && (
-          <div className="p-4 space-y-4 border-t">
-            <div className="flex gap-2 flex-wrap">
-              {bedCalculations.map((bed, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedBed(i)}
-                  className={`px-3 py-2 rounded text-sm font-medium transition ${
-                    selectedBed === i
-                      ? "bg-amber-700 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {bed.bedSize.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded space-y-3 border border-blue-200">
-              <h4 className="font-semibold text-blue-900">{bedCalculations[selectedBed].bedSize}</h4>
-
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-gray-600 uppercase">Total Volume</p>
-                  <p className="text-lg font-bold text-amber-700">{bedCalculations[selectedBed].totalCuFt} cu ft</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 uppercase">Est. Cost</p>
-                  <p className="text-lg font-bold text-orange-600">{bedCalculations[selectedBed].estimatedCost}</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded border border-blue-200">
-                <p className="text-xs font-semibold text-gray-600 mb-2">YOU NEED:</p>
-                <div className="space-y-1 text-sm">
-                  <p>🟤 <strong>Compost:</strong> {bedCalculations[selectedBed].compost} cu ft</p>
-                  <p>🌾 <strong>Coco Coir/Peat:</strong> {bedCalculations[selectedBed].pestCoir} cu ft</p>
-                  <p>✨ <strong>Vermiculite:</strong> {bedCalculations[selectedBed].vermiculite} cu ft</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded border border-green-200">
-                <p className="text-xs font-semibold text-gray-600 mb-2">🏪 LOWE'S SHOPPING LIST:</p>
-                <ul className="space-y-1 text-sm">
-                  {bedCalculations[selectedBed].lowesShoppingList.map((item, i) => (
-                    <li key={i}>☑️ {item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Mixing day */}
+      <div className="soil-steps">
+        <h3>Mixing day, step by step</h3>
+        <ol className="compost-method-steps soil-steps-list">
+          {steps.map((step) => (
+            <li key={step.task}><strong>{step.task}.</strong> {step.details}</li>
+          ))}
+        </ol>
       </div>
 
-      {/* Utah Tips Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("tips")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🏜️ Utah-Specific Tips</span>
-          {expandedTab === "tips" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "tips" && (
-          <div className="p-4 space-y-3 border-t">
-            {utahSpecificTips.map((tip, i) => (
-              <div key={i} className="bg-orange-50 p-3 rounded border border-orange-200">
-                <h4 className="font-semibold text-orange-900">{tip.topic}</h4>
-                <p className="text-sm text-orange-800 mt-1"><strong>✓ {tip.recommendation}</strong></p>
-                <p className="text-xs text-orange-700 mt-1">💡 {tip.reason}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Lowe's Tips Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("lowes")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🏪 Lowe's Shopping Tips</span>
-          {expandedTab === "lowes" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "lowes" && (
-          <div className="p-4 space-y-2 border-t">
-            {lowesShoppingTips.map((tip, i) => (
-              <p key={i} className="text-sm flex gap-2">
-                <span className="text-orange-600">→</span> {tip}
-              </p>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Mixing Instructions Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("mixing")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🔨 How to Mix</span>
-          {expandedTab === "mixing" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "mixing" && (
-          <div className="p-4 space-y-3 border-t">
-            {mixingInstructions.map((instruction, i) => (
-              <div key={i} className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-sm">
-                  {instruction.step}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-amber-900">{instruction.task}</h4>
-                  <p className="text-sm text-gray-700 mt-1">{instruction.details}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-green-50 p-4 rounded border border-green-200">
-        <p className="text-sm text-green-900">
-          <strong>✅ Pro tip:</strong> Order all materials 1 week before you plan to fill beds. Most bags are heavy — recruit help for mixing!
-        </p>
+      <div className="compost-columns">
+        <div className="compost-utah">
+          <h3>Utah adjustments</h3>
+          <ul>
+            <li><strong>Coir over peat:</strong> Utah water is alkaline; coir&apos;s neutral pH keeps the bed in range.</li>
+            <li><strong>Vermiculite is non-negotiable:</strong> in this dry air it holds water 3–4× longer than perlite.</li>
+            <li><strong>Compost must be finished:</strong> fresh manure burns seedlings — age homemade compost 6+ months (the Composting section tracks that for you).</li>
+          </ul>
+        </div>
+        <div className="compost-utah">
+          <h3>Close the loop</h3>
+          <p className="soil-loop-note">
+            Once your piles finish, homemade compost replaces the bagged third — Mel&apos;s Mix refreshes drop to
+            just coir and vermiculite. That&apos;s the whole system: greenhouse scraps → compost → beds → dinner.
+          </p>
+          <button
+            className="secondary-button"
+            onClick={() => askEve("Plan my Mel's Mix soil day: how much of each ingredient for my beds, what to buy versus what my compost piles can cover, and the mixing steps in order.")}
+          >
+            <Bot size={15} /> Ask Eve to plan my soil day
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
 
 function PestManagementSection() {
   const [openPestId, setOpenPestId] = useState<string | null>(null);

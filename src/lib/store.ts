@@ -78,6 +78,8 @@ export type StoredWishlistItem = {
   price: string;
   priority: "High" | "Medium" | "Low";
   note?: string;
+  link?: string; // where to buy it
+  image?: string; // product photo URL
   createdAt: string;
 };
 
