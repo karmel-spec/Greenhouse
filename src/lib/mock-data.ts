@@ -17,6 +17,7 @@ import {
   PackagePlus,
   PanelTop,
   Pickaxe,
+  Recycle,
   Sprout,
   SunMedium,
   TestTube2,
@@ -41,6 +42,7 @@ export type SectionKey =
   | "seed-vault"
   | "saving"
   | "soil-prep"
+  | "compost"
   | "photos"
   | "wishlist"
   | "landscape"
@@ -63,6 +65,7 @@ export const navItems = [
   { key: "community", label: "Community Garden", icon: Users },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
+  { key: "compost", label: "Composting", icon: Recycle },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "landscape", label: "Edible Landscape", icon: SunMedium },

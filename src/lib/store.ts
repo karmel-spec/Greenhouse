@@ -109,6 +109,23 @@ export const DEFAULT_COMMUNITY_GARDEN: StoredCommunityGarden = {
   checklist: {},
 };
 
+export type CompostLogEntry = {
+  at: string; // ISO timestamp
+  type: "greens" | "browns" | "turn" | "water" | "temp" | "note";
+  detail?: string;
+  tempF?: number;
+};
+
+export type StoredCompostPile = {
+  id: string;
+  name: string;
+  method: string; // key into COMPOST_METHODS: hot | cold | tumbler | worms
+  startedAt: string;
+  status: "active" | "curing" | "done";
+  log: CompostLogEntry[];
+  createdAt: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -118,6 +135,7 @@ export type GardenStore = {
   wishlist: StoredWishlistItem[];
   sfgBeds: StoredSfgBed[];
   communityGarden: StoredCommunityGarden;
+  compostPiles: StoredCompostPile[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -151,6 +169,7 @@ export async function readStore(): Promise<GardenStore> {
         parsed.communityGarden && typeof parsed.communityGarden === "object"
           ? { ...DEFAULT_COMMUNITY_GARDEN, ...parsed.communityGarden }
           : { ...DEFAULT_COMMUNITY_GARDEN },
+      compostPiles: Array.isArray(parsed.compostPiles) ? parsed.compostPiles : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -167,6 +186,7 @@ export async function readStore(): Promise<GardenStore> {
       wishlist: [],
       sfgBeds: [],
       communityGarden: { ...DEFAULT_COMMUNITY_GARDEN },
+      compostPiles: [],
     };
     await persist(initial);
     return initial;

@@ -53,6 +53,8 @@ import {
 } from "@/lib/mock-data";
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { CommunityGarden } from "@/components/CommunityGarden";
+import { CompostSection } from "@/components/CompostSection";
+import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -487,6 +489,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <SeedSaving />;
     case "soil-prep":
       return <SoilPrepSection />;
+    case "compost":
+      return <CompostSection />;
     case "wishlist":
       return <Wishlist focus={nav.wishlistFocus} />;
     case "propagation":
@@ -826,16 +830,10 @@ type Tray = {
   harvestedAt?: string;
 };
 
-const TRAY_PRESETS: { name: string; days: number }[] = [
-  { name: "Radish", days: 8 },
-  { name: "Arugula", days: 9 },
-  { name: "Broccoli", days: 10 },
-  { name: "Kale", days: 10 },
-  { name: "Mizuna", days: 10 },
-  { name: "Pea Shoots", days: 12 },
-  { name: "Sunflower", days: 12 },
-  { name: "Basil", days: 18 },
-];
+const TRAY_PRESETS: { name: string; days: number }[] = MICROGREENS.map((green) => ({
+  name: green.name,
+  days: green.days,
+}));
 
 function trayStage(progress: number) {
   if (progress < 0.1) return "Soak";
@@ -852,6 +850,7 @@ function MicrogreensSection({ env }: { env: Environment }) {
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState(TRAY_PRESETS[0].name);
   const [newDays, setNewDays] = useState(String(TRAY_PRESETS[0].days));
+  const [openGuide, setOpenGuide] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/trays")
@@ -907,6 +906,18 @@ function MicrogreensSection({ env }: { env: Environment }) {
     setNewName(name);
     const preset = TRAY_PRESETS.find((entry) => entry.name === name);
     if (preset) setNewDays(String(preset.days));
+  };
+
+  const startFromGuide = async (green: Microgreen) => {
+    const response = await fetch("/api/trays", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: green.name, harvestDays: green.days }),
+    }).catch(() => null);
+    const data = await response?.json();
+    if (data && Array.isArray(data.trays)) setTrays(data.trays);
+    setOpenGuide(null);
+    document.querySelector(".tray-table")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const greenhouse = env.greenhouse;
@@ -1011,7 +1022,69 @@ function MicrogreensSection({ env }: { env: Environment }) {
           ))}
         </div>
       )}
+
+      <div className="micro-library">
+        <h3 className="apothecary-subhead">Microgreens library — know each tray before you sow it</h3>
+        <p className="micro-library-note">
+          Tap a card for soak, blackout, and harvest timing, flavor and nutrition notes, and growing tips — then start a tray right from the guide.
+        </p>
+        <div className="micro-grid">
+          {MICROGREENS.map((green) => (
+            <button
+              key={green.key}
+              className={`micro-card ${openGuide === green.key ? "active" : ""}`}
+              onClick={() => setOpenGuide((current) => (current === green.key ? null : green.key))}
+            >
+              <span className="micro-card-photo">
+                <img src={microPhoto(green.key)} alt={`${green.name} microgreens`} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+              </span>
+              <span className="micro-card-body">
+                <strong>{green.name}</strong>
+                <span className="micro-card-meta">{green.days} days · {green.difficulty}</span>
+                <span className="micro-card-flavor">{green.flavor}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        {openGuide && (
+          <MicrogreenGuide
+            green={MICROGREENS.find((green) => green.key === openGuide)!}
+            onClose={() => setOpenGuide(null)}
+            onStart={startFromGuide}
+          />
+        )}
+      </div>
     </div>
+  );
+}
+
+function MicrogreenGuide({ green, onClose, onStart }: { green: Microgreen; onClose: () => void; onStart: (green: Microgreen) => void }) {
+  return (
+    <article className="micro-guide">
+      <button className="plant-remove" onClick={onClose} aria-label="Close guide"><X size={14} /></button>
+      <div className="micro-guide-photo">
+        <img src={microPhoto(green.key)} alt={`${green.name} microgreens`} onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      </div>
+      <div className="micro-guide-body">
+        <h3>{green.name}</h3>
+        <div className="micro-timing">
+          <span><strong>{green.soakHours ? `${green.soakHours} hr` : "No"}</strong> soak</span>
+          <span><strong>{green.blackoutDays} days</strong> blackout</span>
+          <span><strong>{green.days} days</strong> to harvest</span>
+          <span><strong>{green.seedPerTray}</strong> per 10×20 tray</span>
+          <span><strong>{green.regrows ? "Yes" : "No"}</strong> regrows</span>
+          <span><strong>{green.difficulty}</strong> difficulty</span>
+        </div>
+        <p><em>Flavor:</em> {green.flavor}</p>
+        <p><em>Nutrition:</em> {green.nutrition}</p>
+        <ul className="micro-tips">
+          {green.tips.map((tip) => <li key={tip}>{tip}</li>)}
+        </ul>
+        <button className="primary-button" onClick={() => onStart(green)}>
+          <Plus size={15} /> Start a {green.name.toLowerCase()} tray
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -2092,6 +2165,13 @@ function Photos() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<PlantPhotoRecord[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [healthFilter, setHealthFilter] = useState<PlantPhotoRecord["health"] | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  const toggleHealthFilter = (health: PlantPhotoRecord["health"]) => {
+    setHealthFilter((current) => (current === health ? null : health));
+    setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  };
   const [batchNote, setBatchNote] = useState("Upload photos of every plant — greenhouse, garden, house, and yard. Photos now save permanently to your garden data.");
 
   useEffect(() => {
@@ -2326,6 +2406,8 @@ function Photos() {
     attention: records.filter((record) => record.health === "Needs attention").length,
   };
 
+  const visibleRecords = healthFilter ? records.filter((record) => record.health === healthFilter) : records;
+
   return (
     <div className="section-stack">
       <SectionIntro
@@ -2367,16 +2449,26 @@ function Photos() {
         </article>
 
         <div className="health-summary-grid">
-          <MetricCard value={String(records.length)} label="Photos logged" />
-          <MetricCard value={String(counts.thriving)} label="Looking healthy" />
-          <MetricCard value={String(counts.watch)} label="Watch closely" />
-          <MetricCard value={String(counts.attention)} label="Needs attention" />
+          <MetricCard value={String(records.length)} label="Photos logged" onClick={() => setHealthFilter(null)} active={healthFilter === null} />
+          <MetricCard value={String(counts.thriving)} label="Looking healthy" onClick={() => toggleHealthFilter("Thriving")} active={healthFilter === "Thriving"} />
+          <MetricCard value={String(counts.watch)} label="Watch closely" onClick={() => toggleHealthFilter("Watch")} active={healthFilter === "Watch"} />
+          <MetricCard value={String(counts.attention)} label="Needs attention" onClick={() => toggleHealthFilter("Needs attention")} active={healthFilter === "Needs attention"} />
         </div>
       </div>
 
+      {healthFilter && (
+        <div className="health-filter-banner" ref={boardRef}>
+          <span>
+            Showing <strong>{visibleRecords.length}</strong> {healthFilter === "Needs attention" ? "plants that need attention" : healthFilter === "Watch" ? "plants to watch closely" : "healthy plants"}
+            {healthFilter === "Needs attention" ? " — most urgent first" : ""}
+          </span>
+          <button onClick={() => setHealthFilter(null)}>Show all photos</button>
+        </div>
+      )}
+
       <div className="diagnosis-board">
-        {records.length ? (
-          records.map((record) => (
+        {visibleRecords.length ? (
+          visibleRecords.map((record) => (
             <article className={`diagnosis-card ${record.health.toLowerCase().replace(" ", "-")}`} key={record.id}>
               <div className="diagnosis-photo">
                 {record.photo ? <img src={record.photo} alt={`${record.plant} upload`} /> : <Camera size={28} />}
@@ -2650,8 +2742,14 @@ function Metric({ value, label }: { value: string; label: string }) {
   return <div><strong>{value}</strong><span>{label}</span></div>;
 }
 
-function MetricCard({ value, label }: { value: string; label: string }) {
-  return <div className="metric-card"><strong>{value}</strong><span>{label}</span></div>;
+function MetricCard({ value, label, onClick, active }: { value: string; label: string; onClick?: () => void; active?: boolean }) {
+  if (!onClick) return <div className="metric-card"><strong>{value}</strong><span>{label}</span></div>;
+  return (
+    <button className={`metric-card clickable ${active ? "active" : ""}`} onClick={onClick} title={active ? "Click to show all photos again" : `Click to see only "${label}" plants`}>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </button>
+  );
 }
 
 function DarkPanel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -3044,277 +3142,160 @@ function SoilPrepSection() {
 }
 
 function PestManagementSection() {
-  const [expandedPestId, setExpandedPestId] = useState<string | null>(null);
+  const [openPestId, setOpenPestId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterBySeverity, setFilterBySeverity] = useState<number | null>(null);
+  const [minSeverity, setMinSeverity] = useState<number | null>(null);
 
-  const filteredPests = pestDatabase.filter((pest: any) => {
+  const query = searchTerm.trim().toLowerCase();
+  const filteredPests = pestDatabase.filter((pest) => {
     const matchesSearch =
-      pest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pest.identification.some((s: string) =>
-        s.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    const matchesSeverity =
-      filterBySeverity === null || pest.severity >= filterBySeverity;
+      !query ||
+      pest.name.toLowerCase().includes(query) ||
+      pest.identification.some((sign) => sign.toLowerCase().includes(query)) ||
+      pest.damageSymptoms.some((symptom) => symptom.toLowerCase().includes(query));
+    const matchesSeverity = minSeverity === null || pest.severity >= minSeverity;
     return matchesSearch && matchesSeverity;
   });
 
-  const getSeverityColor = (severity: number) => {
-    if (severity <= 2) return "bg-green-100 text-green-700";
-    if (severity <= 3) return "bg-yellow-100 text-yellow-700";
-    return "bg-red-100 text-red-700";
-  };
-
-  const getSeverityLabel = (severity: number) => {
-    if (severity <= 2) return "Low";
-    if (severity <= 3) return "Medium";
-    return "High";
-  };
+  const pressureLabel = (severity: number) => (severity <= 2 ? "Low pressure" : severity <= 3 ? "Moderate pressure" : "High pressure");
+  // Eve's data mixes real plant names with internal ids like "eve-0032" — only show the names.
+  const readablePlants = (plants: string[]) => plants.filter((plant) => !/^eve-\d+/.test(plant));
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-2">🐛 Pest Management & Education</h1>
-        <p className="text-green-50">
-          Common greenhouse pests, identification, treatments, and prevention strategies for Utah Zone 6a/6b.
-        </p>
-      </div>
+    <div className="section-stack">
+      <SectionIntro
+        title="Pest Management"
+        subtitle="Field guide to the ten troublemakers most likely to find an Orem greenhouse — spot them early, treat them gently, escalate only when you must."
+      />
 
-      {/* Search & Filter */}
-      <div className="space-y-3">
+      <div className="pest-toolbar">
         <input
-          type="text"
-          placeholder="Search pests (e.g., spider mites, powdery mildew)..."
+          type="search"
+          className="pest-search"
+          placeholder="Search by pest, sign, or symptom — try webbing, sticky, or yellow leaves"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          onChange={(event) => setSearchTerm(event.target.value)}
         />
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilterBySeverity(null)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === null
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            All Severities
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(2)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 2
-                ? "bg-green-600 text-white"
-                : "bg-green-100 text-green-700 hover:bg-green-200"
-            }`}
-          >
-            Low
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(3)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 3
-                ? "bg-yellow-600 text-white"
-                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-            }`}
-          >
-            Medium+
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(4)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 4
-                ? "bg-red-600 text-white"
-                : "bg-red-100 text-red-700 hover:bg-red-200"
-            }`}
-          >
-            High
-          </button>
+        <div className="pest-filters">
+          {[
+            { label: "All", value: null },
+            { label: "High pressure", value: 4 },
+            { label: "Moderate+", value: 3 },
+          ].map((option) => (
+            <button
+              key={option.label}
+              className={`pest-filter ${minSeverity === option.value ? "active" : ""}`}
+              onClick={() => setMinSeverity(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Pest Cards */}
-      <div className="space-y-3">
-        {filteredPests.map((pest: any) => (
-          <div key={pest.id} className="border rounded-lg overflow-hidden">
-            {/* Pest Header */}
-            <button
-              onClick={() =>
-                setExpandedPestId(expandedPestId === pest.id ? null : pest.id)
-              }
-              className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition flex items-center justify-between"
-            >
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{pest.emoji}</span>
-                  <div>
-                    <h3 className="font-bold text-lg">{pest.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {pest.identification[0]}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(pest.severity)}`}>
-                  {getSeverityLabel(pest.severity)} ({pest.severity}/5)
+      <div className="pest-list">
+        {filteredPests.map((pest) => {
+          const open = openPestId === pest.id;
+          return (
+            <article key={pest.id} className={`pest-card ${open ? "open" : ""}`}>
+              <button className="pest-head" onClick={() => setOpenPestId(open ? null : pest.id)}>
+                <span className="pest-photo">
+                  <img src={`/pests/${pest.id}.jpg`} alt={pest.name} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
                 </span>
-                {expandedPestId === pest.id ? (
-                  <ChevronUp className="text-gray-600" />
-                ) : (
-                  <ChevronDown className="text-gray-600" />
-                )}
-              </div>
-            </button>
+                <span className="pest-head-body">
+                  <strong>{pest.name}</strong>
+                  <span className="pest-head-sign">{pest.identification[0]}</span>
+                </span>
+                <span className={`pest-pressure sev-${pest.severity}`}>{pressureLabel(pest.severity)}</span>
+                {open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+              </button>
 
-            {/* Pest Details */}
-            {expandedPestId === pest.id && (
-              <div className="p-4 space-y-4 border-t bg-white">
-                {/* Identification */}
-                <div>
-                  <h4 className="font-bold text-green-700 mb-2">🔍 Identification Signs</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.identification.map((sign: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {sign}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {open && (
+                <div className="pest-detail">
+                  <div className="pest-columns">
+                    <div>
+                      <h4>How to spot it</h4>
+                      <ul>{pest.identification.map((sign) => <li key={sign}>{sign}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4>What the damage looks like</h4>
+                      <ul>{pest.damageSymptoms.map((symptom) => <li key={symptom}>{symptom}</li>)}</ul>
+                    </div>
+                  </div>
 
-                {/* Damage */}
-                <div>
-                  <h4 className="font-bold text-red-700 mb-2">⚠️ Damage Symptoms</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.damageSymptoms.map((symptom: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {symptom}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Natural Treatments */}
-                <div>
-                  <h4 className="font-bold text-blue-700 mb-2">🌿 Natural Treatments</h4>
-                  <div className="space-y-2">
-                    {pest.naturalTreatments.map((treatment: any, i: number) => (
-                      <div key={i} className="bg-blue-50 p-3 rounded text-sm">
-                        <div className="font-semibold text-blue-900">{treatment.name}</div>
-                        <p className="text-blue-800 mt-1">{treatment.description}</p>
-                        <div className="flex justify-between mt-2 text-xs text-blue-700">
-                          <span>Frequency: {treatment.frequency}</span>
-                          <span>Effectiveness: {treatment.effectiveness}/5</span>
-                        </div>
+                  <h4>Treat it naturally first</h4>
+                  <div className="pest-treatments">
+                    {pest.naturalTreatments.map((treatment) => (
+                      <div key={treatment.name} className="pest-treatment">
+                        <strong>{treatment.name}</strong>
+                        <p>{treatment.description}</p>
+                        <span>{treatment.frequency} · effectiveness {treatment.effectiveness}/5</span>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Chemical Treatments */}
-                {pest.chemicalTreatments.length > 0 && (
-                  <div>
-                    <h4 className="font-bold text-orange-700 mb-2">⚗️ Chemical Treatments (If Needed)</h4>
-                    <div className="space-y-2">
-                      {pest.chemicalTreatments.map((treatment: any, i: number) => (
-                        <div key={i} className="bg-orange-50 p-3 rounded text-sm border-l-4 border-orange-500">
-                          <div className="font-semibold text-orange-900">{treatment.name}</div>
-                          <p className="text-orange-800 mt-1">{treatment.description}</p>
-                          <div className="flex justify-between mt-2 text-xs text-orange-700">
-                            <span>Frequency: {treatment.frequency}</span>
-                            <span>Effectiveness: {treatment.effectiveness}/5</span>
+                  {pest.chemicalTreatments.length > 0 && (
+                    <>
+                      <h4>If it gets ahead of you</h4>
+                      <div className="pest-treatments chemical">
+                        {pest.chemicalTreatments.map((treatment) => (
+                          <div key={treatment.name} className="pest-treatment">
+                            <strong>{treatment.name}</strong>
+                            <p>{treatment.description}</p>
+                            <span>{treatment.frequency} · effectiveness {treatment.effectiveness}/5</span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="pest-columns">
+                    <div>
+                      <h4>Keep it from coming back</h4>
+                      <ul>{pest.prevention.map((tip) => <li key={tip}>{tip}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4>Here in Utah</h4>
+                      <p className="pest-utah">{pest.utahNotes}</p>
+                      <p className="pest-meta">
+                        <strong>Timeline:</strong> {pest.treatmentTimeline}
+                        <br />
+                        <strong>Edibles:</strong> {pest.safeForEdibles ? "treatments above are food-crop safe" : "use caution on food crops — check labels"}
+                      </p>
                     </div>
                   </div>
-                )}
 
-                {/* Prevention */}
-                <div>
-                  <h4 className="font-bold text-purple-700 mb-2">✨ Prevention Tips</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.prevention.map((tip: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Utah Notes */}
-                <div className="bg-amber-50 p-3 rounded border border-amber-200">
-                  <h4 className="font-bold text-amber-900 mb-1">🏜️ Utah-Specific Notes</h4>
-                  <p className="text-sm text-amber-900">{pest.utahNotes}</p>
-                </div>
-
-                {/* Timeline & Safety */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <h4 className="font-bold text-gray-700 mb-1">⏱️ Treatment Timeline</h4>
-                    <p className="text-sm text-gray-600">{pest.treatmentTimeline}</p>
-                  </div>
-                  <div className={`p-3 rounded ${pest.safeForEdibles ? "bg-green-50" : "bg-red-50"}`}>
-                    <h4 className={`font-bold mb-1 ${pest.safeForEdibles ? "text-green-700" : "text-red-700"}`}>
-                      🍅 Edibles Safety
-                    </h4>
-                    <p className={`text-sm ${pest.safeForEdibles ? "text-green-600" : "text-red-600"}`}>
-                      {pest.safeForEdibles ? "Safe for food crops" : "Use caution on edibles"}
+                  {readablePlants(pest.affectedPlants).length > 0 && (
+                    <p className="pest-hosts">
+                      <strong>Favorite targets:</strong> {readablePlants(pest.affectedPlants).join(", ")}
                     </p>
-                  </div>
-                </div>
+                  )}
 
-                {/* Affected Plants */}
-                <div>
-                  <h4 className="font-bold text-gray-700 mb-2">🌱 Commonly Affected Plants</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {pest.affectedPlants.map((plant: string, i: number) => (
-                      <span key={i} className="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-700">
-                        {plant}
-                      </span>
-                    ))}
-                  </div>
+                  <button
+                    className="secondary-button"
+                    onClick={() => askEve(`I think I have ${pest.name.toLowerCase()} in my Orem greenhouse. Walk me through confirming it and a treatment plan for this week using my plants and setup.`)}
+                  >
+                    <Bot size={15} /> Ask Eve about {pest.name.toLowerCase()}
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </article>
+          );
+        })}
+        {!filteredPests.length && <p className="empty-note">No pest matches that search — try a symptom like &quot;sticky&quot; or &quot;webbing&quot;.</p>}
       </div>
 
-      {/* Tips Section */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
-        <h3 className="font-bold text-blue-900 mb-3">💡 General Pest Management Tips</h3>
-        <ul className="space-y-2 text-sm text-blue-900">
-          <li>✓ Inspect new plants before bringing them into the greenhouse</li>
-          <li>✓ Quarantine infested plants immediately (separate area)</li>
-          <li>✓ Strong, healthy plants resist pests better than weak ones</li>
-          <li>✓ Keep greenhouse clean — remove dead leaves and debris</li>
-          <li>✓ Improve airflow with fans and ventilation (most pests hate moving air)</li>
-          <li>✓ Early detection is key — check plants regularly</li>
-          <li>✓ Start with natural treatments, escalate only if needed</li>
-          <li>✓ Utah heat (110°F+) favors spider mites — cool greenhouse = fewer problems</li>
-          <li>✓ Utah dry air requires humidity management (some pests love it, some hate it)</li>
-          <li>✓ Keep detailed treatment logs — what worked, what didn't, timeline</li>
+      <div className="pest-habits">
+        <h3>The habits that prevent most of this</h3>
+        <ul>
+          <li>Inspect new plants before they come inside, and quarantine anything suspicious.</li>
+          <li>Moving air is your cheapest pesticide — most greenhouse pests hate a fan.</li>
+          <li>Remove dead leaves and debris; check under leaves weekly while you water.</li>
+          <li>Utah heat above 100°F is spider-mite weather — shade cloth and airflow first.</li>
+          <li>Start gentle, escalate slowly, and log what worked in the photo journal.</li>
         </ul>
-      </div>
-
-      {/* Extension Resources */}
-      <div className="bg-gray-50 p-6 rounded">
-        <h3 className="font-bold text-gray-900 mb-3">📚 Utah Extension Resources</h3>
-        <p className="text-sm text-gray-700 mb-3">
-          For more detailed information, visit:{" "}
-          <a
-            href="https://utahpests.usu.edu"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Utah Pests (Utah State University Extension)
-          </a>
-        </p>
-        <p className="text-sm text-gray-700">
-          Local support: Contact your county extension office for free pest ID and treatment advice.
+        <p className="pest-resource">
+          Deeper help: <a href="https://utahpests.usu.edu" target="_blank" rel="noreferrer">Utah Pests — USU Extension</a> offers free pest ID through your county office.
         </p>
       </div>
     </div>
