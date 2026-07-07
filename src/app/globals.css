@@ -2807,3 +2807,81 @@ button.metric-card.clickable.active {
 .bouquet-paint-hint { font-size: 0.8rem; color: var(--muted); font-style: italic; }
 .conservatory-painting { width: 100%; border-radius: 10px; display: block; }
 .brand-painting { width: 130px; border-radius: 14px; display: block; margin: 0 auto; box-shadow: 0 8px 18px rgba(59, 45, 29, 0.12); }
+
+/* ---- Hydroponic tester, top view ---- */
+.hydro-tester { max-width: 460px; }
+.hydro-lightbar {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  background: linear-gradient(180deg, #e8e2d0, #d9d2bd);
+  border: 1.5px solid rgba(43, 58, 42, 0.25);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  padding: 5px 14px;
+}
+.hydro-lightbar span {
+  width: 26px;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #fdf6d8, #f7e9a8);
+  box-shadow: 0 0 8px rgba(247, 233, 168, 0.9);
+}
+.hydro-basin {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.22), transparent 60%),
+    linear-gradient(160deg, #7fa8a4, #5c8683 55%, #4c7370);
+  border: 1.5px solid rgba(43, 58, 42, 0.35);
+  border-radius: 0 0 16px 16px;
+  box-shadow: inset 0 4px 14px rgba(20, 40, 38, 0.35);
+}
+.hydro-well {
+  aspect-ratio: 1;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.hydro-well:disabled { cursor: default; }
+.hydro-plug {
+  width: 86%;
+  height: 86%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #efe7d2, #d9cdb2 70%);
+  border: 3px solid rgba(255, 255, 255, 0.55); /* net-cup rim */
+  box-shadow: 0 2px 6px rgba(20, 40, 38, 0.35), inset 0 -2px 5px rgba(94, 78, 50, 0.25);
+  display: grid;
+  place-items: center;
+  transition: transform 0.12s ease, background 0.2s ease;
+  position: relative;
+}
+.hydro-well:not(:disabled):hover .hydro-plug { transform: scale(1.07); }
+.hydro-seed {
+  width: 7px;
+  height: 9px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #8a6b42;
+  display: block;
+}
+.hydro-well.well-sprouted .hydro-plug {
+  background: radial-gradient(circle at 35% 30%, #e3ecd0, #c8ddb0 70%);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+.hydro-seedling {
+  font-style: normal;
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(20, 40, 38, 0.3));
+}
+.hydro-well.well-failed .hydro-plug {
+  background: radial-gradient(circle at 35% 30%, #e4d9d4, #cbb9b1 70%);
+  opacity: 0.75;
+}
+.hydro-noshow { font-style: normal; color: var(--terracotta); font-weight: 800; font-size: 1rem; }
+.hydro-caption { font-size: 0.75rem; color: var(--muted); margin: 0.4rem 0 0; text-align: center; }

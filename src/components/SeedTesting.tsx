@@ -18,7 +18,6 @@ function askEve(prompt: string) {
 }
 
 const NEXT_PLUG: Record<SeedTestPlug, SeedTestPlug> = { sown: "sprouted", sprouted: "failed", failed: "sown" };
-const PLUG_GLYPH: Record<SeedTestPlug, string> = { sown: "", sprouted: "🌱", failed: "✕" };
 
 export function SeedTesting() {
   const [tests, setTests] = useState<StoredSeedTest[]>([]);
@@ -137,19 +136,29 @@ export function SeedTesting() {
           <button className="plant-remove" onClick={() => removeTest(test.id)} aria-label={`Delete test of ${label}`}><X size={14} /></button>
         </div>
 
-        <div className="seedtest-plugs">
-          {test.plugs.map((plug, index) => (
-            <button
-              key={index}
-              className={`seedtest-plug plug-${plug}`}
-              onClick={() => !isDone && cyclePlug(test, index)}
-              title={isDone ? plug : `Plug ${index + 1}: ${plug} — tap to cycle sown → sprouted → no-show`}
-              disabled={isDone}
-            >
-              <span className="seedtest-cone" />
-              <em>{PLUG_GLYPH[plug]}</em>
-            </button>
-          ))}
+        {/* Top view of the 12-plug hydroponic tester — wells fill with seedlings */}
+        <div className="hydro-tester">
+          <div className="hydro-lightbar" aria-hidden>
+            <span /><span /><span /><span /><span /><span />
+          </div>
+          <div className="hydro-basin">
+            {test.plugs.map((plug, index) => (
+              <button
+                key={index}
+                className={`hydro-well well-${plug}`}
+                onClick={() => !isDone && cyclePlug(test, index)}
+                title={isDone ? `Plug ${index + 1}: ${plug}` : `Plug ${index + 1}: ${plug} — tap to cycle sown → sprouted → no-show`}
+                disabled={isDone}
+              >
+                <span className="hydro-plug">
+                  {plug === "sprouted" && <em className="hydro-seedling">🌱</em>}
+                  {plug === "failed" && <em className="hydro-noshow">✕</em>}
+                  {plug === "sown" && <em className="hydro-seed" />}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="hydro-caption">Your 12-plug tester from above — lights on, water below. Tap a well when it sprouts.</p>
         </div>
 
         <div className="seedtest-score">
