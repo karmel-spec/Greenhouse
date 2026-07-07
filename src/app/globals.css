@@ -2682,3 +2682,112 @@ button.metric-card.clickable.active {
 .seedtest-final { font-size: 0.84rem; color: var(--forest); }
 
 .seed-add-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+/* ---- Codex bouquet stage (from bouquet-design-handoff.md) ---- */
+.bqd-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  padding-bottom: 6px;
+}
+.bqd-glow {
+  position: absolute;
+  inset: 8% 5% 18%;
+  border-radius: 48% 52% 46% 54%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.4) 54%, transparent 70%),
+    linear-gradient(135deg, rgba(247, 217, 215, 0.4), rgba(223, 232, 216, 0.38));
+  filter: blur(1px);
+  z-index: -2;
+}
+.bqd-bouquet { position: relative; margin-top: 4px; }
+.bqd-stem {
+  position: absolute;
+  bottom: 5px;
+  background: linear-gradient(180deg, #6e884f, #3f6b39);
+  transform-origin: bottom center;
+  border-radius: 999px;
+}
+.bqd-flower {
+  position: absolute;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  filter: drop-shadow(0 10px 10px rgba(60, 48, 31, 0.12));
+}
+.bqd-flower::before {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  background: var(--wash, rgba(223, 232, 216, 0.4));
+  filter: blur(8px);
+  z-index: -1;
+}
+.bqd-vase {
+  position: relative;
+  margin-top: -10px;
+  border: 2px solid rgba(87, 105, 82, 0.34);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.65), rgba(201, 220, 203, 0.2), rgba(255, 255, 255, 0.42)),
+    rgba(215, 232, 220, 0.32);
+  box-shadow: inset 12px 0 22px rgba(255, 255, 255, 0.5);
+}
+.bqd-vase span {
+  position: absolute;
+  border: 2px solid rgba(87, 105, 82, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.42);
+}
+.bqd-count {
+  position: absolute;
+  right: 4%;
+  top: 34%;
+  background: rgba(255, 253, 248, 0.92);
+  border: 1px solid rgba(76, 61, 43, 0.13);
+  border-radius: 999px;
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(59, 45, 29, 0.09);
+}
+.bqd-count strong { font-size: 1.5rem; color: #274a2d; line-height: 1; }
+.bqd-count span { font-size: 0.68rem; color: #66705f; line-height: 1.2; }
+.bqd-tagline {
+  margin-top: 0.5rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-style: italic;
+  color: #436c3e;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* ---- The Conservatory ---- */
+.conservatory-card {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem;
+}
+.conservatory-card h3 { font-family: var(--font-display, serif); margin: 0 0 0.2rem; font-size: 1.1rem; }
+.conservatory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+.conservatory-day {
+  background: #fffdf8;
+  border: 1px solid rgba(76, 61, 43, 0.12);
+  border-radius: 14px;
+  padding: 0.5rem 0.4rem 0.6rem;
+  text-align: center;
+  overflow: hidden;
+}
+.conservatory-day strong { display: block; font-size: 0.78rem; color: #274a2d; margin-top: 0.2rem; }
+.conservatory-day em { font-style: normal; font-size: 0.7rem; color: #66705f; }
+.brand-bouquet .bqd-stage { padding-bottom: 0; }

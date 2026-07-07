@@ -62,7 +62,7 @@ import { InspirationBanner } from "@/components/InspirationBanner";
 import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
 import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
 import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey, yesterdayKey as bouquetYesterdayKey } from "@/lib/bouquet";
-import { BouquetArrangement } from "@/components/BouquetArrangement";
+import { BouquetStage } from "@/components/BouquetStage";
 import { SeedTesting } from "@/components/SeedTesting";
 import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
 import { PruningSection } from "@/components/PruningSection";
@@ -370,7 +370,7 @@ function Brand() {
             : "Check off nurturing actions in Today's Bouquet and a bouquet blooms here"
         }
       >
-        <BouquetArrangement flowers={flowers} width={120} showTag={false} />
+        <BouquetStage flowers={flowers.map((emoji) => ({ emoji }))} scale={0.4} showMeta={false} />
       </div>
       <h2>Karmel&apos;s Greenhouse</h2>
     </div>

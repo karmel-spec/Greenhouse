@@ -20,7 +20,7 @@ import {
   type BouquetAction,
 } from "@/lib/bouquet";
 import type { BouquetHistory, StoredBouquetAction } from "@/lib/store";
-import { BouquetArrangement } from "@/components/BouquetArrangement";
+import { BouquetStage } from "@/components/BouquetStage";
 
 /** Lets the sidebar mini-bouquet refresh the moment a box is checked. */
 function announceChange() {
@@ -168,18 +168,17 @@ export function TodaysBouquet() {
         </p>
       </div>
 
-      {/* A hand-tied bouquet: blooms, stems, bow, and the note on twine */}
+      {/* Codex's watercolor bouquet: stems from a glass vase, washes, sun-glow */}
       <div className="bouquet-vase-card">
         <p className="bouquet-date">{dateLabel}</p>
-        <BouquetArrangement
-          flowers={todays.map((key) => actionByKey.get(key)?.emoji ?? "🌸")}
-          width={340}
-          showTag
+        <BouquetStage
+          flowers={todays.map((key) => {
+            const action = actionByKey.get(key);
+            return { emoji: action?.emoji ?? "🌸", title: action ? `${action.flower} — ${action.label}` : undefined };
+          })}
+          count={todays.length}
           tagline={bouquetTag(todays.length)}
         />
-        <p className="bouquet-earned">
-          <strong>{todays.length}</strong> flower{todays.length === 1 ? "" : "s"} earned today
-        </p>
       </div>
 
       {/* Today's checkboxes, by category */}
@@ -300,6 +299,35 @@ export function TodaysBouquet() {
           )}
         </div>
       </div>
+
+      {/* The Conservatory — every day's bouquet, preserved */}
+      {(() => {
+        const pastDays = Object.keys(history)
+          .filter((day) => day !== today)
+          .sort()
+          .reverse()
+          .slice(0, 14);
+        if (!pastDays.length) return null;
+        return (
+          <div className="conservatory-card">
+            <h3>The Conservatory</h3>
+            <p className="bouquet-sub">Every day&apos;s bouquet is preserved here — no days are lost. Beautiful things grow slowly.</p>
+            <div className="conservatory-grid">
+              {pastDays.map((day) => {
+                const dayFlowers = (history[day] ?? []).map((key) => ({ emoji: actionByKey.get(key)?.emoji ?? "🌸" }));
+                const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+                return (
+                  <div key={day} className="conservatory-day">
+                    <BouquetStage flowers={dayFlowers} scale={0.42} showMeta={false} />
+                    <strong>{label}</strong>
+                    <em>{dayFlowers.length} flower{dayFlowers.length === 1 ? "" : "s"}</em>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="bouquet-philosophy">
         <p><strong>No imperfect streaks.</strong> Life is not perfect and neither are days. There are no broken streaks here — only seasons. Rest, reset, and begin again. Your garden is always growing.</p>
