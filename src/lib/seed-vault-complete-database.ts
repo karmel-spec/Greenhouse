@@ -3090,7 +3090,7 @@ export const completeSeedVaultDatabase: SeedPacket[] = [
       spring: { start: "03-01", end: "05-30" },
       fall: { start: "08-15", end: "10-15" },
     },
-    frostHardiness: "frost-hardy",
+    frostHardiness: "cold-hardy",
     utahZone: "3",
     utahSpecificNotes: "Utah native ally—thrives in high desert. Drought tolerant once established. Attracts beneficial insects (parasitic wasps, hover flies). Great for pollinators. Can spread via rhizomes—divide every 2-3 years.",
     harvestTiming: "Cut when flowers fully open but petals still hold",
