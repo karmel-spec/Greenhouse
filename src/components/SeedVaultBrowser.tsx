@@ -7,7 +7,8 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { fileToResizedDataUrl } from "@/lib/image-client";
 import { SeedCard } from "@/components/SeedCard";
 import completeSeedVaultDatabase from "@/lib/seed-vault-complete-database";
 import { SeedVaultFilter } from "@/lib/seed-vault-types";
@@ -39,6 +40,53 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(EMPTY_PACKET_FORM);
   const [formNote, setFormNote] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+
+  const scanPacket = async (files: FileList | null) => {
+    if (!files?.length || scanning) return;
+    setScanning(true);
+    setShowAdd(true);
+    setFormNote("Reading the packet photos…");
+    try {
+      const images = await Promise.all(Array.from(files).slice(0, 2).map((file) => fileToResizedDataUrl(file)));
+      const response = await fetch("/api/seeds/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images }),
+      });
+      const data = await response.json();
+      const extracted = data.extracted;
+      if (!extracted?.commonName) {
+        setFormNote(data.error ?? "I couldn't read a plant name off that packet — try a brighter, straighter photo, or fill the form by hand.");
+        return;
+      }
+      setForm({
+        commonName: extracted.commonName,
+        variety: extracted.variety || "",
+        seedCount: String(extracted.seedCount || 25),
+        germinationRate: String(extracted.germinationRate || 85),
+        packagedYear: String(extracted.packagedYear || new Date().getFullYear()),
+        daysToGermination: extracted.daysToGermination ? String(extracted.daysToGermination) : "",
+        daysToMaturity: extracted.daysToMaturity ? String(extracted.daysToMaturity) : "",
+        springStart: extracted.springStart || "",
+        springEnd: extracted.springEnd || "",
+        notes: extracted.sowingNotes || "",
+        isHeirloom: Boolean(extracted.isHeirloom),
+        isAnnual: extracted.isAnnual !== false,
+      });
+      setFormNote(
+        extracted.confidence >= 0.7
+          ? `Read the packet (${Math.round(extracted.confidence * 100)}% sure) — double-check the fields, then add it.`
+          : `Best guess from the photos (${Math.round((extracted.confidence || 0) * 100)}% sure) — please verify each field before adding.`,
+      );
+    } catch {
+      setFormNote("The scan didn't go through — is the OpenAI key set and the photo clear?");
+    } finally {
+      setScanning(false);
+      if (scanInputRef.current) scanInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     fetch("/api/seeds")
@@ -167,10 +215,21 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 seed-add-buttons">
         <button className="secondary-button" onClick={() => setShowAdd((value) => !value)}>
           <Plus size={15} /> Add seed packet
         </button>
+        <button className="secondary-button" onClick={() => scanInputRef.current?.click()} disabled={scanning}>
+          📷 {scanning ? "Reading the packet…" : "Scan packet photos"}
+        </button>
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={(event) => scanPacket(event.target.files)}
+        />
         {formNote && <span className="seed-form-note"> {formNote}</span>}
       </div>
 

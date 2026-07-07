@@ -2680,3 +2680,5 @@ button.metric-card.clickable.active {
 }
 .seedtest-actions { display: flex; gap: 0.6rem; margin-top: 0.6rem; align-items: center; }
 .seedtest-final { font-size: 0.84rem; color: var(--forest); }
+
+.seed-add-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }

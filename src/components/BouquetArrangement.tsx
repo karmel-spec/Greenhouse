@@ -30,19 +30,46 @@ const HEADS: { x: number; y: number; s: number }[] = [
 ];
 
 const GREENS: { x: number; y: number; s: number; r: number; leaf: string }[] = [
-  { x: 160, y: 118, s: 30, r: 0, leaf: "🌿" },
-  { x: 112, y: 156, s: 30, r: -28, leaf: "🌿" },
-  { x: 208, y: 156, s: 30, r: 28, leaf: "🌿" },
-  { x: 138, y: 96, s: 27, r: -14, leaf: "🍃" },
-  { x: 182, y: 96, s: 27, r: 14, leaf: "🍃" },
-  { x: 72, y: 176, s: 26, r: -44, leaf: "🍃" },
-  { x: 248, y: 176, s: 26, r: 44, leaf: "🍃" },
-  { x: 160, y: 68, s: 26, r: 0, leaf: "🌿" },
-  { x: 92, y: 136, s: 24, r: -34, leaf: "🌿" },
-  { x: 228, y: 136, s: 24, r: 34, leaf: "🌿" },
-  { x: 62, y: 200, s: 23, r: -56, leaf: "🌱" },
-  { x: 258, y: 200, s: 23, r: 56, leaf: "🌱" },
+  { x: 160, y: 118, s: 34, r: 0, leaf: "🌿" },
+  { x: 112, y: 156, s: 34, r: -28, leaf: "🌿" },
+  { x: 208, y: 156, s: 34, r: 28, leaf: "🌿" },
+  { x: 138, y: 96, s: 30, r: -14, leaf: "🍃" },
+  { x: 182, y: 96, s: 30, r: 14, leaf: "🍃" },
+  { x: 72, y: 176, s: 30, r: -44, leaf: "🍃" },
+  { x: 248, y: 176, s: 30, r: 44, leaf: "🍃" },
+  { x: 160, y: 60, s: 30, r: 0, leaf: "🌿" },
+  { x: 92, y: 136, s: 28, r: -34, leaf: "🌿" },
+  { x: 228, y: 136, s: 28, r: 34, leaf: "🌿" },
+  { x: 62, y: 200, s: 26, r: -56, leaf: "🌱" },
+  { x: 258, y: 200, s: 26, r: 56, leaf: "🌱" },
+  { x: 124, y: 70, s: 26, r: -20, leaf: "🌿" },
+  { x: 196, y: 70, s: 26, r: 20, leaf: "🌿" },
+  { x: 100, y: 104, s: 26, r: -38, leaf: "🍃" },
+  { x: 220, y: 104, s: 26, r: 38, leaf: "🍃" },
+  { x: 146, y: 174, s: 28, r: -8, leaf: "🌿" },
+  { x: 174, y: 174, s: 28, r: 8, leaf: "🌿" },
 ];
+
+/** Baby's-breath sprinkles that fill gaps as the bouquet grows. */
+const SPRIGS: [number, number][] = [
+  [104, 88], [216, 88], [86, 122], [234, 122], [130, 58], [190, 58],
+  [76, 158], [244, 158], [150, 44], [170, 44], [112, 178], [208, 178],
+  [140, 132], [180, 132], [96, 196], [224, 196],
+];
+
+/** Point + angle along a stem's quadratic curve, for leaves on the stems. */
+function stemPoint(x: number, y: number, t: number): { px: number; py: number; angle: number } {
+  const [tx, ty] = TIE;
+  const startX = x, startY = y + 6;
+  const cx = x + (tx - x) * 0.22;
+  const cy = y + (ty - y) * 0.6;
+  const inverse = 1 - t;
+  const px = inverse * inverse * startX + 2 * inverse * t * cx + t * t * tx;
+  const py = inverse * inverse * startY + 2 * inverse * t * cy + t * t * ty;
+  const dx = 2 * inverse * (cx - startX) + 2 * t * (tx - cx);
+  const dy = 2 * inverse * (cy - startY) + 2 * t * (ty - cy);
+  return { px, py, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+}
 
 const STEM_GREEN = "#5d7a45";
 const RIBBON = "#8aa06b";
@@ -87,7 +114,7 @@ export function BouquetArrangement({
   tagline?: string;
 }) {
   const blooms = flowers.slice(0, HEADS.length);
-  const greenCount = blooms.length ? Math.min(3 + blooms.length, GREENS.length) : 2;
+  const greenCount = blooms.length ? Math.min(6 + blooms.length, GREENS.length) : 2;
   const height = showTag ? 372 : 320;
   const tagLines = wrapTagline(tagline);
 
@@ -102,6 +129,29 @@ export function BouquetArrangement({
       {blooms.map((_, index) => {
         const head = HEADS[index];
         return <path key={`stem-${index}`} d={stemPath(head.x, head.y)} fill="none" stroke={STEM_GREEN} strokeWidth={3} strokeLinecap="round" opacity={0.95} />;
+      })}
+
+      {/* small leaves growing off each stem */}
+      {blooms.map((_, index) => {
+        const head = HEADS[index];
+        return [0.42, 0.68].map((t, leafIndex) => {
+          const point = stemPoint(head.x, head.y, t);
+          const side = (index + leafIndex) % 2 === 0 ? -1 : 1;
+          return (
+            <ellipse
+              key={`leaf-${index}-${leafIndex}`}
+              cx={point.px}
+              cy={point.py}
+              rx={7.5}
+              ry={3.2}
+              fill="#7c9463"
+              stroke={STEM_GREEN}
+              strokeWidth={0.8}
+              opacity={0.95}
+              transform={`rotate(${point.angle + side * 52} ${point.px} ${point.py})`}
+            />
+          );
+        });
       })}
       {!blooms.length && <path d={stemPath(160, 128)} fill="none" stroke={STEM_GREEN} strokeWidth={3} strokeLinecap="round" opacity={0.6} />}
 
@@ -124,6 +174,16 @@ export function BouquetArrangement({
           {green.leaf}
         </text>
       ))}
+
+      {/* baby's-breath sprinkles filling the gaps */}
+      {blooms.length > 0 &&
+        SPRIGS.slice(0, Math.min(4 + blooms.length, SPRIGS.length)).map(([x, y], index) => (
+          <g key={`sprig-${index}`} opacity={0.9}>
+            <circle cx={x} cy={y} r={2.4} fill="#f7f2e4" stroke="#d8cfb4" strokeWidth={0.7} />
+            <circle cx={x + 5} cy={y + 4} r={1.8} fill="#f7f2e4" stroke="#d8cfb4" strokeWidth={0.6} />
+            <circle cx={x - 4} cy={y + 5} r={1.5} fill="#f7f2e4" stroke="#d8cfb4" strokeWidth={0.6} />
+          </g>
+        ))}
 
       {/* blooms */}
       {blooms.map((emoji, index) => {
