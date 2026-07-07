@@ -2510,3 +2510,56 @@ button.metric-card.clickable.active {
 .berry-card-body em { font-style: normal; font-size: 0.7rem; color: var(--moss); font-weight: 700; display: block; margin: 0.05rem 0 0.2rem; }
 .berry-card-body p { margin: 0; font-size: 0.76rem; color: var(--muted); line-height: 1.45; }
 .berry-vision-note { font-size: 0.8rem; color: var(--muted); margin: 0.8rem 0 0; line-height: 1.5; }
+
+/* ---- Composed bouquet arrangement (mockup-style dome) ---- */
+.bouquet-arrangement {
+  position: relative;
+  width: min(340px, 92%);
+  height: 235px;
+  margin: 0 auto;
+}
+.bouquet-greenery,
+.bouquet-bloom {
+  position: absolute;
+  line-height: 1;
+  transform-origin: bottom center;
+  transition: bottom 0.45s ease, left 0.45s ease, font-size 0.45s ease;
+}
+.bouquet-greenery { z-index: 1; opacity: 0.9; }
+.bouquet-bloom { filter: drop-shadow(0 2px 3px rgba(43, 34, 51, 0.18)); }
+.bouquet-vase.empty .bouquet-greenery { opacity: 0.45; }
+.bouquet-jar { position: relative; margin-top: -14px; z-index: 12; }
+.bouquet-ribbon {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.3rem;
+  z-index: 13;
+}
+
+/* ---- Zone visions (Tea / Meditation / Apothecary / Fairy) ---- */
+.zone-vision {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  padding: 1.1rem 1.2rem;
+}
+.zone-vision-lead { font-size: 0.92rem; line-height: 1.6; margin: 0 0 0.8rem; }
+.zone-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.7rem; margin-bottom: 0.9rem; }
+.zone-figure { margin: 0; }
+.zone-figure img { width: 100%; height: 170px; object-fit: cover; border-radius: 12px; display: block; border: 1px solid rgba(43, 58, 42, 0.12); }
+.zone-figure figcaption { font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; }
+.zone-vision-subhead { font-family: var(--font-display, serif); font-size: 1rem; color: var(--forest); margin: 1rem 0 0.5rem; }
+.zone-idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.55rem; }
+.zone-idea-card { display: flex; gap: 0.55rem; background: var(--cream); border: 1px solid rgba(43, 58, 42, 0.1); border-radius: 12px; padding: 0.5rem; }
+.zone-idea-card img { width: 54px; height: 54px; object-fit: cover; border-radius: 9px; flex-shrink: 0; }
+.zone-idea-card strong { font-size: 0.84rem; display: block; }
+.zone-idea-card p { margin: 0.15rem 0 0; font-size: 0.75rem; color: var(--muted); line-height: 1.45; }
+.zone-vision-list { margin: 0 0 0.8rem; padding-left: 1.1rem; }
+.zone-vision-list li { font-size: 0.86rem; line-height: 1.55; margin: 0.3rem 0; }
+.zone-vision-note { font-size: 0.78rem; color: var(--muted); line-height: 1.5; margin: 0.6rem 0 0.8rem; }
+.zone-tip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.6rem; margin-bottom: 0.9rem; }
+.zone-tip-card { background: var(--cream); border: 1px solid rgba(43, 58, 42, 0.1); border-radius: 12px; padding: 0.7rem 0.8rem; }
+.zone-tip-card strong { font-size: 0.86rem; display: block; margin-bottom: 0.2rem; color: var(--forest); }
+.zone-tip-card p { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.5; }

@@ -64,6 +64,7 @@ import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
 import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey } from "@/lib/bouquet";
 import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
 import { PruningSection } from "@/components/PruningSection";
+import { TeaGardenVision, MeditationVision, ApothecaryVision, FairyGardenVision, teaPlantSplit } from "@/components/ZoneVisions";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -1470,6 +1471,29 @@ function PlantLibrary() {
   );
 }
 
+function ZonePlantGrid({ plants, onOpen }: { plants: PlantDetail[]; onOpen: (plant: PlantDetail) => void }) {
+  return (
+    <div className="plant-grid">
+      {plants.map((plant) => (
+        <article className="plant-card" key={plant.id}>
+          <button className="plant-card-open" onClick={() => onOpen(plant)}>
+            {plant.photo ? (
+              <img src={plant.photo} alt={plant.name} />
+            ) : (
+              <div className="plant-photo-placeholder"><Leaf size={26} /></div>
+            )}
+            <div className="plant-card-body">
+              <h3>{plant.name}</h3>
+              <p>{plant.origin}</p>
+              <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+            </div>
+          </button>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 const BERRY_VISION: { name: string; have: boolean; note: string }[] = [
   { name: "Blueberry", have: true, note: "Your two bushes — they want acidic soil, so keep them in pots or amended beds with peat and sulfur; Utah soil fights them." },
   { name: "Strawberry", have: true, note: "Already gratefully here — edge the beds with them and let a few runners fill the gaps." },
@@ -1586,33 +1610,41 @@ function ZonesSection({ focus }: { focus: string | null }) {
         />
 
         {zone.name === "Gratitude Garden" && <BerryGratefulVision />}
+        {zone.name === "Tea Garden" && <TeaGardenVision />}
+        {zone.name === "Meditation Garden" && <MeditationVision />}
+        {zone.name === "Apothecary Garden" && <ApothecaryVision />}
+        {zone.name === "Fairy Garden" && <FairyGardenVision />}
 
-        <h3 className="apothecary-subhead">Plants in this zone</h3>
         {!loaded && <p className="empty-note">Checking your plant records...</p>}
         {loaded && !zonePlants.length && (
-          <p className="empty-note">
-            No plants recorded here yet. Upload photos in the Photo Journal and set their zone to
-            "{zone.name}" — they'll show up here automatically.
-          </p>
+          <>
+            <h3 className="apothecary-subhead">Plants in this zone</h3>
+            <p className="empty-note">
+              No plants recorded here yet. Upload photos in the Photo Journal and set their zone to
+              "{zone.name}" — they'll show up here automatically.
+            </p>
+          </>
         )}
-        <div className="plant-grid">
-          {zonePlants.map((plant) => (
-            <article className="plant-card" key={plant.id}>
-              <button className="plant-card-open" onClick={() => setDetail(plant)}>
-                {plant.photo ? (
-                  <img src={plant.photo} alt={plant.name} />
-                ) : (
-                  <div className="plant-photo-placeholder"><Leaf size={26} /></div>
-                )}
-                <div className="plant-card-body">
-                  <h3>{plant.name}</h3>
-                  <p>{plant.origin}</p>
-                  <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
-                </div>
-              </button>
-            </article>
-          ))}
-        </div>
+        {loaded && zonePlants.length > 0 && zone.name === "Tea Garden" ? (
+          (() => {
+            const { tea, decorative } = teaPlantSplit(zonePlants);
+            return (
+              <>
+                <h3 className="apothecary-subhead">Tea plants <em className="lesson-minutes">· fills the pot</em></h3>
+                {tea.length ? <ZonePlantGrid plants={tea} onOpen={setDetail} /> : <p className="empty-note">No tea plants recorded yet — photograph your mint & friends and set their zone here.</p>}
+                <h3 className="apothecary-subhead">Decorative cottage plants <em className="lesson-minutes">· fills the vase</em></h3>
+                {decorative.length ? <ZonePlantGrid plants={decorative} onOpen={setDetail} /> : <p className="empty-note">The cottage-flower bed awaits — sweet peas, hollyhocks, cosmos.</p>}
+              </>
+            );
+          })()
+        ) : (
+          loaded && zonePlants.length > 0 && (
+            <>
+              <h3 className="apothecary-subhead">Plants in this zone</h3>
+              <ZonePlantGrid plants={zonePlants} onOpen={setDetail} />
+            </>
+          )
+        )}
 
         {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
 
