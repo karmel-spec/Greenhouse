@@ -335,6 +335,7 @@ export default function Home() {
 function Brand() {
   const [flowers, setFlowers] = useState<string[]>([]);
   const [isYesterdays, setIsYesterdays] = useState(false);
+  const [artUrl, setArtUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const load = () =>
@@ -348,11 +349,16 @@ function Brand() {
           ]);
           // Show yesterday's finished bouquet (it doesn't rebuild hour by hour);
           // fall back to today's while the collection is brand new.
-          const yesterdays: string[] = data.history?.[bouquetYesterdayKey()] ?? [];
-          const todays: string[] = data.history?.[bouquetTodayKey()] ?? [];
-          const chosen = yesterdays.length ? yesterdays : todays;
-          setIsYesterdays(yesterdays.length > 0);
+          const yKey = bouquetYesterdayKey();
+          const tKey = bouquetTodayKey();
+          const yesterdays: string[] = data.history?.[yKey] ?? [];
+          const todays: string[] = data.history?.[tKey] ?? [];
+          const useYesterday = yesterdays.length > 0;
+          const chosen = useYesterday ? yesterdays : todays;
+          setIsYesterdays(useYesterday);
           setFlowers(chosen.map((entry) => emojiByKey.get(entry) ?? "🌸"));
+          // Prefer the AI-painted watercolor when one exists for that day.
+          setArtUrl(data.art?.[useYesterday ? yKey : tKey] ?? null);
         })
         .catch(() => {});
     load();
@@ -370,7 +376,11 @@ function Brand() {
             : "Check off nurturing actions in Today's Bouquet and a bouquet blooms here"
         }
       >
-        <BouquetStage flowers={flowers.map((emoji) => ({ emoji }))} scale={0.4} showMeta={false} />
+        {artUrl ? (
+          <img className="brand-painting" src={artUrl} alt="Your bouquet, painted in watercolor" />
+        ) : (
+          <BouquetStage flowers={flowers.map((emoji) => ({ emoji }))} scale={0.4} showMeta={false} />
+        )}
       </div>
       <h2>Karmel&apos;s Greenhouse</h2>
     </div>

@@ -31,6 +31,9 @@ function announceChange() {
 export function TodaysBouquet() {
   const [history, setHistory] = useState<BouquetHistory>({});
   const [custom, setCustom] = useState<StoredBouquetAction[]>([]);
+  const [art, setArt] = useState<Record<string, string>>({});
+  const [painting, setPainting] = useState(false);
+  const [paintNote, setPaintNote] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({ label: "", flowerIndex: 0, category: "Soul", newCategory: "" });
@@ -42,10 +45,36 @@ export function TodaysBouquet() {
       .then((data) => {
         setHistory(data.history && typeof data.history === "object" ? data.history : {});
         setCustom(Array.isArray(data.custom) ? data.custom : []);
+        setArt(data.art && typeof data.art === "object" ? data.art : {});
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
+
+  const paint = async () => {
+    if (painting) return;
+    setPainting(true);
+    setPaintNote("Eve is painting your bouquet… this takes about a minute. 🎨");
+    try {
+      const response = await fetch("/api/bouquet/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: today }),
+      });
+      const data = await response.json();
+      if (data.art) {
+        setArt(data.art);
+        setPaintNote("");
+        announceChange();
+      } else {
+        setPaintNote(data.error ?? "The painting didn't come through — try again in a moment.");
+      }
+    } catch {
+      setPaintNote("The painting didn't come through — try again in a moment.");
+    } finally {
+      setPainting(false);
+    }
+  };
 
   const allActions: BouquetAction[] = useMemo(
     () => [
@@ -168,17 +197,37 @@ export function TodaysBouquet() {
         </p>
       </div>
 
-      {/* Codex's watercolor bouquet: stems from a glass vase, washes, sun-glow */}
+      {/* The day's bouquet: AI-painted watercolor when painted, live sketch until then */}
       <div className="bouquet-vase-card">
         <p className="bouquet-date">{dateLabel}</p>
-        <BouquetStage
-          flowers={todays.map((key) => {
-            const action = actionByKey.get(key);
-            return { emoji: action?.emoji ?? "🌸", title: action ? `${action.flower} — ${action.label}` : undefined };
-          })}
-          count={todays.length}
-          tagline={bouquetTag(todays.length)}
-        />
+        {art[today] ? (
+          <div className="bouquet-painting">
+            <img src={art[today]} alt={`Today's bouquet — ${todays.length} flowers, painted in watercolor`} />
+            <div className="bqd-count painted">
+              <strong>{todays.length}</strong>
+              <span>Flowers<br />Earned</span>
+            </div>
+            <p className="bqd-tagline">{bouquetTag(todays.length)}</p>
+          </div>
+        ) : (
+          <BouquetStage
+            flowers={todays.map((key) => {
+              const action = actionByKey.get(key);
+              return { emoji: action?.emoji ?? "🌸", title: action ? `${action.flower} — ${action.label}` : undefined };
+            })}
+            count={todays.length}
+            tagline={bouquetTag(todays.length)}
+          />
+        )}
+        <div className="bouquet-paint-row">
+          <button className="primary-button" onClick={paint} disabled={painting || !todays.length}>
+            🎨 {painting ? "Painting…" : art[today] ? "Repaint with today's flowers" : "Paint today's bouquet"}
+          </button>
+          {!art[today] && !painting && todays.length > 0 && (
+            <span className="bouquet-paint-hint">Turns your {todays.length} flowers into a real watercolor.</span>
+          )}
+          {paintNote && <span className="bouquet-paint-hint">{paintNote}</span>}
+        </div>
       </div>
 
       {/* Today's checkboxes, by category */}
@@ -318,7 +367,11 @@ export function TodaysBouquet() {
                 const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
                 return (
                   <div key={day} className="conservatory-day">
-                    <BouquetStage flowers={dayFlowers} scale={0.42} showMeta={false} />
+                    {art[day] ? (
+                      <img className="conservatory-painting" src={art[day]} alt={`Bouquet from ${label}`} loading="lazy" />
+                    ) : (
+                      <BouquetStage flowers={dayFlowers} scale={0.42} showMeta={false} />
+                    )}
                     <strong>{label}</strong>
                     <em>{dayFlowers.length} flower{dayFlowers.length === 1 ? "" : "s"}</em>
                   </div>

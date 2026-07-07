@@ -207,6 +207,8 @@ export type GardenStore = {
   seedTrays: StoredSeedTray[];
   bouquet: BouquetHistory;
   bouquetCustom: StoredBouquetAction[];
+  /** AI-painted bouquet per day (yyyy-mm-dd → /api/photos path). */
+  bouquetArt: Record<string, string>;
   userSeeds: StoredSeedPacket[];
   seedTests: StoredSeedTest[];
 };
@@ -262,6 +264,7 @@ export async function readStore(): Promise<GardenStore> {
       seedTrays: Array.isArray(parsed.seedTrays) ? parsed.seedTrays : [],
       bouquet: parsed.bouquet && typeof parsed.bouquet === "object" ? parsed.bouquet : {},
       bouquetCustom: Array.isArray(parsed.bouquetCustom) ? parsed.bouquetCustom : [],
+      bouquetArt: parsed.bouquetArt && typeof parsed.bouquetArt === "object" ? parsed.bouquetArt : {},
       userSeeds: Array.isArray(parsed.userSeeds) ? parsed.userSeeds : [],
       seedTests: Array.isArray(parsed.seedTests) ? parsed.seedTests : [],
     };
@@ -284,6 +287,7 @@ export async function readStore(): Promise<GardenStore> {
       seedTrays: [],
       bouquet: {},
       bouquetCustom: [],
+      bouquetArt: {},
       userSeeds: [],
       seedTests: [],
     };

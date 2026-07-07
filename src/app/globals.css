@@ -2791,3 +2791,19 @@ button.metric-card.clickable.active {
 .conservatory-day strong { display: block; font-size: 0.78rem; color: #274a2d; margin-top: 0.2rem; }
 .conservatory-day em { font-style: normal; font-size: 0.7rem; color: #66705f; }
 .brand-bouquet .bqd-stage { padding-bottom: 0; }
+
+/* ---- AI-painted bouquet ---- */
+.bouquet-painting { position: relative; text-align: center; }
+.bouquet-painting img {
+  width: min(440px, 92%);
+  border-radius: 18px;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 10px 24px rgba(59, 45, 29, 0.09);
+}
+.bouquet-painting .bqd-count.painted { position: absolute; right: 6%; top: 40%; }
+.bouquet-painting .bqd-tagline { margin-top: 0.7rem; }
+.bouquet-paint-row { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; justify-content: center; margin-top: 0.9rem; }
+.bouquet-paint-hint { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+.conservatory-painting { width: 100%; border-radius: 10px; display: block; }
+.brand-painting { width: 130px; border-radius: 14px; display: block; margin: 0 auto; box-shadow: 0 8px 18px rgba(59, 45, 29, 0.12); }

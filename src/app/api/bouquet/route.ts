@@ -8,7 +8,7 @@ import { newId, readStore, updateStore, StoredBouquetAction } from "@/lib/store"
 
 export async function GET() {
   const store = await readStore();
-  return NextResponse.json({ history: store.bouquet, custom: store.bouquetCustom });
+  return NextResponse.json({ history: store.bouquet, custom: store.bouquetCustom, art: store.bouquetArt });
 }
 
 export async function PATCH(request: NextRequest) {
