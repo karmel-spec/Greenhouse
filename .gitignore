@@ -6,3 +6,5 @@ node_modules
 # local data store
 /data
 tsconfig.tsbuildinfo
+.govee-venv/
+.next-build/

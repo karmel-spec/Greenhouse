@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { hasSupabase, publicPhotoUrl } from "@/lib/supabase-backend";
 
 const PHOTOS_DIR = path.join(process.cwd(), "data", "photos");
 
@@ -27,6 +28,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       },
     });
   } catch {
+    // Not on local disk — in cloud mode the photo lives in Supabase Storage.
+    if (hasSupabase()) {
+      return NextResponse.redirect(publicPhotoUrl(fileName), 302);
+    }
     return NextResponse.json({ error: "Photo not found." }, { status: 404 });
   }
 }

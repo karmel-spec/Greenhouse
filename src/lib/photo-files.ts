@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { copyPhotoObject, deletePhotoObject, hasSupabase, uploadPhotoBuffer } from "@/lib/supabase-backend";
 
 export const PHOTOS_DIR = path.join(process.cwd(), "data", "photos");
 
@@ -19,8 +20,13 @@ export async function saveDataUrlPhoto(dataUrl: unknown, baseName: string): Prom
 
   const extension = MIME_EXTENSIONS[match[1]] ?? "jpg";
   const fileName = `${baseName}.${extension}`;
+  const bytes = Buffer.from(match[2], "base64");
+  if (hasSupabase()) {
+    await uploadPhotoBuffer(fileName, bytes, match[1]);
+    return `/api/photos/${fileName}`;
+  }
   await fs.mkdir(PHOTOS_DIR, { recursive: true });
-  await fs.writeFile(path.join(PHOTOS_DIR, fileName), Buffer.from(match[2], "base64"));
+  await fs.writeFile(path.join(PHOTOS_DIR, fileName), bytes);
   return `/api/photos/${fileName}`;
 }
 
@@ -30,6 +36,9 @@ export async function copyPhoto(publicPath: unknown, baseName: string): Promise<
   const sourceName = path.basename(publicPath);
   const extension = sourceName.split(".").pop() ?? "jpg";
   const fileName = `${baseName}.${extension}`;
+  if (hasSupabase()) {
+    return (await copyPhotoObject(sourceName, fileName)) ? `/api/photos/${fileName}` : undefined;
+  }
   try {
     await fs.copyFile(path.join(PHOTOS_DIR, sourceName), path.join(PHOTOS_DIR, fileName));
     return `/api/photos/${fileName}`;
@@ -40,5 +49,10 @@ export async function copyPhoto(publicPath: unknown, baseName: string): Promise<
 
 export async function deletePhoto(publicPath: unknown) {
   if (typeof publicPath !== "string" || !publicPath.startsWith("/api/photos/")) return;
-  await fs.unlink(path.join(PHOTOS_DIR, path.basename(publicPath))).catch(() => {});
+  const fileName = path.basename(publicPath);
+  if (hasSupabase()) {
+    await deletePhotoObject(fileName).catch(() => {});
+    return;
+  }
+  await fs.unlink(path.join(PHOTOS_DIR, fileName)).catch(() => {});
 }

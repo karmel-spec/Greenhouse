@@ -13,6 +13,7 @@ import {
   ChevronUp,
   CloudSun,
   Droplets,
+  ExternalLink,
   LayoutGrid,
   Leaf,
   LibraryBig,
@@ -52,6 +53,20 @@ import {
   zones,
 } from "@/lib/mock-data";
 import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
+import { CommunityGarden } from "@/components/CommunityGarden";
+import { CompostSection } from "@/components/CompostSection";
+import { SunMap } from "@/components/SunMap";
+import { SeedTraysSection } from "@/components/SeedTrays";
+import { TodaysBouquet } from "@/components/TodaysBouquet";
+import { InspirationBanner } from "@/components/InspirationBanner";
+import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
+import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
+import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey, yesterdayKey as bouquetYesterdayKey } from "@/lib/bouquet";
+import { BouquetStage } from "@/components/BouquetStage";
+import { SeedTesting } from "@/components/SeedTesting";
+import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
+import { PruningSection } from "@/components/PruningSection";
+import { TeaGardenVision, MeditationVision, ApothecaryVision, FairyGardenVision, teaPlantSplit } from "@/components/ZoneVisions";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -229,6 +244,7 @@ export default function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wishlistFocus, setWishlistFocus] = useState<string | null>(null);
   const [zoneFocus, setZoneFocus] = useState<string | null>(null);
+  const [photosFocus, setPhotosFocus] = useState<string | null>(null);
   const env = useEnvironment();
   const current = useMemo(() => navItems.find((item) => item.key === active), [active]);
 
@@ -237,6 +253,13 @@ export default function Home() {
     setDrawerOpen(false);
     if (key !== "wishlist") setWishlistFocus(null);
     if (key !== "zones") setZoneFocus(null);
+    if (key !== "photos") setPhotosFocus(null);
+  };
+
+  const openPhotos = (healthFilter: string | null) => {
+    setPhotosFocus(healthFilter);
+    setActive("photos");
+    setDrawerOpen(false);
   };
 
   const openWishlist = (itemName: string) => {
@@ -276,7 +299,11 @@ export default function Home() {
         </header>
 
         <div className="content-grid">
-          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection, openZone, zoneFocus })}</section>
+          <section className="main-content">
+            <InspirationBanner section={active} slot="top" />
+            {renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection, openZone, zoneFocus, openPhotos, photosFocus })}
+            <InspirationBanner section={active} slot="bottom" />
+          </section>
           <EvePanel />
         </div>
       </section>
@@ -306,10 +333,46 @@ export default function Home() {
 }
 
 function Brand() {
+  const [flowers, setFlowers] = useState<string[]>([]);
+  const [isYesterdays, setIsYesterdays] = useState(false);
+
+  useEffect(() => {
+    const load = () =>
+      fetch("/api/bouquet")
+        .then((response) => response.json())
+        .then((data) => {
+          const custom: { key: string; emoji: string }[] = Array.isArray(data.custom) ? data.custom : [];
+          const emojiByKey = new Map<string, string>([
+            ...ALL_BOUQUET_ACTIONS.map((action) => [action.key, action.emoji] as [string, string]),
+            ...custom.map((action) => [action.key, action.emoji] as [string, string]),
+          ]);
+          // Show yesterday's finished bouquet (it doesn't rebuild hour by hour);
+          // fall back to today's while the collection is brand new.
+          const yesterdays: string[] = data.history?.[bouquetYesterdayKey()] ?? [];
+          const todays: string[] = data.history?.[bouquetTodayKey()] ?? [];
+          const chosen = yesterdays.length ? yesterdays : todays;
+          setIsYesterdays(yesterdays.length > 0);
+          setFlowers(chosen.map((entry) => emojiByKey.get(entry) ?? "🌸"));
+        })
+        .catch(() => {});
+    load();
+    window.addEventListener("bouquet-changed", load);
+    return () => window.removeEventListener("bouquet-changed", load);
+  }, []);
+
   return (
     <div className="brand">
-      <div className="botanical-mark">☼</div>
-      <h2>Karmel's<br />Greenhouse Growth<br />Operating System</h2>
+      <div
+        className="brand-bouquet"
+        title={
+          flowers.length
+            ? `${isYesterdays ? "Yesterday's" : "Today's"} bouquet — ${flowers.length} flower${flowers.length === 1 ? "" : "s"}`
+            : "Check off nurturing actions in Today's Bouquet and a bouquet blooms here"
+        }
+      >
+        <BouquetStage flowers={flowers.map((emoji) => ({ emoji }))} scale={0.4} showMeta={false} />
+      </div>
+      <h2>Karmel&apos;s Greenhouse</h2>
     </div>
   );
 }
@@ -456,14 +519,22 @@ type SectionNav = {
   openSection: (key: SectionKey) => void;
   openZone: (zoneName: string) => void;
   zoneFocus: string | null;
+  openPhotos: (healthFilter: string | null) => void;
+  photosFocus: string | null;
 };
 
 function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
   switch (active) {
     case "today":
       return <TodaySection env={env} nav={nav} />;
+    case "bouquet":
+      return <TodaysBouquet />;
     case "operations":
-      return <OperationsSection />;
+      return <OperationsSection nav={nav} />;
+    case "seedtrays":
+      return <SeedTraysSection />;
+    case "seedtesting":
+      return <SeedTesting />;
     case "microgreens":
       return <MicrogreensSection env={env} />;
     case "apothecary":
@@ -472,6 +543,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <PestManagementSection />;
     case "sfg":
       return <SquareFootPlanner />;
+    case "community":
+      return <CommunityGarden />;
     case "plants":
       return <PlantLibrary />;
     case "zones":
@@ -484,10 +557,14 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <SeedSaving />;
     case "soil-prep":
       return <SoilPrepSection />;
+    case "compost":
+      return <CompostSection />;
     case "wishlist":
       return <Wishlist focus={nav.wishlistFocus} />;
     case "propagation":
       return <Propagation />;
+    case "pruning":
+      return <PruningSection />;
     case "map":
       return <GardenMap />;
     case "quotes":
@@ -497,7 +574,7 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
     case "reminders":
       return <Reminders />;
     case "photos":
-      return <Photos />;
+      return <Photos focus={nav.photosFocus} />;
     case "landscape":
       return <Landscape />;
     case "eve":
@@ -786,22 +863,64 @@ function TodaySection({ env, nav }: { env: Environment; nav: SectionNav }) {
   );
 }
 
-function OperationsSection() {
+function OperationsSection({ nav }: { nav: SectionNav }) {
+  const [counts, setCounts] = useState({ tasks: 0, attention: 0, trays: 0, propagations: 0, plants: 0 });
+  const [openTasks, setOpenTasks] = useState<{ title: string; priority: string }[]>([]);
+  const checklistRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [tasksRes, journalRes, traysRes, seedTraysRes, propRes, plantsRes] = await Promise.all([
+          fetch("/api/tasks").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/journal").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/trays").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/seedtrays").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/propagation").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/plants").then((r) => r.json()).catch(() => ({})),
+        ]);
+        const allTasks: { title: string; priority: string; done?: boolean }[] = Array.isArray(tasksRes.tasks) ? tasksRes.tasks : [];
+        const open = allTasks.filter((task) => !task.done);
+        const journal: { health?: string }[] = Array.isArray(journalRes.entries) ? journalRes.entries : [];
+        const microActive = (Array.isArray(traysRes.trays) ? traysRes.trays : []).filter((tray: { status?: string }) => tray.status === "active").length;
+        const seedTrayCount = Array.isArray(seedTraysRes.trays) ? seedTraysRes.trays.length : 0;
+        setCounts({
+          tasks: open.length,
+          attention: journal.filter((entry) => entry.health === "Needs attention").length,
+          trays: microActive + seedTrayCount,
+          propagations: Array.isArray(propRes.items) ? propRes.items.length : 0,
+          plants: Array.isArray(plantsRes.plants) ? plantsRes.plants.length : 0,
+        });
+        setOpenTasks(open.slice(0, 5));
+      } catch {
+        // leave zeros
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="command-mode">
       <SectionIntro title="Garden Operations Center" subtitle="Real-time overview of tasks, reminders, zone health, and Eve's project-management recommendations." />
       <div className="stat-grid">
-        {[
-          ["28", "Tasks today"],
-          ["12", "Needs water"],
-          ["7", "Trays active"],
-          ["15", "Propagations"],
-          ["82", "Plants total"],
-        ].map(([value, label]) => <MetricCard key={label} value={value} label={label} />)}
+        <MetricCard
+          value={String(counts.tasks)}
+          label="Tasks today"
+          onClick={() => checklistRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        />
+        <MetricCard value={String(counts.attention)} label="Needs attention" onClick={() => nav.openPhotos("Needs attention")} />
+        <MetricCard value={String(counts.trays)} label="Trays active" onClick={() => nav.openSection("seedtrays")} />
+        <MetricCard value={String(counts.propagations)} label="Propagations" onClick={() => nav.openSection("propagation")} />
+        <MetricCard value={String(counts.plants)} label="Plants total" onClick={() => nav.openSection("plants")} />
       </div>
-      <div className="two-col">
-        <DarkPanel title="Task Priorities">
-          {tasks.slice(0, 5).map((task) => <PriorityRow key={task.title} task={task.title} priority={task.priority} />)}
+      <div className="two-col" ref={checklistRef}>
+        <DarkPanel title="Today's operations checklist">
+          {openTasks.length ? (
+            openTasks.map((task) => <PriorityRow key={task.title} task={task.title} priority={task.priority} />)
+          ) : (
+            <p>All caught up — nothing open on today&apos;s list. 🌿</p>
+          )}
+          <button className="text-link ops-alltasks" onClick={() => nav.openSection("today")}>Open the full list on Today →</button>
         </DarkPanel>
         <DarkPanel title="Zone Health Overview">
           <div className="map-grid">{zones.slice(0, 9).map((zone) => <span key={zone.name}>{zone.name.split(" ")[0]}</span>)}</div>
@@ -823,16 +942,10 @@ type Tray = {
   harvestedAt?: string;
 };
 
-const TRAY_PRESETS: { name: string; days: number }[] = [
-  { name: "Radish", days: 8 },
-  { name: "Arugula", days: 9 },
-  { name: "Broccoli", days: 10 },
-  { name: "Kale", days: 10 },
-  { name: "Mizuna", days: 10 },
-  { name: "Pea Shoots", days: 12 },
-  { name: "Sunflower", days: 12 },
-  { name: "Basil", days: 18 },
-];
+const TRAY_PRESETS: { name: string; days: number }[] = MICROGREENS.map((green) => ({
+  name: green.name,
+  days: green.days,
+}));
 
 function trayStage(progress: number) {
   if (progress < 0.1) return "Soak";
@@ -849,6 +962,7 @@ function MicrogreensSection({ env }: { env: Environment }) {
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState(TRAY_PRESETS[0].name);
   const [newDays, setNewDays] = useState(String(TRAY_PRESETS[0].days));
+  const [openGuide, setOpenGuide] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/trays")
@@ -904,6 +1018,18 @@ function MicrogreensSection({ env }: { env: Environment }) {
     setNewName(name);
     const preset = TRAY_PRESETS.find((entry) => entry.name === name);
     if (preset) setNewDays(String(preset.days));
+  };
+
+  const startFromGuide = async (green: Microgreen) => {
+    const response = await fetch("/api/trays", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: green.name, harvestDays: green.days }),
+    }).catch(() => null);
+    const data = await response?.json();
+    if (data && Array.isArray(data.trays)) setTrays(data.trays);
+    setOpenGuide(null);
+    document.querySelector(".tray-table")?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const greenhouse = env.greenhouse;
@@ -1008,7 +1134,69 @@ function MicrogreensSection({ env }: { env: Environment }) {
           ))}
         </div>
       )}
+
+      <div className="micro-library">
+        <h3 className="apothecary-subhead">Microgreens library — know each tray before you sow it</h3>
+        <p className="micro-library-note">
+          Tap a card for soak, blackout, and harvest timing, flavor and nutrition notes, and growing tips — then start a tray right from the guide.
+        </p>
+        <div className="micro-grid">
+          {MICROGREENS.map((green) => (
+            <button
+              key={green.key}
+              className={`micro-card ${openGuide === green.key ? "active" : ""}`}
+              onClick={() => setOpenGuide((current) => (current === green.key ? null : green.key))}
+            >
+              <span className="micro-card-photo">
+                <img src={microPhoto(green.key)} alt={`${green.name} microgreens`} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+              </span>
+              <span className="micro-card-body">
+                <strong>{green.name}</strong>
+                <span className="micro-card-meta">{green.days} days · {green.difficulty}</span>
+                <span className="micro-card-flavor">{green.flavor}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        {openGuide && (
+          <MicrogreenGuide
+            green={MICROGREENS.find((green) => green.key === openGuide)!}
+            onClose={() => setOpenGuide(null)}
+            onStart={startFromGuide}
+          />
+        )}
+      </div>
     </div>
+  );
+}
+
+function MicrogreenGuide({ green, onClose, onStart }: { green: Microgreen; onClose: () => void; onStart: (green: Microgreen) => void }) {
+  return (
+    <article className="micro-guide">
+      <button className="plant-remove" onClick={onClose} aria-label="Close guide"><X size={14} /></button>
+      <div className="micro-guide-photo">
+        <img src={microPhoto(green.key)} alt={`${green.name} microgreens`} onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      </div>
+      <div className="micro-guide-body">
+        <h3>{green.name}</h3>
+        <div className="micro-timing">
+          <span><strong>{green.soakHours ? `${green.soakHours} hr` : "No"}</strong> soak</span>
+          <span><strong>{green.blackoutDays} days</strong> blackout</span>
+          <span><strong>{green.days} days</strong> to harvest</span>
+          <span><strong>{green.seedPerTray}</strong> per 10×20 tray</span>
+          <span><strong>{green.regrows ? "Yes" : "No"}</strong> regrows</span>
+          <span><strong>{green.difficulty}</strong> difficulty</span>
+        </div>
+        <p><em>Flavor:</em> {green.flavor}</p>
+        <p><em>Nutrition:</em> {green.nutrition}</p>
+        <ul className="micro-tips">
+          {green.tips.map((tip) => <li key={tip}>{tip}</li>)}
+        </ul>
+        <button className="primary-button" onClick={() => onStart(green)}>
+          <Plus size={15} /> Start a {green.name.toLowerCase()} tray
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -1275,9 +1463,75 @@ function PlantLibrary() {
   );
 }
 
+function ZonePlantGrid({ plants, onOpen }: { plants: PlantDetail[]; onOpen: (plant: PlantDetail) => void }) {
+  return (
+    <div className="plant-grid">
+      {plants.map((plant) => (
+        <article className="plant-card" key={plant.id}>
+          <button className="plant-card-open" onClick={() => onOpen(plant)}>
+            {plant.photo ? (
+              <img src={plant.photo} alt={plant.name} />
+            ) : (
+              <div className="plant-photo-placeholder"><Leaf size={26} /></div>
+            )}
+            <div className="plant-card-body">
+              <h3>{plant.name}</h3>
+              <p>{plant.origin}</p>
+              <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
+            </div>
+          </button>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+const BERRY_VISION: { name: string; have: boolean; note: string }[] = [
+  { name: "Blueberry", have: true, note: "Your two bushes — they want acidic soil, so keep them in pots or amended beds with peat and sulfur; Utah soil fights them." },
+  { name: "Strawberry", have: true, note: "Already gratefully here — edge the beds with them and let a few runners fill the gaps." },
+  { name: "Raspberry", have: false, note: "Coming soon — plant 'Heritage' or 'Caroline' fall-bearers and simply mow the canes each February." },
+  { name: "Blackberry", have: false, note: "'Triple Crown' thornless thrives in Orem and out-yields everything on a simple two-wire fence." },
+  { name: "Honeyberry", have: false, note: "Haskap — blooms through late frosts, fruits before strawberries, laughs at zone 6 winters. Plant two for pollination." },
+  { name: "Currant", have: false, note: "Black or red — happy in the part-shade corners other berries refuse, and they love our cool springs." },
+  { name: "Gooseberry", have: false, note: "'Hinnomaki Red' — pie-perfect, thrives here, and nearly zero care once established." },
+  { name: "Serviceberry", have: false, note: "Saskatoon — a Utah native that's both ornamental and delicious; blueberry-ish fruit without the acid-soil drama." },
+  { name: "Elderberry", have: false, note: "For the apothecary shelf — syrup from your own gratitude garden. Give it the moist corner." },
+];
+
+function BerryGratefulVision() {
+  return (
+    <div className="berry-vision">
+      <p className="berry-vision-lead">
+        The vision: a garden where every plant is a thank-you — <strong>Berry Berry Grateful</strong>. Blueberries and
+        strawberries are home; raspberries are on the way. Here&apos;s the full berry patch this corner of Orem can carry:
+      </p>
+      <div className="berry-vision-grid">
+        {BERRY_VISION.map((berry) => {
+          const photo = plantPhoto(berry.name);
+          return (
+            <article key={berry.name} className={`berry-card ${berry.have ? "have" : ""}`}>
+              {photo && <img src={photo} alt={berry.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+              <div className="berry-card-body">
+                <strong>{berry.name} {berry.have ? "✓" : ""}</strong>
+                <em>{berry.have ? "Berry berry here" : "Berry berry soon (on the wishlist)"}</em>
+                <p>{berry.note}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <p className="berry-vision-note">
+        Orem-friendly picks above are on your wishlist under this zone. One honest note: blueberries are the only
+        rebels here — Utah&apos;s alkaline soil means they live their best life in containers of acidified mix.
+      </p>
+    </div>
+  );
+}
+
 function ZonesSection({ focus }: { focus: string | null }) {
   const [selected, setSelected] = useState<string | null>(focus);
   const [zonePlants, setZonePlants] = useState<PlantDetail[]>([]);
+  const [storedWish, setStoredWish] = useState<WishItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [detail, setDetail] = useState<PlantDetail | null>(null);
 
@@ -1290,10 +1544,12 @@ function ZonesSection({ focus }: { focus: string | null }) {
     setLoaded(false);
     const load = async () => {
       try {
-        const [plantsData, journalData] = await Promise.all([
+        const [plantsData, journalData, wishData] = await Promise.all([
           (await fetch("/api/plants")).json(),
           (await fetch("/api/journal")).json(),
+          (await fetch("/api/wishlist")).json(),
         ]);
+        setStoredWish(Array.isArray(wishData.items) ? wishData.items : []);
         const entries: PlantPhotoRecord[] = Array.isArray(journalData.entries) ? journalData.entries : [];
         const journalById = new Map(entries.map((e) => [e.id, e]));
         const library: PlantDetail[] = (Array.isArray(plantsData.plants) ? plantsData.plants : [])
@@ -1334,38 +1590,53 @@ function ZonesSection({ focus }: { focus: string | null }) {
   const zone = zones.find((entry) => entry.name === selected);
 
   if (selected && zone) {
-    const zoneWishlist = wishlistItems.filter((item) => item.category === selected);
+    const zoneWishlist = storedWish.length
+      ? storedWish.filter((item) => item.category === selected)
+      : wishlistItems.filter((item) => item.category === selected);
     return (
       <div className="section-stack">
         <button className="text-link" onClick={() => setSelected(null)}>← All garden zones</button>
-        <SectionIntro title={zone.name} subtitle={`Mood: ${zone.mood} • Status: ${zone.status}`} />
+        <SectionIntro
+          title={zone.name === "Gratitude Garden" ? "Gratitude Garden — Berry Berry Grateful 🫐" : zone.name}
+          subtitle={`Mood: ${zone.mood} • Status: ${zone.status}`}
+        />
 
-        <h3 className="apothecary-subhead">Plants in this zone</h3>
+        {zone.name === "Gratitude Garden" && <BerryGratefulVision />}
+        {zone.name === "Tea Garden" && <TeaGardenVision />}
+        {zone.name === "Meditation Garden" && <MeditationVision />}
+        {zone.name === "Apothecary Garden" && <ApothecaryVision />}
+        {zone.name === "Fairy Garden" && <FairyGardenVision />}
+
         {!loaded && <p className="empty-note">Checking your plant records...</p>}
         {loaded && !zonePlants.length && (
-          <p className="empty-note">
-            No plants recorded here yet. Upload photos in the Photo Journal and set their zone to
-            "{zone.name}" — they'll show up here automatically.
-          </p>
+          <>
+            <h3 className="apothecary-subhead">Plants in this zone</h3>
+            <p className="empty-note">
+              No plants recorded here yet. Upload photos in the Photo Journal and set their zone to
+              "{zone.name}" — they'll show up here automatically.
+            </p>
+          </>
         )}
-        <div className="plant-grid">
-          {zonePlants.map((plant) => (
-            <article className="plant-card" key={plant.id}>
-              <button className="plant-card-open" onClick={() => setDetail(plant)}>
-                {plant.photo ? (
-                  <img src={plant.photo} alt={plant.name} />
-                ) : (
-                  <div className="plant-photo-placeholder"><Leaf size={26} /></div>
-                )}
-                <div className="plant-card-body">
-                  <h3>{plant.name}</h3>
-                  <p>{plant.origin}</p>
-                  <span className={`health-pill ${plant.health.toLowerCase().replace(" ", "-")}`}>{plant.health}</span>
-                </div>
-              </button>
-            </article>
-          ))}
-        </div>
+        {loaded && zonePlants.length > 0 && zone.name === "Tea Garden" ? (
+          (() => {
+            const { tea, decorative } = teaPlantSplit(zonePlants);
+            return (
+              <>
+                <h3 className="apothecary-subhead">Tea plants <em className="lesson-minutes">· fills the pot</em></h3>
+                {tea.length ? <ZonePlantGrid plants={tea} onOpen={setDetail} /> : <p className="empty-note">No tea plants recorded yet — photograph your mint & friends and set their zone here.</p>}
+                <h3 className="apothecary-subhead">Decorative cottage plants <em className="lesson-minutes">· fills the vase</em></h3>
+                {decorative.length ? <ZonePlantGrid plants={decorative} onOpen={setDetail} /> : <p className="empty-note">The cottage-flower bed awaits — sweet peas, hollyhocks, cosmos.</p>}
+              </>
+            );
+          })()
+        ) : (
+          loaded && zonePlants.length > 0 && (
+            <>
+              <h3 className="apothecary-subhead">Plants in this zone</h3>
+              <ZonePlantGrid plants={zonePlants} onOpen={setDetail} />
+            </>
+          )
+        )}
 
         {detail && <PlantDetailModal plant={detail} onClose={() => setDetail(null)} />}
 
@@ -1684,13 +1955,55 @@ type WishItem = {
   price: string;
   priority: "High" | "Medium" | "Low";
   note?: string;
+  link?: string;
+  image?: string;
 };
 
 function Wishlist({ focus }: { focus: string | null }) {
   const highlightRef = useRef<HTMLElement | null>(null);
   const [items, setItems] = useState<WishItem[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "" });
+  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "", link: "", image: "" });
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importNote, setImportNote] = useState("");
+
+  const importFromLink = async () => {
+    const url = importUrl.trim();
+    if (!url || importing) return;
+    setImporting(true);
+    setImportNote("Reading the product page…");
+    try {
+      const response = await fetch("/api/wishlist/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await response.json();
+      if (data.preview) {
+        setForm({
+          name: data.preview.name ?? "",
+          category: data.preview.category ?? "General",
+          price: data.preview.price || "",
+          priority: "Medium",
+          note: "",
+          link: data.preview.link ?? url,
+          image: data.preview.image ?? "",
+        });
+        setShowForm(true);
+        setImportNote(data.preview.image ? "Details filled in below — adjust anything, then add it." : "Filled in what the page shared (no photo found) — adjust and add.");
+        setImportUrl("");
+      } else {
+        setImportNote(data.error ?? "Couldn't read that link — fill the form in manually below.");
+        setForm((current) => ({ ...current, link: url }));
+        setShowForm(true);
+      }
+    } catch {
+      setImportNote("Couldn't reach that page — fill the form in manually below.");
+    } finally {
+      setImporting(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/wishlist")
@@ -1717,7 +2030,8 @@ function Wishlist({ focus }: { focus: string | null }) {
     });
     const data = await response.json();
     if (Array.isArray(data.items)) setItems(data.items);
-    setForm({ name: "", category: form.category, price: "", priority: "Medium", note: "" });
+    setForm({ name: "", category: form.category, price: "", priority: "Medium", note: "", link: "", image: "" });
+    setImportNote("");
     setShowForm(false);
   };
 
@@ -1741,6 +2055,20 @@ function Wishlist({ focus }: { focus: string | null }) {
           <Plus size={16} /> Add wishlist item
         </button>
       </div>
+
+      <div className="wish-import">
+        <input
+          type="url"
+          value={importUrl}
+          onChange={(e) => setImportUrl(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); importFromLink(); } }}
+          placeholder="Paste a product link (Amazon, anywhere) — item, photo, and price fill in automatically"
+        />
+        <button className="secondary-button" onClick={importFromLink} disabled={importing}>
+          {importing ? "Reading…" : "Fetch details"}
+        </button>
+      </div>
+      {importNote && <p className="wish-import-note">{importNote}</p>}
 
       {showForm && (
         <form className="wish-form" onSubmit={addItem}>
@@ -1768,6 +2096,19 @@ function Wishlist({ focus }: { focus: string | null }) {
             Note (what it's for)
             <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Optional" />
           </label>
+          <label className="wish-form-note">
+            Link to purchase
+            <input type="url" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://…" />
+          </label>
+          <label className="wish-form-note">
+            Photo (image URL)
+            <input type="url" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://…" />
+          </label>
+          {form.image && (
+            <span className="wish-form-preview">
+              <img src={form.image} alt="Item preview" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            </span>
+          )}
           <button className="primary-button" type="submit">Add to wishlist</button>
         </form>
       )}
@@ -1783,10 +2124,15 @@ function Wishlist({ focus }: { focus: string | null }) {
                 const deletable = !item.id.startsWith("default-");
                 return (
                   <article
-                    className={`wish-card ${focused ? "focused" : ""}`}
+                    className={`wish-card ${focused ? "focused" : ""} ${item.image ? "has-photo" : ""}`}
                     key={item.id}
                     ref={focused ? (node) => { highlightRef.current = node; } : undefined}
                   >
+                    {item.image && (
+                      <span className="wish-photo">
+                        <img src={item.image} alt={item.name} loading="lazy" onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }} />
+                      </span>
+                    )}
                     <header>
                       <h4>{item.name}</h4>
                       <span className={`prop-badge ${item.priority === "High" ? "ready" : item.priority === "Medium" ? "soon" : "wait"}`}>
@@ -1796,6 +2142,11 @@ function Wishlist({ focus }: { focus: string | null }) {
                     {item.note && <p>{item.note}</p>}
                     <footer>
                       <span>{item.price}</span>
+                      {item.link && (
+                        <a className="wish-buy" href={item.link} target="_blank" rel="noreferrer">
+                          Purchase <ExternalLink size={12} />
+                        </a>
+                      )}
                       {deletable && (
                         <button className="wish-delete" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`}>
                           <X size={13} />
@@ -2033,13 +2384,66 @@ function GardenMap() {
           </span>
         </figcaption>
       </figure>
+
+      <SunMap />
+
       <div className="map-canvas">{zones.slice(0, 12).map((zone) => <span key={zone.name}>{zone.name}</span>)}</div>
     </div>
   );
 }
 
 function Quotes() {
-  return <CardCollection title="Scripture & Quote Library" subtitle="Attach light, growth, roots, harvest, stewardship, and renewal quotes to plants, zones, journal entries, lessons, and daily plans." items={quoteTopics} />;
+  const [openTopic, setOpenTopic] = useState<string | null>(null);
+  const plan = openTopic ? STUDY_PLAN_BY_TOPIC.get(openTopic) ?? null : null;
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Garden Sanctuary Study"
+        subtitle="A simple study plan for each theme — a few passages to read, a question to ponder, and a practice to carry into the garden. Tap a topic and take it outside."
+      />
+      <div className="collection-grid">
+        {quoteTopics.map((topic) => (
+          <button
+            className={`collection-card zone-card ${openTopic === topic ? "active" : ""}`}
+            key={topic}
+            onClick={() => setOpenTopic((current) => (current === topic ? null : topic))}
+          >
+            <Leaf size={18} />
+            <span>{topic}</span>
+            <ChevronRight size={16} />
+          </button>
+        ))}
+      </div>
+
+      {plan && (
+        <article className="study-plan">
+          <button className="plant-remove" onClick={() => setOpenTopic(null)} aria-label="Close study plan"><X size={14} /></button>
+          <h3>{plan.topic}</h3>
+          <p className="study-invitation">{plan.invitation}</p>
+          <h4>Read</h4>
+          <ul className="study-read">
+            {plan.read.map((entry) => (
+              <li key={entry.ref}><strong>{entry.ref}</strong> — “{entry.line}”</li>
+            ))}
+          </ul>
+          <h4>Ponder</h4>
+          <p className="study-ponder">{plan.ponder}</p>
+          <h4>Practice in the garden</h4>
+          <p className="study-practice">{plan.practice}</p>
+          <button
+            className="secondary-button"
+            onClick={() => askEve(`I'm studying the theme "${plan.topic}" in my garden sanctuary today. Share one more scripture or garden reflection on ${plan.topic.toLowerCase()}, and one gentle question to sit with while I tend the plants.`)}
+          >
+            <Bot size={15} /> Ask Eve to add to this study
+          </button>
+        </article>
+      )}
+      {openTopic && !plan && (
+        <p className="empty-note">A study plan for {openTopic} is coming — ask Eve about it in the meantime.</p>
+      )}
+    </div>
+  );
 }
 
 function Learning() {
@@ -2085,10 +2489,26 @@ function Reminders() {
   );
 }
 
-function Photos() {
+function Photos({ focus = null }: { focus?: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<PlantPhotoRecord[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [healthFilter, setHealthFilter] = useState<PlantPhotoRecord["health"] | null>(
+    focus === "Thriving" || focus === "Watch" || focus === "Needs attention" ? focus : null,
+  );
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focus === "Thriving" || focus === "Watch" || focus === "Needs attention") {
+      setHealthFilter(focus);
+      setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+  }, [focus]);
+
+  const toggleHealthFilter = (health: PlantPhotoRecord["health"]) => {
+    setHealthFilter((current) => (current === health ? null : health));
+    setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  };
   const [batchNote, setBatchNote] = useState("Upload photos of every plant — greenhouse, garden, house, and yard. Photos now save permanently to your garden data.");
 
   useEffect(() => {
@@ -2323,6 +2743,8 @@ function Photos() {
     attention: records.filter((record) => record.health === "Needs attention").length,
   };
 
+  const visibleRecords = healthFilter ? records.filter((record) => record.health === healthFilter) : records;
+
   return (
     <div className="section-stack">
       <SectionIntro
@@ -2364,16 +2786,26 @@ function Photos() {
         </article>
 
         <div className="health-summary-grid">
-          <MetricCard value={String(records.length)} label="Photos logged" />
-          <MetricCard value={String(counts.thriving)} label="Looking healthy" />
-          <MetricCard value={String(counts.watch)} label="Watch closely" />
-          <MetricCard value={String(counts.attention)} label="Needs attention" />
+          <MetricCard value={String(records.length)} label="Photos logged" onClick={() => setHealthFilter(null)} active={healthFilter === null} />
+          <MetricCard value={String(counts.thriving)} label="Looking healthy" onClick={() => toggleHealthFilter("Thriving")} active={healthFilter === "Thriving"} />
+          <MetricCard value={String(counts.watch)} label="Watch closely" onClick={() => toggleHealthFilter("Watch")} active={healthFilter === "Watch"} />
+          <MetricCard value={String(counts.attention)} label="Needs attention" onClick={() => toggleHealthFilter("Needs attention")} active={healthFilter === "Needs attention"} />
         </div>
       </div>
 
+      {healthFilter && (
+        <div className="health-filter-banner" ref={boardRef}>
+          <span>
+            Showing <strong>{visibleRecords.length}</strong> {healthFilter === "Needs attention" ? "plants that need attention" : healthFilter === "Watch" ? "plants to watch closely" : "healthy plants"}
+            {healthFilter === "Needs attention" ? " — most urgent first" : ""}
+          </span>
+          <button onClick={() => setHealthFilter(null)}>Show all photos</button>
+        </div>
+      )}
+
       <div className="diagnosis-board">
-        {records.length ? (
-          records.map((record) => (
+        {visibleRecords.length ? (
+          visibleRecords.map((record) => (
             <article className={`diagnosis-card ${record.health.toLowerCase().replace(" ", "-")}`} key={record.id}>
               <div className="diagnosis-photo">
                 {record.photo ? <img src={record.photo} alt={`${record.plant} upload`} /> : <Camera size={28} />}
@@ -2572,7 +3004,61 @@ function CareNote({ label, value }: { label: string; value: string }) {
 }
 
 function Landscape() {
-  return <CardCollection title="Edible Landscape Planner" subtitle="Plan fruit, herbs, flowers, living water moments, vines, pollinator edges, paths, and harvest rhythms." items={["Sun Garden berries", "Vineyard pathway", "Tea garden border", "Pollinator flower bands", "Herb spiral", "Shade garden greens"]} />;
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const open = LANDSCAPE_PROJECTS.find((project) => project.key === openKey) ?? null;
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Edible Landscape Planner"
+        subtitle="Plan fruit, herbs, flowers, living water moments, vines, pollinator edges, paths, and harvest rhythms. Tap a project for plant picks, layout, and Orem timing."
+      />
+      <div className="collection-grid">
+        {LANDSCAPE_PROJECTS.map((project) => (
+          <button
+            className={`collection-card zone-card ${openKey === project.key ? "active" : ""}`}
+            key={project.key}
+            onClick={() => setOpenKey((current) => (current === project.key ? null : project.key))}
+          >
+            <Leaf size={18} />
+            <span>{project.name}</span>
+            <ChevronRight size={16} />
+          </button>
+        ))}
+      </div>
+
+      {open && (
+        <article className="landscape-guide">
+          <button className="plant-remove" onClick={() => setOpenKey(null)} aria-label="Close guide"><X size={14} /></button>
+          <div className="landscape-guide-photo">
+            <img src={plantPhoto(open.heroPlant) ?? undefined} alt={open.name} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          </div>
+          <div className="landscape-guide-body">
+            <h3>{open.name}</h3>
+            <p className="landscape-tagline">{open.tagline}</p>
+            <p>{open.why}</p>
+            <h4>What to plant</h4>
+            <ul className="landscape-plants">
+              {open.plants.map((plant) => (
+                <li key={plant.name}><strong>{plant.name}</strong> — {plant.note}</li>
+              ))}
+            </ul>
+            <h4>How to lay it out</h4>
+            <ol className="landscape-layout">
+              {open.layout.map((step) => <li key={step}>{step}</li>)}
+            </ol>
+            <p className="landscape-timing"><strong>Orem timing:</strong> {open.oremTiming}</p>
+            <button
+              className="secondary-button"
+              onClick={() => askEve(`Design the "${open.name}" project for my Orem yard: ${open.tagline.toLowerCase()}. Use my existing plants and seed library where possible, give me a shopping list for the rest, and a step-by-step plan for the next month.`)}
+            >
+              <Bot size={15} /> Ask Eve to plan this for my yard
+            </button>
+          </div>
+        </article>
+      )}
+    </div>
+  );
 }
 
 const EVE_HELP_CARDS: { label: string; prompt?: string; opensPhotos?: boolean }[] = [
@@ -2647,8 +3133,14 @@ function Metric({ value, label }: { value: string; label: string }) {
   return <div><strong>{value}</strong><span>{label}</span></div>;
 }
 
-function MetricCard({ value, label }: { value: string; label: string }) {
-  return <div className="metric-card"><strong>{value}</strong><span>{label}</span></div>;
+function MetricCard({ value, label, onClick, active }: { value: string; label: string; onClick?: () => void; active?: boolean }) {
+  if (!onClick) return <div className="metric-card"><strong>{value}</strong><span>{label}</span></div>;
+  return (
+    <button className={`metric-card clickable ${active ? "active" : ""}`} onClick={onClick} title={active ? "Click to show all photos again" : `Click to see only "${label}" plants`}>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </button>
+  );
 }
 
 function DarkPanel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -2711,607 +3203,319 @@ function SeedVaultRedirect() {
 }
 
 function SoilPrepSection() {
-  const [expandedTab, setExpandedTab] = useState<
-    "recipe" | "calculator" | "tips" | "lowes" | "mixing"
-  >("recipe");
   const [selectedBed, setSelectedBed] = useState(0);
 
-  const melsMixRecipe = {
-    name: "Mel's Mix",
-    ratio: "1/3 : 1/3 : 1/3",
-    ingredients: [
-      {
-        name: "Compost",
-        portion: "1/3",
-        description: "High-quality finished compost (dark, crumbly, earthy)",
-        notes: "Use mushroom compost, homemade, or premium bagged compost. NOT fresh manure or garden soil.",
-      },
-      {
-        name: "Peat Moss or Coco Coir",
-        portion: "1/3",
-        description: "Moisture-holding medium",
-        notes: "Peat Moss: traditional, slightly acidic. Coco Coir: sustainable, neutral pH (better for Utah's alkaline water)",
-      },
-      {
-        name: "Vermiculite",
-        portion: "1/3",
-        description: "Expanded mica mineral for aeration and water retention",
-        notes: "Holds water & nutrients. Use Vermiculite over Perlite for Utah's dry climate.",
-      },
-    ],
-    benefits: [
-      "Perfect drainage — water drains quickly but doesn't dry instantly",
-      "Lightweight — easy to work with, no compaction",
-      "Fluffy texture — roots grow easily with no resistance",
-      "Balanced nutrients — compost feeds, vermiculite holds them",
-      "Disease-free — clean ingredients reduce soil diseases",
-      "Reusable — refresh with compost each year, lasts 3+ years",
-    ],
-  };
-
-  const bedCalculations = [
+  const beds = [
     {
-      bedSize: "4×4×6\" (Square Foot Garden bed)",
+      label: "4×4 SFG bed",
+      size: "4×4 ft, 6 in deep",
       totalCuFt: 8,
-      compost: 2.7,
-      pestCoir: 2.7,
-      vermiculite: 2.7,
-      lowesShoppingList: [
+      perPart: 2.7,
+      shopping: [
         "3 bags compost (2.8 cu ft each)",
-        "1-2 coco coir blocks (expands to ~5 cu ft) OR 2 bags peat moss",
+        "1–2 coco coir blocks (expands to ~5 cu ft) or 2 bags peat moss",
         "3 bags vermiculite (0.9 cu ft each)",
       ],
-      estimatedCost: "$25-35",
+      cost: "$25–35",
     },
     {
-      bedSize: "4×8×6\" (Raised bed)",
+      label: "4×8 raised bed",
+      size: "4×8 ft, 6 in deep",
       totalCuFt: 16,
-      compost: 5.3,
-      pestCoir: 5.3,
-      vermiculite: 5.3,
-      lowesShoppingList: [
+      perPart: 5.3,
+      shopping: [
         "6 bags compost (2.8 cu ft each)",
-        "2 coco coir blocks OR 3 bags peat moss (2 cu ft each)",
+        "2 coco coir blocks or 3 bags peat moss (2 cu ft each)",
         "6 bags vermiculite (0.9 cu ft each)",
       ],
-      estimatedCost: "$60-80",
+      cost: "$60–80",
     },
     {
-      bedSize: "Microgreens tray (10×20 flat)",
+      label: "Microgreens tray",
+      size: "10×20 flat",
       totalCuFt: 0.67,
-      compost: 0.22,
-      pestCoir: 0.22,
-      vermiculite: 0.22,
-      lowesShoppingList: [
-        "1 small bag compost (share with other trays)",
-        "Use remaining coco coir from blocks",
-        "Use remaining vermiculite",
+      perPart: 0.22,
+      shopping: [
+        "1 small bag compost (shares across many trays)",
+        "Leftover coco coir from the blocks",
+        "Leftover vermiculite",
       ],
-      estimatedCost: "$2-3 per tray",
+      cost: "$2–3 per tray",
     },
   ];
+  const bed = beds[selectedBed];
 
-  const utahSpecificTips = [
-    {
-      topic: "Peat Moss vs. Coco Coir",
-      recommendation: "Choose Coco Coir",
-      reason: "Utah's water is alkaline; coco coir has neutral pH and balances alkalinity.",
-    },
-    {
-      topic: "Vermiculite is Critical",
-      recommendation: "Do not substitute with Perlite",
-      reason: "Utah's air is very dry. Vermiculite retains water 3-4x better than Perlite.",
-    },
-    {
-      topic: "Compost Quality",
-      recommendation: "Use finished compost only",
-      reason: "Avoid fresh manure (too hot for seedlings). Age homemade compost 6+ months.",
-    },
-  ];
-
-  const mixingInstructions = [
-    {
-      step: 1,
-      task: "Gather materials",
-      details: "Have all compost, coco coir/peat moss, and vermiculite ready.",
-    },
-    {
-      step: 2,
-      task: "Layer compost",
-      details: "Spread compost evenly across bed (~2 inches deep).",
-    },
-    {
-      step: 3,
-      task: "Add peat moss or coco coir",
-      details: "Spread evenly on top of compost (~2 inches).",
-    },
-    {
-      step: 4,
-      task: "Add vermiculite",
-      details: "Top layer of vermiculite (~2 inches).",
-    },
-    {
-      step: 5,
-      task: "Mix thoroughly",
-      details: "Use shovel or garden fork to turn mixture 5-6 times.",
-    },
-    {
-      step: 6,
-      task: "Water lightly",
-      details: "Helps settle and activates beneficial microbes.",
-    },
-    {
-      step: 7,
-      task: "Let it rest (optional)",
-      details: "Wait 1 week before planting if possible.",
-    },
-  ];
-
-  const lowesShoppingTips = [
-    "Call ahead to confirm vermiculite in stock (often overlooked, may need to ask)",
-    "Buy compost in spring/summer when prices are lowest",
-    "Check bag sizes — different brands vary (2 cu ft vs. 2.8 cu ft)",
-    "Coco coir blocks are cheaper than bagged peat moss when you do the math",
-    "Ask for help loading bags — they're heavy!",
+  const steps = [
+    { task: "Gather materials", details: "Have all compost, coco coir or peat moss, and vermiculite on hand before you open a bag." },
+    { task: "Layer compost", details: "Spread it evenly across the bed, about 2 inches deep." },
+    { task: "Add coco coir", details: "An even 2-inch layer on top of the compost." },
+    { task: "Add vermiculite", details: "The final 2-inch layer." },
+    { task: "Mix thoroughly", details: "Turn the whole bed 5–6 times with a fork — the mix should look uniform, no streaks." },
+    { task: "Water lightly", details: "Settles the mix and wakes up the compost's microbes." },
+    { task: "Rest a week if you can", details: "Optional, but the mix mellows and settles before seeds go in." },
   ];
 
   return (
     <div className="section-stack">
-      <SectionIntro 
-        title="Soil Prep: Mel's Mix" 
-        subtitle="The proven recipe for square foot gardening. Equal parts compost, coco coir, and vermiculite." 
+      <SectionIntro
+        title="Soil Prep — Mel's Mix"
+        subtitle="The square-foot-gardening soil recipe: equal parts compost, coco coir, and vermiculite — with Utah substitutions and per-bed shopping math."
       />
 
-      {/* Recipe Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("recipe")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>📋 The Recipe: {melsMixRecipe.ratio}</span>
-          {expandedTab === "recipe" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
+      {/* The recipe, told like the compost card */}
+      <div className="compost-recipe">
+        <div className="compost-recipe-col greens">
+          <h3>Compost <span>· 1/3 · the food</span></h3>
+          <p>Dark, crumbly, finished compost — mushroom, homemade, or premium bagged. Never fresh manure or garden soil.</p>
+        </div>
+        <div className="compost-recipe-plus">+</div>
+        <div className="compost-recipe-col browns">
+          <h3>Coco coir <span>· 1/3 · the sponge</span></h3>
+          <p>Holds moisture between waterings. Choose coir over peat here — neutral pH balances Utah&apos;s alkaline water.</p>
+        </div>
+        <div className="compost-recipe-plus">+</div>
+        <div className="compost-recipe-col extras">
+          <h3>Vermiculite <span>· 1/3 · the lungs</span></h3>
+          <p>Expanded mica that aerates and holds water. In Orem&apos;s dry air, don&apos;t substitute perlite — it dries out 3–4× faster.</p>
+        </div>
+      </div>
 
-        {expandedTab === "recipe" && (
-          <div className="p-4 space-y-4 border-t">
-            {melsMixRecipe.ingredients.map((ingredient, i) => (
-              <div key={i} className="border-l-4 border-amber-600 pl-3">
-                <h4 className="font-semibold text-amber-900">
-                  {ingredient.portion} — {ingredient.name}
-                </h4>
-                <p className="text-sm text-gray-700 mt-1">{ingredient.description}</p>
-                <p className="text-xs text-gray-600 mt-1">💡 {ingredient.notes}</p>
-              </div>
-            ))}
+      <div className="soil-why">
+        <h3>Why the mix works</h3>
+        <ul>
+          <li>Drains fast but never dries instantly — the balance beds need in a high desert.</li>
+          <li>Light and fluffy: roots meet no resistance and the bed never compacts.</li>
+          <li>Clean ingredients mean almost no soil disease or weed seed.</li>
+          <li>Reusable for 3+ years — just refresh each spring with a few inches of compost (your new piles have a job).</li>
+        </ul>
+      </div>
 
-            <div className="bg-emerald-50 p-3 rounded mt-4 border border-emerald-200">
-              <h4 className="font-semibold text-emerald-900 mb-2">✅ Why Mel's Mix Works</h4>
-              <ul className="text-sm space-y-1 text-emerald-800">
-                {melsMixRecipe.benefits.map((benefit, i) => (
-                  <li key={i}>• {benefit}</li>
-                ))}
-              </ul>
+      {/* Calculator */}
+      <div className="soil-calc">
+        <h3>How much do I need?</h3>
+        <div className="pest-filters soil-bed-tabs">
+          {beds.map((entry, index) => (
+            <button key={entry.label} className={`pest-filter ${selectedBed === index ? "active" : ""}`} onClick={() => setSelectedBed(index)}>
+              {entry.label}
+            </button>
+          ))}
+        </div>
+        <div className="soil-calc-grid">
+          <div className="soil-calc-numbers">
+            <p className="soil-calc-size">{bed.size} — <strong>{bed.totalCuFt} cu ft</strong> of mix</p>
+            <div className="micro-timing">
+              <span><strong>{bed.perPart} cu ft</strong> compost</span>
+              <span><strong>{bed.perPart} cu ft</strong> coco coir</span>
+              <span><strong>{bed.perPart} cu ft</strong> vermiculite</span>
             </div>
+            <p className="soil-calc-cost">Estimated cost: <strong>{bed.cost}</strong></p>
           </div>
-        )}
+          <div className="soil-calc-list">
+            <h4>Shopping list</h4>
+            <ul>
+              {bed.shopping.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+            <p className="soil-shopping-note">
+              Store tips: call ahead for vermiculite (often back-of-store), check bag sizes between brands (2 vs 2.8 cu ft),
+              and coir blocks beat bagged peat on price every time.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Calculator Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("calculator")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>📐 Bed Calculator</span>
-          {expandedTab === "calculator" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "calculator" && (
-          <div className="p-4 space-y-4 border-t">
-            <div className="flex gap-2 flex-wrap">
-              {bedCalculations.map((bed, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedBed(i)}
-                  className={`px-3 py-2 rounded text-sm font-medium transition ${
-                    selectedBed === i
-                      ? "bg-amber-700 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {bed.bedSize.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded space-y-3 border border-blue-200">
-              <h4 className="font-semibold text-blue-900">{bedCalculations[selectedBed].bedSize}</h4>
-
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-gray-600 uppercase">Total Volume</p>
-                  <p className="text-lg font-bold text-amber-700">{bedCalculations[selectedBed].totalCuFt} cu ft</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600 uppercase">Est. Cost</p>
-                  <p className="text-lg font-bold text-orange-600">{bedCalculations[selectedBed].estimatedCost}</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded border border-blue-200">
-                <p className="text-xs font-semibold text-gray-600 mb-2">YOU NEED:</p>
-                <div className="space-y-1 text-sm">
-                  <p>🟤 <strong>Compost:</strong> {bedCalculations[selectedBed].compost} cu ft</p>
-                  <p>🌾 <strong>Coco Coir/Peat:</strong> {bedCalculations[selectedBed].pestCoir} cu ft</p>
-                  <p>✨ <strong>Vermiculite:</strong> {bedCalculations[selectedBed].vermiculite} cu ft</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-3 rounded border border-green-200">
-                <p className="text-xs font-semibold text-gray-600 mb-2">🏪 LOWE'S SHOPPING LIST:</p>
-                <ul className="space-y-1 text-sm">
-                  {bedCalculations[selectedBed].lowesShoppingList.map((item, i) => (
-                    <li key={i}>☑️ {item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Mixing day */}
+      <div className="soil-steps">
+        <h3>Mixing day, step by step</h3>
+        <ol className="compost-method-steps soil-steps-list">
+          {steps.map((step) => (
+            <li key={step.task}><strong>{step.task}.</strong> {step.details}</li>
+          ))}
+        </ol>
       </div>
 
-      {/* Utah Tips Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("tips")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🏜️ Utah-Specific Tips</span>
-          {expandedTab === "tips" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "tips" && (
-          <div className="p-4 space-y-3 border-t">
-            {utahSpecificTips.map((tip, i) => (
-              <div key={i} className="bg-orange-50 p-3 rounded border border-orange-200">
-                <h4 className="font-semibold text-orange-900">{tip.topic}</h4>
-                <p className="text-sm text-orange-800 mt-1"><strong>✓ {tip.recommendation}</strong></p>
-                <p className="text-xs text-orange-700 mt-1">💡 {tip.reason}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Lowe's Tips Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("lowes")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🏪 Lowe's Shopping Tips</span>
-          {expandedTab === "lowes" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "lowes" && (
-          <div className="p-4 space-y-2 border-t">
-            {lowesShoppingTips.map((tip, i) => (
-              <p key={i} className="text-sm flex gap-2">
-                <span className="text-orange-600">→</span> {tip}
-              </p>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Mixing Instructions Tab */}
-      <div className="eve-card">
-        <button
-          onClick={() => setExpandedTab("mixing")}
-          className="w-full text-left flex justify-between items-center font-semibold hover:bg-gray-50 p-3 rounded"
-        >
-          <span>🔨 How to Mix</span>
-          {expandedTab === "mixing" ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {expandedTab === "mixing" && (
-          <div className="p-4 space-y-3 border-t">
-            {mixingInstructions.map((instruction, i) => (
-              <div key={i} className="flex gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-sm">
-                  {instruction.step}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-amber-900">{instruction.task}</h4>
-                  <p className="text-sm text-gray-700 mt-1">{instruction.details}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-green-50 p-4 rounded border border-green-200">
-        <p className="text-sm text-green-900">
-          <strong>✅ Pro tip:</strong> Order all materials 1 week before you plan to fill beds. Most bags are heavy — recruit help for mixing!
-        </p>
+      <div className="compost-columns">
+        <div className="compost-utah">
+          <h3>Utah adjustments</h3>
+          <ul>
+            <li><strong>Coir over peat:</strong> Utah water is alkaline; coir&apos;s neutral pH keeps the bed in range.</li>
+            <li><strong>Vermiculite is non-negotiable:</strong> in this dry air it holds water 3–4× longer than perlite.</li>
+            <li><strong>Compost must be finished:</strong> fresh manure burns seedlings — age homemade compost 6+ months (the Composting section tracks that for you).</li>
+          </ul>
+        </div>
+        <div className="compost-utah">
+          <h3>Close the loop</h3>
+          <p className="soil-loop-note">
+            Once your piles finish, homemade compost replaces the bagged third — Mel&apos;s Mix refreshes drop to
+            just coir and vermiculite. That&apos;s the whole system: greenhouse scraps → compost → beds → dinner.
+          </p>
+          <button
+            className="secondary-button"
+            onClick={() => askEve("Plan my Mel's Mix soil day: how much of each ingredient for my beds, what to buy versus what my compost piles can cover, and the mixing steps in order.")}
+          >
+            <Bot size={15} /> Ask Eve to plan my soil day
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function PestManagementSection() {
-  const [expandedPestId, setExpandedPestId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterBySeverity, setFilterBySeverity] = useState<number | null>(null);
 
-  const filteredPests = pestDatabase.filter((pest: any) => {
+function PestManagementSection() {
+  const [openPestId, setOpenPestId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [minSeverity, setMinSeverity] = useState<number | null>(null);
+
+  const query = searchTerm.trim().toLowerCase();
+  const filteredPests = pestDatabase.filter((pest) => {
     const matchesSearch =
-      pest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pest.identification.some((s: string) =>
-        s.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    const matchesSeverity =
-      filterBySeverity === null || pest.severity >= filterBySeverity;
+      !query ||
+      pest.name.toLowerCase().includes(query) ||
+      pest.identification.some((sign) => sign.toLowerCase().includes(query)) ||
+      pest.damageSymptoms.some((symptom) => symptom.toLowerCase().includes(query));
+    const matchesSeverity = minSeverity === null || pest.severity >= minSeverity;
     return matchesSearch && matchesSeverity;
   });
 
-  const getSeverityColor = (severity: number) => {
-    if (severity <= 2) return "bg-green-100 text-green-700";
-    if (severity <= 3) return "bg-yellow-100 text-yellow-700";
-    return "bg-red-100 text-red-700";
-  };
-
-  const getSeverityLabel = (severity: number) => {
-    if (severity <= 2) return "Low";
-    if (severity <= 3) return "Medium";
-    return "High";
-  };
+  const pressureLabel = (severity: number) => (severity <= 2 ? "Low pressure" : severity <= 3 ? "Moderate pressure" : "High pressure");
+  // Eve's data mixes real plant names with internal ids like "eve-0032" — only show the names.
+  const readablePlants = (plants: string[]) => plants.filter((plant) => !/^eve-\d+/.test(plant));
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-2">🐛 Pest Management & Education</h1>
-        <p className="text-green-50">
-          Common greenhouse pests, identification, treatments, and prevention strategies for Utah Zone 6a/6b.
-        </p>
-      </div>
+    <div className="section-stack">
+      <SectionIntro
+        title="Pest Management"
+        subtitle="Field guide to the ten troublemakers most likely to find an Orem greenhouse — spot them early, treat them gently, escalate only when you must."
+      />
 
-      {/* Search & Filter */}
-      <div className="space-y-3">
+      <div className="pest-toolbar">
         <input
-          type="text"
-          placeholder="Search pests (e.g., spider mites, powdery mildew)..."
+          type="search"
+          className="pest-search"
+          placeholder="Search by pest, sign, or symptom — try webbing, sticky, or yellow leaves"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          onChange={(event) => setSearchTerm(event.target.value)}
         />
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilterBySeverity(null)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === null
-                ? "bg-gray-800 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            All Severities
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(2)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 2
-                ? "bg-green-600 text-white"
-                : "bg-green-100 text-green-700 hover:bg-green-200"
-            }`}
-          >
-            Low
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(3)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 3
-                ? "bg-yellow-600 text-white"
-                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-            }`}
-          >
-            Medium+
-          </button>
-          <button
-            onClick={() => setFilterBySeverity(4)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterBySeverity === 4
-                ? "bg-red-600 text-white"
-                : "bg-red-100 text-red-700 hover:bg-red-200"
-            }`}
-          >
-            High
-          </button>
+        <div className="pest-filters">
+          {[
+            { label: "All", value: null },
+            { label: "High pressure", value: 4 },
+            { label: "Moderate+", value: 3 },
+          ].map((option) => (
+            <button
+              key={option.label}
+              className={`pest-filter ${minSeverity === option.value ? "active" : ""}`}
+              onClick={() => setMinSeverity(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Pest Cards */}
-      <div className="space-y-3">
-        {filteredPests.map((pest: any) => (
-          <div key={pest.id} className="border rounded-lg overflow-hidden">
-            {/* Pest Header */}
-            <button
-              onClick={() =>
-                setExpandedPestId(expandedPestId === pest.id ? null : pest.id)
-              }
-              className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition flex items-center justify-between"
-            >
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{pest.emoji}</span>
-                  <div>
-                    <h3 className="font-bold text-lg">{pest.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {pest.identification[0]}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSeverityColor(pest.severity)}`}>
-                  {getSeverityLabel(pest.severity)} ({pest.severity}/5)
+      <div className="pest-list">
+        {filteredPests.map((pest) => {
+          const open = openPestId === pest.id;
+          return (
+            <article key={pest.id} className={`pest-card ${open ? "open" : ""}`}>
+              <button className="pest-head" onClick={() => setOpenPestId(open ? null : pest.id)}>
+                <span className="pest-photo">
+                  <img src={`/pests/${pest.id}.jpg`} alt={pest.name} loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />
                 </span>
-                {expandedPestId === pest.id ? (
-                  <ChevronUp className="text-gray-600" />
-                ) : (
-                  <ChevronDown className="text-gray-600" />
-                )}
-              </div>
-            </button>
+                <span className="pest-head-body">
+                  <strong>{pest.name}</strong>
+                  <span className="pest-head-sign">{pest.identification[0]}</span>
+                </span>
+                <span className={`pest-pressure sev-${pest.severity}`}>{pressureLabel(pest.severity)}</span>
+                {open ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+              </button>
 
-            {/* Pest Details */}
-            {expandedPestId === pest.id && (
-              <div className="p-4 space-y-4 border-t bg-white">
-                {/* Identification */}
-                <div>
-                  <h4 className="font-bold text-green-700 mb-2">🔍 Identification Signs</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.identification.map((sign: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {sign}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {open && (
+                <div className="pest-detail">
+                  <div className="pest-columns">
+                    <div>
+                      <h4>How to spot it</h4>
+                      <ul>{pest.identification.map((sign) => <li key={sign}>{sign}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4>What the damage looks like</h4>
+                      <ul>{pest.damageSymptoms.map((symptom) => <li key={symptom}>{symptom}</li>)}</ul>
+                    </div>
+                  </div>
 
-                {/* Damage */}
-                <div>
-                  <h4 className="font-bold text-red-700 mb-2">⚠️ Damage Symptoms</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.damageSymptoms.map((symptom: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {symptom}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Natural Treatments */}
-                <div>
-                  <h4 className="font-bold text-blue-700 mb-2">🌿 Natural Treatments</h4>
-                  <div className="space-y-2">
-                    {pest.naturalTreatments.map((treatment: any, i: number) => (
-                      <div key={i} className="bg-blue-50 p-3 rounded text-sm">
-                        <div className="font-semibold text-blue-900">{treatment.name}</div>
-                        <p className="text-blue-800 mt-1">{treatment.description}</p>
-                        <div className="flex justify-between mt-2 text-xs text-blue-700">
-                          <span>Frequency: {treatment.frequency}</span>
-                          <span>Effectiveness: {treatment.effectiveness}/5</span>
-                        </div>
+                  <h4>Treat it naturally first</h4>
+                  <div className="pest-treatments">
+                    {pest.naturalTreatments.map((treatment) => (
+                      <div key={treatment.name} className="pest-treatment">
+                        <strong>{treatment.name}</strong>
+                        <p>{treatment.description}</p>
+                        <span>{treatment.frequency} · effectiveness {treatment.effectiveness}/5</span>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Chemical Treatments */}
-                {pest.chemicalTreatments.length > 0 && (
-                  <div>
-                    <h4 className="font-bold text-orange-700 mb-2">⚗️ Chemical Treatments (If Needed)</h4>
-                    <div className="space-y-2">
-                      {pest.chemicalTreatments.map((treatment: any, i: number) => (
-                        <div key={i} className="bg-orange-50 p-3 rounded text-sm border-l-4 border-orange-500">
-                          <div className="font-semibold text-orange-900">{treatment.name}</div>
-                          <p className="text-orange-800 mt-1">{treatment.description}</p>
-                          <div className="flex justify-between mt-2 text-xs text-orange-700">
-                            <span>Frequency: {treatment.frequency}</span>
-                            <span>Effectiveness: {treatment.effectiveness}/5</span>
+                  {pest.chemicalTreatments.length > 0 && (
+                    <>
+                      <h4>If it gets ahead of you</h4>
+                      <div className="pest-treatments chemical">
+                        {pest.chemicalTreatments.map((treatment) => (
+                          <div key={treatment.name} className="pest-treatment">
+                            <strong>{treatment.name}</strong>
+                            <p>{treatment.description}</p>
+                            <span>{treatment.frequency} · effectiveness {treatment.effectiveness}/5</span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="pest-columns">
+                    <div>
+                      <h4>Keep it from coming back</h4>
+                      <ul>{pest.prevention.map((tip) => <li key={tip}>{tip}</li>)}</ul>
+                    </div>
+                    <div>
+                      <h4>Here in Utah</h4>
+                      <p className="pest-utah">{pest.utahNotes}</p>
+                      <p className="pest-meta">
+                        <strong>Timeline:</strong> {pest.treatmentTimeline}
+                        <br />
+                        <strong>Edibles:</strong> {pest.safeForEdibles ? "treatments above are food-crop safe" : "use caution on food crops — check labels"}
+                      </p>
                     </div>
                   </div>
-                )}
 
-                {/* Prevention */}
-                <div>
-                  <h4 className="font-bold text-purple-700 mb-2">✨ Prevention Tips</h4>
-                  <ul className="space-y-1 text-sm">
-                    {pest.prevention.map((tip: string, i: number) => (
-                      <li key={i} className="text-gray-700">
-                        • {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Utah Notes */}
-                <div className="bg-amber-50 p-3 rounded border border-amber-200">
-                  <h4 className="font-bold text-amber-900 mb-1">🏜️ Utah-Specific Notes</h4>
-                  <p className="text-sm text-amber-900">{pest.utahNotes}</p>
-                </div>
-
-                {/* Timeline & Safety */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <h4 className="font-bold text-gray-700 mb-1">⏱️ Treatment Timeline</h4>
-                    <p className="text-sm text-gray-600">{pest.treatmentTimeline}</p>
-                  </div>
-                  <div className={`p-3 rounded ${pest.safeForEdibles ? "bg-green-50" : "bg-red-50"}`}>
-                    <h4 className={`font-bold mb-1 ${pest.safeForEdibles ? "text-green-700" : "text-red-700"}`}>
-                      🍅 Edibles Safety
-                    </h4>
-                    <p className={`text-sm ${pest.safeForEdibles ? "text-green-600" : "text-red-600"}`}>
-                      {pest.safeForEdibles ? "Safe for food crops" : "Use caution on edibles"}
+                  {readablePlants(pest.affectedPlants).length > 0 && (
+                    <p className="pest-hosts">
+                      <strong>Favorite targets:</strong> {readablePlants(pest.affectedPlants).join(", ")}
                     </p>
-                  </div>
-                </div>
+                  )}
 
-                {/* Affected Plants */}
-                <div>
-                  <h4 className="font-bold text-gray-700 mb-2">🌱 Commonly Affected Plants</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {pest.affectedPlants.map((plant: string, i: number) => (
-                      <span key={i} className="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-700">
-                        {plant}
-                      </span>
-                    ))}
-                  </div>
+                  <button
+                    className="secondary-button"
+                    onClick={() => askEve(`I think I have ${pest.name.toLowerCase()} in my Orem greenhouse. Walk me through confirming it and a treatment plan for this week using my plants and setup.`)}
+                  >
+                    <Bot size={15} /> Ask Eve about {pest.name.toLowerCase()}
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </article>
+          );
+        })}
+        {!filteredPests.length && <p className="empty-note">No pest matches that search — try a symptom like &quot;sticky&quot; or &quot;webbing&quot;.</p>}
       </div>
 
-      {/* Tips Section */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
-        <h3 className="font-bold text-blue-900 mb-3">💡 General Pest Management Tips</h3>
-        <ul className="space-y-2 text-sm text-blue-900">
-          <li>✓ Inspect new plants before bringing them into the greenhouse</li>
-          <li>✓ Quarantine infested plants immediately (separate area)</li>
-          <li>✓ Strong, healthy plants resist pests better than weak ones</li>
-          <li>✓ Keep greenhouse clean — remove dead leaves and debris</li>
-          <li>✓ Improve airflow with fans and ventilation (most pests hate moving air)</li>
-          <li>✓ Early detection is key — check plants regularly</li>
-          <li>✓ Start with natural treatments, escalate only if needed</li>
-          <li>✓ Utah heat (110°F+) favors spider mites — cool greenhouse = fewer problems</li>
-          <li>✓ Utah dry air requires humidity management (some pests love it, some hate it)</li>
-          <li>✓ Keep detailed treatment logs — what worked, what didn't, timeline</li>
+      <div className="pest-habits">
+        <h3>The habits that prevent most of this</h3>
+        <ul>
+          <li>Inspect new plants before they come inside, and quarantine anything suspicious.</li>
+          <li>Moving air is your cheapest pesticide — most greenhouse pests hate a fan.</li>
+          <li>Remove dead leaves and debris; check under leaves weekly while you water.</li>
+          <li>Utah heat above 100°F is spider-mite weather — shade cloth and airflow first.</li>
+          <li>Start gentle, escalate slowly, and log what worked in the photo journal.</li>
         </ul>
-      </div>
-
-      {/* Extension Resources */}
-      <div className="bg-gray-50 p-6 rounded">
-        <h3 className="font-bold text-gray-900 mb-3">📚 Utah Extension Resources</h3>
-        <p className="text-sm text-gray-700 mb-3">
-          For more detailed information, visit:{" "}
-          <a
-            href="https://utahpests.usu.edu"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            Utah Pests (Utah State University Extension)
-          </a>
-        </p>
-        <p className="text-sm text-gray-700">
-          Local support: Contact your county extension office for free pest ID and treatment advice.
+        <p className="pest-resource">
+          Deeper help: <a href="https://utahpests.usu.edu" target="_blank" rel="noreferrer">Utah Pests — USU Extension</a> offers free pest ID through your county office.
         </p>
       </div>
     </div>

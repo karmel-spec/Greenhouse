@@ -3090,7 +3090,7 @@ export const completeSeedVaultDatabase: SeedPacket[] = [
       spring: { start: "03-01", end: "05-30" },
       fall: { start: "08-15", end: "10-15" },
     },
-    frostHardiness: "cold-hardy",
+    frostHardiness: "frost-hardy",
     utahZone: "3",
     utahSpecificNotes: "Utah native ally—thrives in high desert. Drought tolerant once established. Attracts beneficial insects (parasitic wasps, hover flies). Great for pollinators. Can spread via rhizomes—divide every 2-3 years.",
     harvestTiming: "Cut when flowers fully open but petals still hold",
@@ -3099,13 +3099,23 @@ export const completeSeedVaultDatabase: SeedPacket[] = [
     canSaveSeed: true,
     seedStorageMethod: "cool-dry",
     estimatedShelfLife: 3,
+    culinaryUses: ["tea", "tincture", "dried flowers", "fresh bouquets"],
+    medicinalProperties: [
+      "Traditional wound healer (stops bleeding)",
+      "Anti-inflammatory",
+      "Fever reduction",
+      "Digestive support",
+    ],
     commonCuisines: ["Herbal", "Medicinal"],
     companionPlants: ["lavender", "rosemary", "thyme", "bee balm", "dill"],
+    attractsPollinators: true,
+    attractsBeneficialInsects: true,
     createdAt: "2026-07-06T00:00:00Z",
     updatedAt: "2026-07-06T00:00:00Z",
     plantingHistory: [],
   },
 ];
+
 
 // Export as default for easy import
 export default completeSeedVaultDatabase;

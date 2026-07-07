@@ -7,24 +7,141 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { fileToResizedDataUrl } from "@/lib/image-client";
 import { SeedCard } from "@/components/SeedCard";
 import completeSeedVaultDatabase from "@/lib/seed-vault-complete-database";
 import { SeedVaultFilter } from "@/lib/seed-vault-types";
 import { plantingSortKey } from "@/lib/planting";
-import { Search, Filter, Leaf, CalendarClock, ArrowDownAZ } from "lucide-react";
+import { toSeedPacket } from "@/lib/user-seeds";
+import type { StoredSeedPacket } from "@/lib/store";
+import { Search, Filter, Leaf, CalendarClock, ArrowDownAZ, Plus, X } from "lucide-react";
+
+const EMPTY_PACKET_FORM = {
+  commonName: "",
+  variety: "",
+  seedCount: "25",
+  germinationRate: "85",
+  packagedYear: String(new Date().getFullYear()),
+  daysToGermination: "",
+  daysToMaturity: "",
+  springStart: "",
+  springEnd: "",
+  notes: "",
+  isHeirloom: false,
+  isAnnual: true,
+};
 
 export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<SeedVaultFilter>({});
   const [sortBy, setSortBy] = useState<"planting" | "name">("planting");
+  const [userSeeds, setUserSeeds] = useState<StoredSeedPacket[]>([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState(EMPTY_PACKET_FORM);
+  const [formNote, setFormNote] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const scanInputRef = useRef<HTMLInputElement>(null);
+
+  const scanPacket = async (files: FileList | null) => {
+    if (!files?.length || scanning) return;
+    setScanning(true);
+    setShowAdd(true);
+    setFormNote("Reading the packet photos…");
+    try {
+      const images = await Promise.all(Array.from(files).slice(0, 2).map((file) => fileToResizedDataUrl(file)));
+      const response = await fetch("/api/seeds/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images }),
+      });
+      const data = await response.json();
+      const extracted = data.extracted;
+      if (!extracted?.commonName) {
+        setFormNote(data.error ?? "I couldn't read a plant name off that packet — try a brighter, straighter photo, or fill the form by hand.");
+        return;
+      }
+      setForm({
+        commonName: extracted.commonName,
+        variety: extracted.variety || "",
+        seedCount: String(extracted.seedCount || 25),
+        germinationRate: String(extracted.germinationRate || 85),
+        packagedYear: String(extracted.packagedYear || new Date().getFullYear()),
+        daysToGermination: extracted.daysToGermination ? String(extracted.daysToGermination) : "",
+        daysToMaturity: extracted.daysToMaturity ? String(extracted.daysToMaturity) : "",
+        springStart: extracted.springStart || "",
+        springEnd: extracted.springEnd || "",
+        notes: extracted.sowingNotes || "",
+        isHeirloom: Boolean(extracted.isHeirloom),
+        isAnnual: extracted.isAnnual !== false,
+      });
+      setFormNote(
+        extracted.confidence >= 0.7
+          ? `Read the packet (${Math.round(extracted.confidence * 100)}% sure) — double-check the fields, then add it.`
+          : `Best guess from the photos (${Math.round((extracted.confidence || 0) * 100)}% sure) — please verify each field before adding.`,
+      );
+    } catch {
+      setFormNote("The scan didn't go through — is the OpenAI key set and the photo clear?");
+    } finally {
+      setScanning(false);
+      if (scanInputRef.current) scanInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    fetch("/api/seeds")
+      .then((r) => r.json())
+      .then((data) => setUserSeeds(Array.isArray(data.seeds) ? data.seeds : []))
+      .catch(() => {});
+  }, []);
+
+  const allSeeds = useMemo(
+    () => [...completeSeedVaultDatabase, ...userSeeds.map(toSeedPacket)],
+    [userSeeds],
+  );
+
+  const addPacket = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.commonName.trim()) return;
+    const response = await fetch("/api/seeds", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        commonName: form.commonName,
+        variety: form.variety || undefined,
+        seedCount: Number(form.seedCount) || 25,
+        germinationRate: Number(form.germinationRate) || 85,
+        packagedYear: Number(form.packagedYear) || undefined,
+        daysToGermination: form.daysToGermination ? Number(form.daysToGermination) : undefined,
+        daysToMaturity: form.daysToMaturity ? Number(form.daysToMaturity) : undefined,
+        springStart: form.springStart || undefined,
+        springEnd: form.springEnd || undefined,
+        notes: form.notes || undefined,
+        isHeirloom: form.isHeirloom,
+        isAnnual: form.isAnnual,
+      }),
+    }).catch(() => null);
+    const data = await response?.json();
+    if (data?.seeds) {
+      setUserSeeds(data.seeds);
+      setForm(EMPTY_PACKET_FORM);
+      setShowAdd(false);
+      setFormNote(`Added "${data.packet.commonName}" to the library.`);
+    } else {
+      setFormNote(data?.error ?? "Couldn't save that packet — try again.");
+    }
+  };
+
+  const removePacket = async (id: string) => {
+    setUserSeeds((current) => current.filter((seed) => seed.id !== id));
+    await fetch(`/api/seeds?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+  };
 
   const stats = useMemo(() => {
-    const totalSeeds = completeSeedVaultDatabase.length;
-    const totalSeedCount = completeSeedVaultDatabase.reduce((sum, s) => sum + s.seedCount, 0);
-    const heirloomCount = completeSeedVaultDatabase.filter((s) => s.isHeirloom).length;
-    const avgGermination =
-      completeSeedVaultDatabase.reduce((sum, s) => sum + s.germinationRate, 0) / totalSeeds;
+    const totalSeeds = allSeeds.length;
+    const totalSeedCount = allSeeds.reduce((sum, s) => sum + s.seedCount, 0);
+    const heirloomCount = allSeeds.filter((s) => s.isHeirloom).length;
+    const avgGermination = allSeeds.reduce((sum, s) => sum + s.germinationRate, 0) / totalSeeds;
 
     return {
       totalSeeds,
@@ -32,10 +149,10 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
       heirloomCount,
       avgGermination: avgGermination.toFixed(1),
     };
-  }, []);
+  }, [allSeeds]);
 
   const filteredSeeds = useMemo(() => {
-    return completeSeedVaultDatabase.filter((seed) => {
+    return allSeeds.filter((seed) => {
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
         const matches =
@@ -56,7 +173,7 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
 
       return true;
     });
-  }, [searchTerm, filter]);
+  }, [allSeeds, searchTerm, filter]);
 
   const sortedSeeds = useMemo(() => {
     const seeds = [...filteredSeeds];
@@ -97,6 +214,88 @@ export function SeedVaultBrowser({ showStats = true }: { showStats?: boolean }) 
           />
         </div>
       </div>
+
+      <div className="mb-4 seed-add-buttons">
+        <button className="secondary-button" onClick={() => setShowAdd((value) => !value)}>
+          <Plus size={15} /> Add seed packet
+        </button>
+        <button className="secondary-button" onClick={() => scanInputRef.current?.click()} disabled={scanning}>
+          📷 {scanning ? "Reading the packet…" : "Scan packet photos"}
+        </button>
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={(event) => scanPacket(event.target.files)}
+        />
+        {formNote && <span className="seed-form-note"> {formNote}</span>}
+      </div>
+
+      {showAdd && (
+        <form className="seed-add-form" onSubmit={addPacket}>
+          <label>
+            Plant name *
+            <input value={form.commonName} onChange={(e) => setForm({ ...form, commonName: e.target.value })} placeholder="e.g. Basil" autoFocus />
+          </label>
+          <label>
+            Variety
+            <input value={form.variety} onChange={(e) => setForm({ ...form, variety: e.target.value })} placeholder="e.g. Genovese" />
+          </label>
+          <label>
+            Seed count
+            <input value={form.seedCount} onChange={(e) => setForm({ ...form, seedCount: e.target.value.replace(/\D/g, "") })} inputMode="numeric" />
+          </label>
+          <label>
+            Germination %
+            <input value={form.germinationRate} onChange={(e) => setForm({ ...form, germinationRate: e.target.value.replace(/\D/g, "") })} inputMode="numeric" />
+          </label>
+          <label>
+            Year packaged
+            <input value={form.packagedYear} onChange={(e) => setForm({ ...form, packagedYear: e.target.value.replace(/\D/g, "") })} inputMode="numeric" />
+          </label>
+          <label>
+            Days to germinate
+            <input value={form.daysToGermination} onChange={(e) => setForm({ ...form, daysToGermination: e.target.value.replace(/\D/g, "") })} placeholder="e.g. 7" inputMode="numeric" />
+          </label>
+          <label>
+            Days to maturity
+            <input value={form.daysToMaturity} onChange={(e) => setForm({ ...form, daysToMaturity: e.target.value.replace(/\D/g, "") })} placeholder="e.g. 65" inputMode="numeric" />
+          </label>
+          <label>
+            Sow window start (MM-DD)
+            <input value={form.springStart} onChange={(e) => setForm({ ...form, springStart: e.target.value })} placeholder="05-01" />
+          </label>
+          <label>
+            Sow window end (MM-DD)
+            <input value={form.springEnd} onChange={(e) => setForm({ ...form, springEnd: e.target.value })} placeholder="06-15" />
+          </label>
+          <label className="seed-add-notes">
+            Notes (from the packet back)
+            <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Sowing depth, spacing, anything worth keeping" />
+          </label>
+          <label className="seed-add-check">
+            <input type="checkbox" checked={form.isHeirloom} onChange={(e) => setForm({ ...form, isHeirloom: e.target.checked })} /> Heirloom
+          </label>
+          <label className="seed-add-check">
+            <input type="checkbox" checked={form.isAnnual} onChange={(e) => setForm({ ...form, isAnnual: e.target.checked })} /> Annual
+          </label>
+          <button className="primary-button" type="submit">Add to seed library</button>
+        </form>
+      )}
+
+      {userSeeds.length > 0 && (
+        <p className="seed-user-note">
+          {userSeeds.length} packet{userSeeds.length === 1 ? "" : "s"} added by you:
+          {userSeeds.map((seed) => (
+            <span key={seed.id} className="seed-user-chip">
+              {seed.commonName}{seed.variety ? ` '${seed.variety}'` : ""}
+              <button onClick={() => removePacket(seed.id)} title="Remove this packet" aria-label={`Remove ${seed.commonName}`}><X size={11} /></button>
+            </span>
+          ))}
+        </p>
+      )}
 
       <div className="flex gap-2 flex-wrap items-center mb-6">
         <span className="text-sm font-semibold text-[#3a4430] flex items-center gap-1">

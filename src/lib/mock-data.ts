@@ -4,7 +4,10 @@ import {
   Bug,
   CalendarDays,
   Camera,
+  FlaskConical,
+  Flower,
   Flower2,
+  Grid3x3,
   GalleryHorizontalEnd,
   Heart,
   Home,
@@ -17,28 +20,37 @@ import {
   PackagePlus,
   PanelTop,
   Pickaxe,
+  Recycle,
+  Scissors,
   Sprout,
   SunMedium,
   TestTube2,
   Trees,
+  Users,
   WandSparkles,
 } from "lucide-react";
 
 export type SectionKey =
   | "today"
+  | "bouquet"
   | "eve"
   | "plants"
   | "zones"
   | "operations"
   | "propagation"
+  | "pruning"
   | "microgreens"
+  | "seedtrays"
+  | "seedtesting"
   | "apothecary"
   | "pest-management"
   | "sfg"
+  | "community"
   | "seeds"
   | "seed-vault"
   | "saving"
   | "soil-prep"
+  | "compost"
   | "photos"
   | "wishlist"
   | "landscape"
@@ -49,19 +61,23 @@ export type SectionKey =
 
 export const navItems = [
   { key: "today", label: "Today", icon: Home },
+  { key: "bouquet", label: "Today's Bouquet", icon: Flower },
   { key: "eve", label: "Ask Eve", icon: Bot },
   { key: "plants", label: "Plant Library", icon: Leaf },
   { key: "zones", label: "Garden Zones", icon: Trees },
   { key: "operations", label: "Operations", icon: PanelTop },
   { key: "propagation", label: "Propagation", icon: Sprout },
+  { key: "pruning", label: "Pruning", icon: Scissors },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
+  { key: "seedtrays", label: "Seed Trays", icon: Grid3x3 },
+  { key: "seedtesting", label: "Seed Testing", icon: FlaskConical },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
+  { key: "community", label: "Community Garden", icon: Users },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
-  { key: "seed-vault", label: "Seed Vault", icon: GalleryHorizontalEnd },
-  { key: "saving", label: "Seed Saving", icon: Images },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
+  { key: "compost", label: "Composting", icon: Recycle },
   { key: "photos", label: "Photo Journal", icon: Camera },
   { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "landscape", label: "Edible Landscape", icon: SunMedium },
