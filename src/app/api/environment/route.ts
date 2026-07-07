@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
+import { readLocalSensor, readingAgeMinutes } from "@/lib/local-sensor";
 
 /**
  * One call for everything the dashboard needs about conditions:
  *  - outdoor: live Orem, UT weather from Open-Meteo (no key needed)
- *  - greenhouse: inside temp + humidity from the Govee thermo/hygrometer
- *    via the Govee cloud API (needs GOVEE_API_KEY; device auto-discovered
- *    or pinned with GOVEE_DEVICE + GOVEE_SKU)
+ *  - greenhouse: inside temp + humidity from the Govee thermo/hygrometer —
+ *    a fresh reading from the Mac's Bluetooth bridge wins, then the Govee
+ *    cloud API (needs GOVEE_API_KEY; device auto-discovered or pinned with
+ *    GOVEE_DEVICE + GOVEE_SKU)
  */
 
 const OREM = { latitude: 40.2969, longitude: -111.6946 };
@@ -85,6 +87,23 @@ async function getOutdoorWeather() {
 }
 
 async function getGreenhouseReading() {
+  // A fresh reading from the Mac's Bluetooth bridge beats the cloud —
+  // the H5075 is BLE-only, so the cloud is usually empty anyway.
+  const local = await readLocalSensor();
+  if (local && readingAgeMinutes(local) <= 10) {
+    return {
+      ok: true,
+      configured: true,
+      online: true,
+      temperatureF: Math.round(local.tempF * 10) / 10,
+      humidity: Math.round(local.humidity),
+      deviceName: local.name || "Greenhouse thermometer",
+      sku: "H5075",
+      battery: local.battery ?? null,
+      source: "bluetooth-bridge",
+    };
+  }
+
   const apiKey = process.env.GOVEE_API_KEY;
 
   if (!apiKey) {
@@ -145,7 +164,7 @@ async function getGreenhouseReading() {
         configured: true,
         online: online === true,
         message: isBleOnly
-          ? `Found "${device.deviceName ?? device.sku}" (${device.sku} — Bluetooth-only). Its readings reach the cloud only while your phone's Govee app is open near it, or via a Govee WiFi gateway (H5151). Open the app near the sensor to sync, then check back.`
+          ? `Found "${device.deviceName ?? device.sku}" (${device.sku} — Bluetooth-only). Three ways to get live readings: double-click "Greenhouse Bluetooth Bridge.command" in the Greenhouse folder (uses this Mac's Bluetooth — free), plug in a Govee H5151 WiFi gateway (on your wishlist), or open the Govee app on your phone near the sensor to sync once.`
           : `Device ${device.deviceName ?? device.sku} responded without sensor readings. It may be offline or not synced to the cloud.`,
       };
     }
