@@ -103,7 +103,28 @@ export const PROPAGATION_KB: KnowledgeEntry[] = [
     ],
   },
   {
-    match: /succulent|echeveria|jade|sedum|crassula|haworthia|sempervivum/i,
+    match: /aloe/i,
+    method: "Pup division (offsets only)",
+    steps: [
+      "Wait for pups — the small rosettes that appear around the base; they're ready when about a fifth the parent's size.",
+      "Unpot, tease the pup away with as many of its own roots as possible (a clean knife if it resists).",
+      "Let the pup's cut side callus for 1–2 days in dry shade.",
+      "Pot in dry cactus mix, wait a full week, then give the first light watering.",
+    ],
+    seasonNote:
+      "Aloe only propagates from pups. Leaf and stem cuttings rot — the leaves hold too much water to root. If there are no pups yet, the move is patience (and a slightly root-bound pot encourages them).",
+  },
+  {
+    match: /kalanchoe/i,
+    method: "Stem or leaf cuttings",
+    steps: [
+      "Take a 3-inch stem cutting (or a healthy leaf) and let it callus for 1–2 days.",
+      "Stick in barely-moist cactus mix; no dome — kalanchoe rots in humidity.",
+      "Water lightly every week or so; roots in 2–3 weeks.",
+    ],
+  },
+  {
+    match: /succulent|echeveria|jade|sedum|crassula|haworthia|sempervivum|burro/i,
     method: "Leaf or offset propagation",
     steps: [
       "Twist off a healthy leaf cleanly, or cut an offset (pup) at the base.",
@@ -193,8 +214,9 @@ export const PROPAGATION_KB: KnowledgeEntry[] = [
 ];
 
 export const DEFAULT_PROPAGATION: PropagationGuide = {
-  method: "Stem cuttings (general method)",
+  method: "General stem-cutting method (unverified for this plant — ask Eve first)",
   steps: [
+    "This plant isn't in the propagation guide yet, so treat these as a starting point, not gospel.",
     "Take a 3–4 inch cutting of healthy, non-flowering growth just below a node.",
     "Strip the lower leaves, dip in rooting hormone if you have it.",
     "Stick in moist, well-draining mix; keep humid and in bright indirect light.",

@@ -47,7 +47,9 @@ const CARE: { match: RegExp; care: PlantCare }[] = [
   { match: /begonia/i, care: { category: "Flowers", type: "Tender perennial (annual outdoors, houseplant in winter)", water: "Evenly moist, never soggy; water at the base", sun: "Part shade outdoors / bright indirect indoors", propagate: "Yes — stem or leaf cuttings" } },
 
   // ——— Succulents ———
-  { match: /succulent|echeveria|sedum(?!.*groundcover)|jade|crassula|aloe|haworthia|sempervivum|hens.?and.?chicks/i, care: { category: "Succulents", type: "Succulent (tender — indoors in Utah winters unless hardy sedum/sempervivum)", water: "Soak, then let dry completely — every 2–3 weeks", sun: "Bright light / several hours of sun; indoors or out in summer", propagate: "Yes — leaf cuttings or offsets, very easy" } },
+  { match: /aloe/i, care: { category: "Succulents", type: "Succulent (tender — indoors below ~50°F)", water: "Soak, then let dry completely — every 2–3 weeks; less in winter", sun: "Bright light; a few hours of direct sun (introduce gradually or it sunburns)", propagate: "Yes — pup division only; leaf cuttings rot on aloe" } },
+  { match: /kalanchoe/i, care: { category: "Succulents", type: "Succulent (tender flowering — indoors in Utah winters)", water: "Let dry between waterings — about every 2 weeks", sun: "Bright light; reblooms after short winter days", propagate: "Yes — stem or leaf cuttings, very easy" } },
+  { match: /succulent|echeveria|sedum(?!.*groundcover)|jade|crassula|haworthia|sempervivum|hens.?and.?chicks|burro/i, care: { category: "Succulents", type: "Succulent (tender — indoors in Utah winters unless hardy sedum/sempervivum)", water: "Soak, then let dry completely — every 2–3 weeks", sun: "Bright light / several hours of sun; indoors or out in summer", propagate: "Yes — leaf cuttings or offsets, very easy" } },
   { match: /moss rose|portulaca/i, care: { category: "Flowers", type: "Annual (heat-loving succulent)", water: "Low — drought-proof; let soil dry between waterings", sun: "Full sun, outdoors; loves Utah heat", propagate: "Yes — stem cuttings or self-sown seed" } },
 
   // ——— Herbs ———
