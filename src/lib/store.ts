@@ -128,6 +128,25 @@ export type StoredCompostPile = {
   createdAt: string;
 };
 
+export type SeedTrayCell = {
+  seed: string; // common name from the seed vault
+  variety?: string;
+  state: "sown" | "sprouted" | "failed" | "transplanted";
+} | null;
+
+export type StoredSeedTray = {
+  id: string;
+  name: string;
+  rows: number;
+  cols: number;
+  cells: SeedTrayCell[]; // rows*cols, row-major
+  sownAt: string; // ISO date of first sowing
+  createdAt: string;
+};
+
+/** Today's Bouquet — nurturing actions checked per day, keyed yyyy-mm-dd. */
+export type BouquetHistory = Record<string, string[]>;
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -138,6 +157,8 @@ export type GardenStore = {
   sfgBeds: StoredSfgBed[];
   communityGarden: StoredCommunityGarden;
   compostPiles: StoredCompostPile[];
+  seedTrays: StoredSeedTray[];
+  bouquet: BouquetHistory;
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -172,6 +193,8 @@ export async function readStore(): Promise<GardenStore> {
           ? { ...DEFAULT_COMMUNITY_GARDEN, ...parsed.communityGarden }
           : { ...DEFAULT_COMMUNITY_GARDEN },
       compostPiles: Array.isArray(parsed.compostPiles) ? parsed.compostPiles : [],
+      seedTrays: Array.isArray(parsed.seedTrays) ? parsed.seedTrays : [],
+      bouquet: parsed.bouquet && typeof parsed.bouquet === "object" ? parsed.bouquet : {},
     };
   } catch {
     const initial: GardenStore = {
@@ -189,6 +212,8 @@ export async function readStore(): Promise<GardenStore> {
       sfgBeds: [],
       communityGarden: { ...DEFAULT_COMMUNITY_GARDEN },
       compostPiles: [],
+      seedTrays: [],
+      bouquet: {},
     };
     await persist(initial);
     return initial;

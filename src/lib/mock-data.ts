@@ -4,7 +4,9 @@ import {
   Bug,
   CalendarDays,
   Camera,
+  Flower,
   Flower2,
+  Grid3x3,
   GalleryHorizontalEnd,
   Heart,
   Home,
@@ -28,12 +30,14 @@ import {
 
 export type SectionKey =
   | "today"
+  | "bouquet"
   | "eve"
   | "plants"
   | "zones"
   | "operations"
   | "propagation"
   | "microgreens"
+  | "seedtrays"
   | "apothecary"
   | "pest-management"
   | "sfg"
@@ -53,12 +57,14 @@ export type SectionKey =
 
 export const navItems = [
   { key: "today", label: "Today", icon: Home },
+  { key: "bouquet", label: "Today's Bouquet", icon: Flower },
   { key: "eve", label: "Ask Eve", icon: Bot },
   { key: "plants", label: "Plant Library", icon: Leaf },
   { key: "zones", label: "Garden Zones", icon: Trees },
   { key: "operations", label: "Operations", icon: PanelTop },
   { key: "propagation", label: "Propagation", icon: Sprout },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
+  { key: "seedtrays", label: "Seed Trays", icon: Grid3x3 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },

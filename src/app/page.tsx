@@ -56,6 +56,9 @@ import { SeedVaultBrowser } from "@/components/SeedVaultBrowser";
 import { CommunityGarden } from "@/components/CommunityGarden";
 import { CompostSection } from "@/components/CompostSection";
 import { SunMap } from "@/components/SunMap";
+import { SeedTraysSection } from "@/components/SeedTrays";
+import { TodaysBouquet } from "@/components/TodaysBouquet";
+import { InspirationBanner } from "@/components/InspirationBanner";
 import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
 import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
 import { plantPhoto } from "@/lib/crop-photos";
@@ -235,6 +238,7 @@ export default function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [wishlistFocus, setWishlistFocus] = useState<string | null>(null);
   const [zoneFocus, setZoneFocus] = useState<string | null>(null);
+  const [photosFocus, setPhotosFocus] = useState<string | null>(null);
   const env = useEnvironment();
   const current = useMemo(() => navItems.find((item) => item.key === active), [active]);
 
@@ -243,6 +247,13 @@ export default function Home() {
     setDrawerOpen(false);
     if (key !== "wishlist") setWishlistFocus(null);
     if (key !== "zones") setZoneFocus(null);
+    if (key !== "photos") setPhotosFocus(null);
+  };
+
+  const openPhotos = (healthFilter: string | null) => {
+    setPhotosFocus(healthFilter);
+    setActive("photos");
+    setDrawerOpen(false);
   };
 
   const openWishlist = (itemName: string) => {
@@ -282,7 +293,11 @@ export default function Home() {
         </header>
 
         <div className="content-grid">
-          <section className="main-content">{renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection, openZone, zoneFocus })}</section>
+          <section className="main-content">
+            <InspirationBanner section={active} slot="top" />
+            {renderSection(active, env, { openWishlist, wishlistFocus, openSection: chooseSection, openZone, zoneFocus, openPhotos, photosFocus })}
+            <InspirationBanner section={active} slot="bottom" />
+          </section>
           <EvePanel />
         </div>
       </section>
@@ -462,14 +477,20 @@ type SectionNav = {
   openSection: (key: SectionKey) => void;
   openZone: (zoneName: string) => void;
   zoneFocus: string | null;
+  openPhotos: (healthFilter: string | null) => void;
+  photosFocus: string | null;
 };
 
 function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
   switch (active) {
     case "today":
       return <TodaySection env={env} nav={nav} />;
+    case "bouquet":
+      return <TodaysBouquet />;
     case "operations":
-      return <OperationsSection />;
+      return <OperationsSection nav={nav} />;
+    case "seedtrays":
+      return <SeedTraysSection />;
     case "microgreens":
       return <MicrogreensSection env={env} />;
     case "apothecary":
@@ -507,7 +528,7 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
     case "reminders":
       return <Reminders />;
     case "photos":
-      return <Photos />;
+      return <Photos focus={nav.photosFocus} />;
     case "landscape":
       return <Landscape />;
     case "eve":
@@ -796,22 +817,64 @@ function TodaySection({ env, nav }: { env: Environment; nav: SectionNav }) {
   );
 }
 
-function OperationsSection() {
+function OperationsSection({ nav }: { nav: SectionNav }) {
+  const [counts, setCounts] = useState({ tasks: 0, attention: 0, trays: 0, propagations: 0, plants: 0 });
+  const [openTasks, setOpenTasks] = useState<{ title: string; priority: string }[]>([]);
+  const checklistRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [tasksRes, journalRes, traysRes, seedTraysRes, propRes, plantsRes] = await Promise.all([
+          fetch("/api/tasks").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/journal").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/trays").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/seedtrays").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/propagation").then((r) => r.json()).catch(() => ({})),
+          fetch("/api/plants").then((r) => r.json()).catch(() => ({})),
+        ]);
+        const allTasks: { title: string; priority: string; done?: boolean }[] = Array.isArray(tasksRes.tasks) ? tasksRes.tasks : [];
+        const open = allTasks.filter((task) => !task.done);
+        const journal: { health?: string }[] = Array.isArray(journalRes.entries) ? journalRes.entries : [];
+        const microActive = (Array.isArray(traysRes.trays) ? traysRes.trays : []).filter((tray: { status?: string }) => tray.status === "active").length;
+        const seedTrayCount = Array.isArray(seedTraysRes.trays) ? seedTraysRes.trays.length : 0;
+        setCounts({
+          tasks: open.length,
+          attention: journal.filter((entry) => entry.health === "Needs attention").length,
+          trays: microActive + seedTrayCount,
+          propagations: Array.isArray(propRes.items) ? propRes.items.length : 0,
+          plants: Array.isArray(plantsRes.plants) ? plantsRes.plants.length : 0,
+        });
+        setOpenTasks(open.slice(0, 5));
+      } catch {
+        // leave zeros
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="command-mode">
       <SectionIntro title="Garden Operations Center" subtitle="Real-time overview of tasks, reminders, zone health, and Eve's project-management recommendations." />
       <div className="stat-grid">
-        {[
-          ["28", "Tasks today"],
-          ["12", "Needs water"],
-          ["7", "Trays active"],
-          ["15", "Propagations"],
-          ["82", "Plants total"],
-        ].map(([value, label]) => <MetricCard key={label} value={value} label={label} />)}
+        <MetricCard
+          value={String(counts.tasks)}
+          label="Tasks today"
+          onClick={() => checklistRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        />
+        <MetricCard value={String(counts.attention)} label="Needs attention" onClick={() => nav.openPhotos("Needs attention")} />
+        <MetricCard value={String(counts.trays)} label="Trays active" onClick={() => nav.openSection("seedtrays")} />
+        <MetricCard value={String(counts.propagations)} label="Propagations" onClick={() => nav.openSection("propagation")} />
+        <MetricCard value={String(counts.plants)} label="Plants total" onClick={() => nav.openSection("plants")} />
       </div>
-      <div className="two-col">
-        <DarkPanel title="Task Priorities">
-          {tasks.slice(0, 5).map((task) => <PriorityRow key={task.title} task={task.title} priority={task.priority} />)}
+      <div className="two-col" ref={checklistRef}>
+        <DarkPanel title="Today's operations checklist">
+          {openTasks.length ? (
+            openTasks.map((task) => <PriorityRow key={task.title} task={task.title} priority={task.priority} />)
+          ) : (
+            <p>All caught up — nothing open on today&apos;s list. 🌿</p>
+          )}
+          <button className="text-link ops-alltasks" onClick={() => nav.openSection("today")}>Open the full list on Today →</button>
         </DarkPanel>
         <DarkPanel title="Zone Health Overview">
           <div className="map-grid">{zones.slice(0, 9).map((zone) => <span key={zone.name}>{zone.name.split(" ")[0]}</span>)}</div>
@@ -2247,12 +2310,21 @@ function Reminders() {
   );
 }
 
-function Photos() {
+function Photos({ focus = null }: { focus?: string | null }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<PlantPhotoRecord[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [healthFilter, setHealthFilter] = useState<PlantPhotoRecord["health"] | null>(null);
+  const [healthFilter, setHealthFilter] = useState<PlantPhotoRecord["health"] | null>(
+    focus === "Thriving" || focus === "Watch" || focus === "Needs attention" ? focus : null,
+  );
   const boardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focus === "Thriving" || focus === "Watch" || focus === "Needs attention") {
+      setHealthFilter(focus);
+      setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+  }, [focus]);
 
   const toggleHealthFilter = (health: PlantPhotoRecord["health"]) => {
     setHealthFilter((current) => (current === health ? null : health));
