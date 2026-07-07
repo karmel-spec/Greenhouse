@@ -18,7 +18,6 @@ import {
   bouquetTag,
   todayKey,
   type BouquetAction,
-  type BouquetCategory,
 } from "@/lib/bouquet";
 import type { BouquetHistory, StoredBouquetAction } from "@/lib/store";
 
@@ -72,7 +71,7 @@ export function TodaysBouquet() {
   const [custom, setCustom] = useState<StoredBouquetAction[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ label: "", flowerIndex: 0, category: "Soul" as BouquetCategory });
+  const [addForm, setAddForm] = useState({ label: "", flowerIndex: 0, category: "Soul", newCategory: "" });
   const today = todayKey();
 
   useEffect(() => {
@@ -95,13 +94,24 @@ export function TodaysBouquet() {
         flower: action.flower,
         emoji: action.emoji,
         meaning: `${action.flower} · your own`,
-        category: (["Body", "Soul", "Connection", "Garden"].includes(action.category) ? action.category : "Soul") as BouquetCategory,
+        category: action.category || "Soul",
         custom: true,
       })),
       COMPASSION_ACTION,
     ],
     [custom],
   );
+
+  // Built-in categories first, then any categories Karmel has invented.
+  const categoryList = useMemo(() => {
+    const builtIn = BOUQUET_CATEGORIES.map((category) => ({ key: category.key as string, blurb: category.blurb }));
+    const known = new Set(builtIn.map((category) => category.key));
+    const extras = Array.from(new Set(custom.map((action) => action.category || "Soul")))
+      .filter((key) => !known.has(key))
+      .sort()
+      .map((key) => ({ key, blurb: "your own category" }));
+    return [...builtIn, ...extras];
+  }, [custom]);
   const actionByKey = useMemo(() => new Map(allActions.map((action) => [action.key, action])), [allActions]);
 
   const todays = history[today] ?? [];
@@ -129,16 +139,17 @@ export function TodaysBouquet() {
     event.preventDefault();
     const label = addForm.label.trim();
     if (!label) return;
+    const category = addForm.category === "__new__" ? addForm.newCategory.trim() || "Soul" : addForm.category;
     const choice = FLOWER_CHOICES[addForm.flowerIndex];
     const response = await fetch("/api/bouquet", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label, emoji: choice.emoji, flower: choice.flower, category: addForm.category }),
+      body: JSON.stringify({ label, emoji: choice.emoji, flower: choice.flower, category }),
     }).catch(() => null);
     const data = await response?.json();
     if (data?.custom) {
       setCustom(data.custom);
-      setAddForm({ label: "", flowerIndex: 0, category: addForm.category });
+      setAddForm({ label: "", flowerIndex: 0, category, newCategory: "" });
       setShowAdd(false);
     }
   };
@@ -269,10 +280,22 @@ export function TodaysBouquet() {
             </label>
             <label>
               Category
-              <select value={addForm.category} onChange={(event) => setAddForm((form) => ({ ...form, category: event.target.value as BouquetCategory }))}>
-                {BOUQUET_CATEGORIES.map((category) => <option key={category.key} value={category.key}>{category.key}</option>)}
+              <select value={addForm.category} onChange={(event) => setAddForm((form) => ({ ...form, category: event.target.value }))}>
+                {categoryList.map((category) => <option key={category.key} value={category.key}>{category.key}</option>)}
+                <option value="__new__">＋ New category…</option>
               </select>
             </label>
+            {addForm.category === "__new__" && (
+              <label>
+                Name the new category
+                <input
+                  value={addForm.newCategory}
+                  onChange={(event) => setAddForm((form) => ({ ...form, newCategory: event.target.value }))}
+                  placeholder="e.g. Relationships, Creativity, Learning"
+                  autoFocus
+                />
+              </label>
+            )}
             <div className="bouquet-flower-picker">
               <span>Its flower</span>
               <div>
@@ -293,7 +316,7 @@ export function TodaysBouquet() {
           </form>
         )}
 
-        {BOUQUET_CATEGORIES.map((category) => {
+        {categoryList.map((category) => {
           const actions = allActions.filter((action) => action.category === category.key && action.key !== COMPASSION_ACTION.key);
           if (!actions.length) return null;
           return (

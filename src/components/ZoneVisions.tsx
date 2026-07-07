@@ -154,12 +154,12 @@ export function MeditationVision() {
 
 /* ---------------------------- Apothecary Garden -------------------------- */
 
-const APOTHECARY_VAULT_SEEDS = [
-  { name: "Chamomile", note: "Bedtime tea and skin-soothing rinses — sow a wide patch." },
-  { name: "Calendula", note: "The salve flower — petals infused in oil heal almost anything topical." },
-  { name: "Borage", note: "Cheerful cucumber-flavored flowers; traditional courage herb." },
+const APOTHECARY_SOW_SEEDS = [
+  { name: "Chamomile", note: "Bedtime tea and skin-soothing rinses — sow a wide patch (seeds on your wishlist)." },
+  { name: "Calendula", note: "The salve flower — petals infused in oil heal almost anything topical (wishlisted)." },
+  { name: "Borage", note: "Cheerful cucumber-flavored flowers; traditional courage herb (wishlisted)." },
   { name: "Feverfew", note: "The old headache herb; self-sows politely once established." },
-  { name: "Valerian", note: "Sleep-tea root — patient plant, two seasons to harvest." },
+  { name: "Poppy", note: "The one apothecary flower already in your seed vault — sow it here." },
 ];
 
 const APOTHECARY_BUY = [
@@ -177,14 +177,15 @@ export function ApothecaryVision() {
     <div className="zone-vision">
       <p className="zone-vision-lead">
         The vision: a working <strong>physic garden</strong> — aloe on the shelf for burns, calendula in the oil jar,
-        chamomile in the tea tin. Your aloe vera now lives here, and your seed vault already holds real medicine:
+        chamomile in the tea tin. Your aloe vera now lives here; the seeds below (mostly wishlisted — your vault is
+        vegetable-rich but medicine-light) fill out the bed:
       </p>
       <div className="zone-figures">
         <ZoneFigure src="/zones/apothecary.jpg" caption="A physic garden — medicine in rows" />
       </div>
-      <h4 className="zone-vision-subhead">🌼 Already in your seed vault — sow these here</h4>
+      <h4 className="zone-vision-subhead">🌼 Seeds to sow in this bed</h4>
       <div className="zone-idea-grid">
-        {APOTHECARY_VAULT_SEEDS.map((seed) => {
+        {APOTHECARY_SOW_SEEDS.map((seed) => {
           const photo = plantPhoto(seed.name);
           return (
             <article key={seed.name} className="zone-idea-card">

@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
   const label = typeof body.label === "string" ? body.label.trim().slice(0, 80) : "";
   const emoji = typeof body.emoji === "string" ? body.emoji.trim().slice(0, 8) : "";
   const flower = typeof body.flower === "string" ? body.flower.trim().slice(0, 40) : "Flower";
-  const category = ["Body", "Soul", "Connection", "Garden"].includes(body.category) ? body.category : "Soul";
+  const category =
+    typeof body.category === "string" && body.category.trim() ? body.category.trim().slice(0, 30) : "Soul";
   if (!label || !emoji) {
     return NextResponse.json({ error: "Give the activity a name and pick its flower." }, { status: 400 });
   }

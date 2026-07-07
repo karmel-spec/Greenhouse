@@ -20,7 +20,7 @@ export type BouquetAction = {
   flower: string;
   emoji: string;
   meaning: string;
-  category: BouquetCategory;
+  category: string; // built-in BouquetCategory or any category Karmel creates (e.g. "Relationships")
   custom?: boolean;
 };
 
