@@ -2563,3 +2563,50 @@ button.metric-card.clickable.active {
 .zone-tip-card { background: var(--cream); border: 1px solid rgba(43, 58, 42, 0.1); border-radius: 12px; padding: 0.7rem 0.8rem; }
 .zone-tip-card strong { font-size: 0.86rem; display: block; margin-bottom: 0.2rem; color: var(--forest); }
 .zone-tip-card p { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+/* ---- Add seed packet form ---- */
+.seed-add-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+  align-items: end;
+  background: var(--paper);
+  border: 1px dashed var(--moss);
+  border-radius: 14px;
+  padding: 0.9rem;
+  margin-bottom: 1rem;
+}
+.seed-add-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.seed-add-form input:not([type="checkbox"]) {
+  border: 1px solid rgba(43, 58, 42, 0.2);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--cream);
+}
+.seed-add-notes { grid-column: 1 / -1; }
+.seed-add-check { flex-direction: row !important; align-items: center; gap: 0.4rem !important; }
+.seed-add-check input { width: 16px; height: 16px; accent-color: var(--moss); }
+.seed-form-note { font-size: 0.82rem; color: var(--moss); margin-left: 0.6rem; }
+.seed-user-note { font-size: 0.82rem; color: var(--muted); margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.seed-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--cream);
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.76rem;
+  color: var(--ink);
+}
+.seed-user-chip button { border: none; background: none; cursor: pointer; color: var(--muted); padding: 0; display: inline-flex; }
+.seed-user-chip button:hover { color: var(--terracotta); }

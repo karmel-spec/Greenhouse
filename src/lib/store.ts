@@ -156,6 +156,27 @@ export type StoredBouquetAction = {
   category: string; // Body | Soul | Connection | Garden
 };
 
+/** Seed packets Karmel adds herself (app form or Telegram) — merged with the built-in vault. */
+export type StoredSeedPacket = {
+  id: string; // "userseed-..."
+  commonName: string;
+  botanicalName?: string;
+  variety?: string;
+  seedCount: number;
+  germinationRate: number;
+  packagedDate: string; // ISO date or year
+  source?: string;
+  isHeirloom?: boolean;
+  isAnnual?: boolean;
+  daysToMaturity?: number;
+  daysToGermination?: number;
+  startIndoors?: boolean;
+  springStart?: string; // MM-DD
+  springEnd?: string; // MM-DD
+  notes?: string;
+  createdAt: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -169,6 +190,7 @@ export type GardenStore = {
   seedTrays: StoredSeedTray[];
   bouquet: BouquetHistory;
   bouquetCustom: StoredBouquetAction[];
+  userSeeds: StoredSeedPacket[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -206,6 +228,7 @@ export async function readStore(): Promise<GardenStore> {
       seedTrays: Array.isArray(parsed.seedTrays) ? parsed.seedTrays : [],
       bouquet: parsed.bouquet && typeof parsed.bouquet === "object" ? parsed.bouquet : {},
       bouquetCustom: Array.isArray(parsed.bouquetCustom) ? parsed.bouquetCustom : [],
+      userSeeds: Array.isArray(parsed.userSeeds) ? parsed.userSeeds : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -226,6 +249,7 @@ export async function readStore(): Promise<GardenStore> {
       seedTrays: [],
       bouquet: {},
       bouquetCustom: [],
+      userSeeds: [],
     };
     await persist(initial);
     return initial;
