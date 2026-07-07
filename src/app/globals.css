@@ -2391,3 +2391,122 @@ button.metric-card.clickable.active {
 .bouquet-philosophy strong { color: var(--forest); }
 
 .ops-alltasks { margin-top: 0.6rem; font-size: 0.8rem; }
+
+/* ---- Sidebar mini bouquet ---- */
+.bouquet-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.5s ease, height 0.5s ease;
+  overflow: visible;
+}
+.bouquet-mark.blooming { border-color: var(--moss); }
+.brand-flower {
+  position: absolute;
+  bottom: 18%;
+  transform-origin: bottom center;
+  transition: transform 0.4s ease, font-size 0.4s ease;
+  line-height: 1;
+}
+.brand-seed { font-size: 1.1rem; opacity: 0.6; }
+
+/* ---- Bouquet categories + custom activities ---- */
+.bouquet-actions-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+.bouquet-actions-head h3 { margin: 0; }
+.bouquet-category { margin: 0.8rem 0 0.3rem; }
+.bouquet-category h4 {
+  font-family: var(--font-display, serif);
+  font-size: 0.95rem;
+  color: var(--forest);
+  margin: 0 0 0.4rem;
+  border-bottom: 1px dashed rgba(43, 58, 42, 0.15);
+  padding-bottom: 0.25rem;
+}
+.bouquet-category h4 em { font-family: var(--font-body, sans-serif); font-style: normal; font-weight: 400; font-size: 0.74rem; color: var(--muted); }
+.bouquet-remove {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 6px;
+}
+.bouquet-remove:hover { color: var(--terracotta); background: rgba(43, 58, 42, 0.06); }
+.bouquet-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.7rem;
+  background: var(--cream);
+  border: 1px dashed var(--moss);
+  border-radius: 12px;
+  padding: 0.8rem;
+  margin-bottom: 0.8rem;
+  align-items: end;
+}
+.bouquet-add label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.bouquet-add input, .bouquet-add select {
+  border: 1px solid rgba(43, 58, 42, 0.2);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--paper);
+}
+.bouquet-add-label { grid-column: 1 / -1; }
+.bouquet-flower-picker { grid-column: 1 / -1; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.bouquet-flower-picker > div { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+.bouquet-flower-picker button {
+  font-size: 1.25rem;
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 10px;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+.bouquet-flower-picker button.active { border: 2px solid var(--moss); background: #f0f4ea; }
+
+/* ---- Pruning section ---- */
+.pruning-stats { margin-bottom: 0.4rem; }
+.pruning-stats svg { vertical-align: -2px; color: var(--moss); }
+.pruning-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.7rem; align-items: start; }
+.pruning-card { background: var(--paper); border: 1px solid rgba(43, 58, 42, 0.12); border-radius: 14px; overflow: hidden; }
+.pruning-card.due { border-color: var(--gold); }
+.pruning-card.open { border-color: var(--moss); }
+.pruning-head { display: flex; gap: 0.7rem; width: 100%; background: none; border: none; font: inherit; text-align: left; padding: 0.7rem; cursor: pointer; align-items: center; }
+.pruning-head:hover { background: #f6f1e4; }
+.pruning-photo { flex-shrink: 0; width: 62px; height: 62px; border-radius: 10px; overflow: hidden; background: #e7e0cf; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.pruning-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pruning-head-body { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
+.pruning-head-body strong { font-family: var(--font-display, serif); font-size: 0.98rem; line-height: 1.25; }
+.pruning-head-body em { font-style: normal; font-size: 0.74rem; color: var(--muted); }
+.pruning-badge { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+.pruning-badge.now { color: var(--forest); font-weight: 700; }
+.pruning-detail { border-top: 1px dashed rgba(43, 58, 42, 0.15); padding: 0.7rem 0.9rem 0.9rem; }
+.pruning-when { font-size: 0.84rem; margin: 0 0 0.4rem; }
+.pruning-detail ol { margin: 0 0 0.5rem; padding-left: 1.2rem; }
+.pruning-detail li { font-size: 0.84rem; line-height: 1.5; margin: 0.25rem 0; }
+.pruning-caution { font-size: 0.8rem; color: var(--terracotta); margin: 0.3rem 0 0.6rem; }
+
+/* ---- Study plans ---- */
+.study-plan { position: relative; background: var(--paper); border: 1px solid var(--moss); border-radius: 16px; padding: 1.2rem 1.4rem; }
+.study-plan h3 { font-family: var(--font-display, serif); font-size: 1.4rem; margin: 0 0 0.15rem; }
+.study-invitation { font-style: italic; color: var(--moss); font-size: 0.9rem; margin: 0 0 0.6rem; }
+.study-plan h4 { font-family: var(--font-display, serif); font-size: 0.98rem; color: var(--forest); margin: 0.9rem 0 0.3rem; }
+.study-read { margin: 0; padding-left: 1.1rem; }
+.study-read li { font-size: 0.88rem; line-height: 1.6; margin: 0.3rem 0; }
+.study-ponder { font-size: 0.92rem; line-height: 1.6; margin: 0; font-style: italic; }
+.study-practice { font-size: 0.88rem; line-height: 1.6; margin: 0 0 0.9rem; }
+
+/* ---- Berry Berry Grateful ---- */
+.berry-vision { background: var(--paper); border: 1px solid rgba(43, 58, 42, 0.12); border-radius: 16px; padding: 1.1rem 1.2rem; }
+.berry-vision-lead { font-size: 0.92rem; line-height: 1.6; margin: 0 0 0.8rem; }
+.berry-vision-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.6rem; }
+.berry-card { display: flex; gap: 0.6rem; background: var(--cream); border: 1px solid rgba(43, 58, 42, 0.12); border-radius: 12px; padding: 0.55rem; }
+.berry-card.have { border-color: var(--moss); }
+.berry-card img { width: 58px; height: 58px; object-fit: cover; border-radius: 9px; flex-shrink: 0; }
+.berry-card-body strong { font-size: 0.88rem; display: block; }
+.berry-card-body em { font-style: normal; font-size: 0.7rem; color: var(--moss); font-weight: 700; display: block; margin: 0.05rem 0 0.2rem; }
+.berry-card-body p { margin: 0; font-size: 0.76rem; color: var(--muted); line-height: 1.45; }
+.berry-vision-note { font-size: 0.8rem; color: var(--muted); margin: 0.8rem 0 0; line-height: 1.5; }

@@ -4,25 +4,65 @@
  * Today's Bouquet — celebrate what you DID do. Check a nurturing action,
  * earn its flower, watch the day's bouquet fill the vase. Flowers are never
  * lost: no streaks, only growth. Built from Karmel's Daily Bouquet mockups.
+ * Actions are grouped by category, and Karmel can add her own (name + flower).
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { Heart } from "lucide-react";
-import { ACTION_BY_KEY, ALL_ACTIONS, BOUQUET_ACTIONS, COMPASSION_ACTION, REDEEM_TIERS, bouquetTag, todayKey } from "@/lib/bouquet";
-import type { BouquetHistory } from "@/lib/store";
+import { Heart, Plus, X } from "lucide-react";
+import {
+  BOUQUET_ACTIONS,
+  BOUQUET_CATEGORIES,
+  COMPASSION_ACTION,
+  FLOWER_CHOICES,
+  REDEEM_TIERS,
+  bouquetTag,
+  todayKey,
+  type BouquetAction,
+  type BouquetCategory,
+} from "@/lib/bouquet";
+import type { BouquetHistory, StoredBouquetAction } from "@/lib/store";
+
+/** Lets the sidebar mini-bouquet refresh the moment a box is checked. */
+function announceChange() {
+  window.dispatchEvent(new CustomEvent("bouquet-changed"));
+}
 
 export function TodaysBouquet() {
   const [history, setHistory] = useState<BouquetHistory>({});
+  const [custom, setCustom] = useState<StoredBouquetAction[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ label: "", flowerIndex: 0, category: "Soul" as BouquetCategory });
   const today = todayKey();
 
   useEffect(() => {
     fetch("/api/bouquet")
       .then((r) => r.json())
-      .then((data) => setHistory(data.history && typeof data.history === "object" ? data.history : {}))
+      .then((data) => {
+        setHistory(data.history && typeof data.history === "object" ? data.history : {});
+        setCustom(Array.isArray(data.custom) ? data.custom : []);
+      })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
+
+  const allActions: BouquetAction[] = useMemo(
+    () => [
+      ...BOUQUET_ACTIONS,
+      ...custom.map((action) => ({
+        key: action.key,
+        label: action.label,
+        flower: action.flower,
+        emoji: action.emoji,
+        meaning: `${action.flower} · your own`,
+        category: (["Body", "Soul", "Connection", "Garden"].includes(action.category) ? action.category : "Soul") as BouquetCategory,
+        custom: true,
+      })),
+      COMPASSION_ACTION,
+    ],
+    [custom],
+  );
+  const actionByKey = useMemo(() => new Map(allActions.map((action) => [action.key, action])), [allActions]);
 
   const todays = history[today] ?? [];
 
@@ -38,9 +78,34 @@ export function TodaysBouquet() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: today, actions: next }),
-      }).catch(() => {});
+      })
+        .then(announceChange)
+        .catch(() => {});
       return nextHistory;
     });
+  };
+
+  const addCustom = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const label = addForm.label.trim();
+    if (!label) return;
+    const choice = FLOWER_CHOICES[addForm.flowerIndex];
+    const response = await fetch("/api/bouquet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label, emoji: choice.emoji, flower: choice.flower, category: addForm.category }),
+    }).catch(() => null);
+    const data = await response?.json();
+    if (data?.custom) {
+      setCustom(data.custom);
+      setAddForm({ label: "", flowerIndex: 0, category: addForm.category });
+      setShowAdd(false);
+    }
+  };
+
+  const removeCustom = async (key: string) => {
+    setCustom((current) => current.filter((action) => action.key !== key));
+    await fetch(`/api/bouquet?key=${encodeURIComponent(key)}`, { method: "DELETE" }).catch(() => {});
   };
 
   const collection = useMemo(() => {
@@ -54,8 +119,31 @@ export function TodaysBouquet() {
   const lifetimeFlowers = Array.from(collection.values()).reduce((sum, count) => sum + count, 0);
   const daysBloomed = Object.keys(history).length;
   const nextTier = REDEEM_TIERS.find((tier) => lifetimeFlowers < tier.flowers);
-
   const dateLabel = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+
+  const renderAction = (action: BouquetAction) => {
+    const done = todays.includes(action.key);
+    return (
+      <label key={action.key} className={`bouquet-action ${done ? "done" : ""}`}>
+        <input type="checkbox" checked={done} onChange={() => toggle(action.key)} />
+        <span className="bouquet-action-emoji">{action.emoji}</span>
+        <span className="bouquet-action-body">
+          <strong>{action.label}</strong>
+          <em>{action.flower} · {action.meaning}</em>
+        </span>
+        {action.custom && (
+          <button
+            type="button"
+            className="bouquet-remove"
+            onClick={(event) => { event.preventDefault(); removeCustom(action.key); }}
+            title="Remove this activity (flowers already earned are kept)"
+          >
+            <X size={13} />
+          </button>
+        )}
+      </label>
+    );
+  };
 
   return (
     <div className="section-stack">
@@ -74,10 +162,15 @@ export function TodaysBouquet() {
           <div className="bouquet-flowers">
             {todays.length ? (
               todays.map((key, index) => {
-                const action = ACTION_BY_KEY.get(key);
+                const action = actionByKey.get(key);
                 if (!action) return null;
                 return (
-                  <span key={key} className="bouquet-flower" style={{ transform: `rotate(${(index - (todays.length - 1) / 2) * 14}deg) translateY(${Math.abs(index - (todays.length - 1) / 2) * 6}px)` }} title={`${action.flower} — ${action.label}`}>
+                  <span
+                    key={key}
+                    className="bouquet-flower"
+                    style={{ transform: `rotate(${(index - (todays.length - 1) / 2) * 14}deg) translateY(${Math.abs(index - (todays.length - 1) / 2) * 6}px)` }}
+                    title={`${action.flower} — ${action.label}`}
+                  >
                     {action.emoji}
                   </span>
                 );
@@ -95,24 +188,63 @@ export function TodaysBouquet() {
         </p>
       </div>
 
-      {/* Today's checkboxes */}
+      {/* Today's checkboxes, by category */}
       <div className="bouquet-actions-card">
-        <h3>Today you…</h3>
-        <div className="bouquet-actions">
-          {BOUQUET_ACTIONS.map((action) => {
-            const done = todays.includes(action.key);
-            return (
-              <label key={action.key} className={`bouquet-action ${done ? "done" : ""}`}>
-                <input type="checkbox" checked={done} onChange={() => toggle(action.key)} />
-                <span className="bouquet-action-emoji">{action.emoji}</span>
-                <span className="bouquet-action-body">
-                  <strong>{action.label}</strong>
-                  <em>{action.flower} · {action.meaning}</em>
-                </span>
-              </label>
-            );
-          })}
+        <div className="bouquet-actions-head">
+          <h3>Today you…</h3>
+          <button className="secondary-button" onClick={() => setShowAdd((value) => !value)}>
+            <Plus size={14} /> Add your own
+          </button>
         </div>
+
+        {showAdd && (
+          <form className="bouquet-add" onSubmit={addCustom}>
+            <label className="bouquet-add-label">
+              What will you do?
+              <input
+                value={addForm.label}
+                onChange={(event) => setAddForm((form) => ({ ...form, label: event.target.value }))}
+                placeholder="e.g. Practiced piano, called Mom, 10 minutes of stretching"
+                autoFocus
+              />
+            </label>
+            <label>
+              Category
+              <select value={addForm.category} onChange={(event) => setAddForm((form) => ({ ...form, category: event.target.value as BouquetCategory }))}>
+                {BOUQUET_CATEGORIES.map((category) => <option key={category.key} value={category.key}>{category.key}</option>)}
+              </select>
+            </label>
+            <div className="bouquet-flower-picker">
+              <span>Its flower</span>
+              <div>
+                {FLOWER_CHOICES.map((choice, index) => (
+                  <button
+                    type="button"
+                    key={`${choice.flower}-${index}`}
+                    className={addForm.flowerIndex === index ? "active" : ""}
+                    title={choice.flower}
+                    onClick={() => setAddForm((form) => ({ ...form, flowerIndex: index }))}
+                  >
+                    {choice.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button className="primary-button" type="submit">Add to my list</button>
+          </form>
+        )}
+
+        {BOUQUET_CATEGORIES.map((category) => {
+          const actions = allActions.filter((action) => action.category === category.key && action.key !== COMPASSION_ACTION.key);
+          if (!actions.length) return null;
+          return (
+            <div key={category.key} className="bouquet-category">
+              <h4>{category.key} <em>· {category.blurb}</em></h4>
+              <div className="bouquet-actions">{actions.map(renderAction)}</div>
+            </div>
+          );
+        })}
+
         <label className={`bouquet-action compassion ${todays.includes(COMPASSION_ACTION.key) ? "done" : ""}`}>
           <input type="checkbox" checked={todays.includes(COMPASSION_ACTION.key)} onChange={() => toggle(COMPASSION_ACTION.key)} />
           <span className="bouquet-action-emoji">{COMPASSION_ACTION.emoji}</span>
@@ -130,7 +262,7 @@ export function TodaysBouquet() {
           <h3>Your flower collection</h3>
           <p className="bouquet-sub">{lifetimeFlowers.toLocaleString()} flowers across {daysBloomed} day{daysBloomed === 1 ? "" : "s"} — saved forever. No days are lost; every day adds beauty.</p>
           <div className="bouquet-collection-grid">
-            {ALL_ACTIONS.map((action) => (
+            {allActions.map((action) => (
               <div key={action.key} className="bouquet-collect">
                 <span>{action.emoji}</span>
                 <strong>{(collection.get(action.key) ?? 0).toLocaleString()}</strong>

@@ -3066,7 +3066,55 @@ export const completeSeedVaultDatabase: SeedPacket[] = [
     updatedAt: "2026-07-02T00:00:00Z",
     plantingHistory: [],
   },
+  // ==========================================
+  // 2026 ADDITIONS
+  // ==========================================
+
+  {
+    id: "seed-wildflower-pollinator-mix-2026",
+    commonName: "Wildflower Pollinator Mix",
+    botanicalName: "18-species annual & perennial blend",
+    variety: "Ferry-Morse Pollinator Mix (shaker bag)",
+    seedCount: 5000,
+    germinationRate: 85,
+    packagedDate: "2026-01-01",
+    storageLocation: "Greenhouse shelf",
+    isHeirloom: false,
+    isAnnual: true,
+    source: "Ferry-Morse (bought July 2026)",
+    daysToMaturity: 65,
+    daysToGermination: 14,
+    startIndoors: false,
+    lightRequirement: "full-sun",
+    waterNeeds: "moderate",
+    soilType: "Any prepared, weed-free bed — includes natural soil conditioner",
+    spacingInches: 0,
+    utahPlantingWindows: {
+      spring: { start: "04-15", end: "06-15" },
+      fall: { start: "10-15", end: "11-15" },
+    },
+    frostHardiness: "frost-tolerant",
+    utahZone: "6b",
+    utahSpecificNotes:
+      "Covers up to 500 sq ft — perfect for the pollinator flower bands. Shake the bag well (seed settles). Sprinkle over prepared soil, rake lightly to cover 1/8–1/4 inch, and mist. Water gently every day for 2–3 weeks until seedlings have their second set of leaves, then once a week. Annuals (poppies, California poppy, tidy tips, gaillardia) bloom ~60–75 days from sowing; perennials (echinacea, blue flax, anise hyssop, bee balm) mostly bloom their second year. A dormant late-fall sowing gives earlier spring blooms.",
+    harvestTiming: "First annual blooms ~60–75 days after sowing; continuous color to frost",
+    harvestSeason: "June-October",
+    yieldPerPlant: "Season-long nectar for bees, butterflies, and hummingbirds",
+    canSaveSeed: true,
+    seedStorageMethod: "cool-dry",
+    estimatedShelfLife: 3,
+    cookingMethods: [],
+    preservationMethods: [],
+    flavorProfile: "For the pollinators, not the table (calendula-family petals aside)",
+    nutritionHighlights: "1 of every 3 bites of food depends on the pollinators this feeds",
+    commonCuisines: [],
+    companionPlants: ["squash", "tomatoes", "berries", "fruit trees"],
+    createdAt: "2026-07-07",
+    updatedAt: "2026-07-07",
+    mix: "Cynoglossum amabile, Cheiranthus allionii, Eschscholzia californica, Echinacea purpurea, Callistephus chinensis, Papaver rhoeas, Linum perenne, Nemophila, Layia platyglossa, Gilia capitata, Gaillardia pulchella, Coreopsis, Lobularia maritima, Agastache foeniculum, Aster, Erigeron speciosus, Monarda fistulosa",
+  } as unknown as SeedPacket,
 ];
+
 
 // Export as default for easy import
 export default completeSeedVaultDatabase;

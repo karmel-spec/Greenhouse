@@ -147,6 +147,15 @@ export type StoredSeedTray = {
 /** Today's Bouquet — nurturing actions checked per day, keyed yyyy-mm-dd. */
 export type BouquetHistory = Record<string, string[]>;
 
+/** Karmel's own bouquet activities, alongside the built-in dozen. */
+export type StoredBouquetAction = {
+  key: string; // "custom-<id>"
+  label: string;
+  flower: string;
+  emoji: string;
+  category: string; // Body | Soul | Connection | Garden
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -159,6 +168,7 @@ export type GardenStore = {
   compostPiles: StoredCompostPile[];
   seedTrays: StoredSeedTray[];
   bouquet: BouquetHistory;
+  bouquetCustom: StoredBouquetAction[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -195,6 +205,7 @@ export async function readStore(): Promise<GardenStore> {
       compostPiles: Array.isArray(parsed.compostPiles) ? parsed.compostPiles : [],
       seedTrays: Array.isArray(parsed.seedTrays) ? parsed.seedTrays : [],
       bouquet: parsed.bouquet && typeof parsed.bouquet === "object" ? parsed.bouquet : {},
+      bouquetCustom: Array.isArray(parsed.bouquetCustom) ? parsed.bouquetCustom : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -214,6 +225,7 @@ export async function readStore(): Promise<GardenStore> {
       compostPiles: [],
       seedTrays: [],
       bouquet: {},
+      bouquetCustom: [],
     };
     await persist(initial);
     return initial;

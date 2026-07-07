@@ -61,6 +61,9 @@ import { TodaysBouquet } from "@/components/TodaysBouquet";
 import { InspirationBanner } from "@/components/InspirationBanner";
 import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
 import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
+import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey } from "@/lib/bouquet";
+import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
+import { PruningSection } from "@/components/PruningSection";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
@@ -327,10 +330,58 @@ export default function Home() {
 }
 
 function Brand() {
+  const [todayFlowers, setTodayFlowers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const load = () =>
+      fetch("/api/bouquet")
+        .then((response) => response.json())
+        .then((data) => {
+          const key = bouquetTodayKey();
+          const keys: string[] = data.history?.[key] ?? [];
+          const custom: { key: string; emoji: string }[] = Array.isArray(data.custom) ? data.custom : [];
+          const emojiByKey = new Map<string, string>([
+            ...ALL_BOUQUET_ACTIONS.map((action) => [action.key, action.emoji] as [string, string]),
+            ...custom.map((action) => [action.key, action.emoji] as [string, string]),
+          ]);
+          setTodayFlowers(keys.map((entry) => emojiByKey.get(entry) ?? "🌸"));
+        })
+        .catch(() => {});
+    load();
+    window.addEventListener("bouquet-changed", load);
+    return () => window.removeEventListener("bouquet-changed", load);
+  }, []);
+
+  const count = todayFlowers.length;
+  // The bouquet literally grows: bigger mark and bigger blooms as the day fills.
+  const markSize = Math.min(64 + count * 7, 140);
+  const flowerSize = Math.min(15 + count * 1.2, 26);
+
   return (
     <div className="brand">
-      <div className="botanical-mark">☼</div>
-      <h2>Karmel's<br />Greenhouse Growth<br />Operating System</h2>
+      <div
+        className={`botanical-mark bouquet-mark ${count ? "blooming" : ""}`}
+        style={{ width: markSize, height: markSize }}
+        title={count ? `${count} flower${count === 1 ? "" : "s"} in today's bouquet — keep going!` : "Check off nurturing actions in Today's Bouquet and watch this bloom"}
+      >
+        {count ? (
+          todayFlowers.map((emoji, index) => (
+            <span
+              key={`${emoji}-${index}`}
+              className="brand-flower"
+              style={{
+                fontSize: flowerSize,
+                transform: `rotate(${(index - (count - 1) / 2) * (count > 8 ? 11 : 16)}deg) translateY(-${markSize / 3.2}px)`,
+              }}
+            >
+              {emoji}
+            </span>
+          ))
+        ) : (
+          <span className="brand-seed">🌿</span>
+        )}
+      </div>
+      <h2>Greenhouse</h2>
     </div>
   );
 }
@@ -519,6 +570,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <Wishlist focus={nav.wishlistFocus} />;
     case "propagation":
       return <Propagation />;
+    case "pruning":
+      return <PruningSection />;
     case "map":
       return <GardenMap />;
     case "quotes":
@@ -1417,9 +1470,52 @@ function PlantLibrary() {
   );
 }
 
+const BERRY_VISION: { name: string; have: boolean; note: string }[] = [
+  { name: "Blueberry", have: true, note: "Your two bushes — they want acidic soil, so keep them in pots or amended beds with peat and sulfur; Utah soil fights them." },
+  { name: "Strawberry", have: true, note: "Already gratefully here — edge the beds with them and let a few runners fill the gaps." },
+  { name: "Raspberry", have: false, note: "Coming soon — plant 'Heritage' or 'Caroline' fall-bearers and simply mow the canes each February." },
+  { name: "Blackberry", have: false, note: "'Triple Crown' thornless thrives in Orem and out-yields everything on a simple two-wire fence." },
+  { name: "Honeyberry", have: false, note: "Haskap — blooms through late frosts, fruits before strawberries, laughs at zone 6 winters. Plant two for pollination." },
+  { name: "Currant", have: false, note: "Black or red — happy in the part-shade corners other berries refuse, and they love our cool springs." },
+  { name: "Gooseberry", have: false, note: "'Hinnomaki Red' — pie-perfect, thrives here, and nearly zero care once established." },
+  { name: "Serviceberry", have: false, note: "Saskatoon — a Utah native that's both ornamental and delicious; blueberry-ish fruit without the acid-soil drama." },
+  { name: "Elderberry", have: false, note: "For the apothecary shelf — syrup from your own gratitude garden. Give it the moist corner." },
+];
+
+function BerryGratefulVision() {
+  return (
+    <div className="berry-vision">
+      <p className="berry-vision-lead">
+        The vision: a garden where every plant is a thank-you — <strong>Berry Berry Grateful</strong>. Blueberries and
+        strawberries are home; raspberries are on the way. Here&apos;s the full berry patch this corner of Orem can carry:
+      </p>
+      <div className="berry-vision-grid">
+        {BERRY_VISION.map((berry) => {
+          const photo = plantPhoto(berry.name);
+          return (
+            <article key={berry.name} className={`berry-card ${berry.have ? "have" : ""}`}>
+              {photo && <img src={photo} alt={berry.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />}
+              <div className="berry-card-body">
+                <strong>{berry.name} {berry.have ? "✓" : ""}</strong>
+                <em>{berry.have ? "Berry berry here" : "Berry berry soon (on the wishlist)"}</em>
+                <p>{berry.note}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <p className="berry-vision-note">
+        Orem-friendly picks above are on your wishlist under this zone. One honest note: blueberries are the only
+        rebels here — Utah&apos;s alkaline soil means they live their best life in containers of acidified mix.
+      </p>
+    </div>
+  );
+}
+
 function ZonesSection({ focus }: { focus: string | null }) {
   const [selected, setSelected] = useState<string | null>(focus);
   const [zonePlants, setZonePlants] = useState<PlantDetail[]>([]);
+  const [storedWish, setStoredWish] = useState<WishItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [detail, setDetail] = useState<PlantDetail | null>(null);
 
@@ -1432,10 +1528,12 @@ function ZonesSection({ focus }: { focus: string | null }) {
     setLoaded(false);
     const load = async () => {
       try {
-        const [plantsData, journalData] = await Promise.all([
+        const [plantsData, journalData, wishData] = await Promise.all([
           (await fetch("/api/plants")).json(),
           (await fetch("/api/journal")).json(),
+          (await fetch("/api/wishlist")).json(),
         ]);
+        setStoredWish(Array.isArray(wishData.items) ? wishData.items : []);
         const entries: PlantPhotoRecord[] = Array.isArray(journalData.entries) ? journalData.entries : [];
         const journalById = new Map(entries.map((e) => [e.id, e]));
         const library: PlantDetail[] = (Array.isArray(plantsData.plants) ? plantsData.plants : [])
@@ -1476,11 +1574,18 @@ function ZonesSection({ focus }: { focus: string | null }) {
   const zone = zones.find((entry) => entry.name === selected);
 
   if (selected && zone) {
-    const zoneWishlist = wishlistItems.filter((item) => item.category === selected);
+    const zoneWishlist = storedWish.length
+      ? storedWish.filter((item) => item.category === selected)
+      : wishlistItems.filter((item) => item.category === selected);
     return (
       <div className="section-stack">
         <button className="text-link" onClick={() => setSelected(null)}>← All garden zones</button>
-        <SectionIntro title={zone.name} subtitle={`Mood: ${zone.mood} • Status: ${zone.status}`} />
+        <SectionIntro
+          title={zone.name === "Gratitude Garden" ? "Gratitude Garden — Berry Berry Grateful 🫐" : zone.name}
+          subtitle={`Mood: ${zone.mood} • Status: ${zone.status}`}
+        />
+
+        {zone.name === "Gratitude Garden" && <BerryGratefulVision />}
 
         <h3 className="apothecary-subhead">Plants in this zone</h3>
         {!loaded && <p className="empty-note">Checking your plant records...</p>}
@@ -2264,7 +2369,57 @@ function GardenMap() {
 }
 
 function Quotes() {
-  return <CardCollection title="Scripture & Quote Library" subtitle="Attach light, growth, roots, harvest, stewardship, and renewal quotes to plants, zones, journal entries, lessons, and daily plans." items={quoteTopics} />;
+  const [openTopic, setOpenTopic] = useState<string | null>(null);
+  const plan = openTopic ? STUDY_PLAN_BY_TOPIC.get(openTopic) ?? null : null;
+
+  return (
+    <div className="section-stack">
+      <SectionIntro
+        title="Garden Sanctuary Study"
+        subtitle="A simple study plan for each theme — a few passages to read, a question to ponder, and a practice to carry into the garden. Tap a topic and take it outside."
+      />
+      <div className="collection-grid">
+        {quoteTopics.map((topic) => (
+          <button
+            className={`collection-card zone-card ${openTopic === topic ? "active" : ""}`}
+            key={topic}
+            onClick={() => setOpenTopic((current) => (current === topic ? null : topic))}
+          >
+            <Leaf size={18} />
+            <span>{topic}</span>
+            <ChevronRight size={16} />
+          </button>
+        ))}
+      </div>
+
+      {plan && (
+        <article className="study-plan">
+          <button className="plant-remove" onClick={() => setOpenTopic(null)} aria-label="Close study plan"><X size={14} /></button>
+          <h3>{plan.topic}</h3>
+          <p className="study-invitation">{plan.invitation}</p>
+          <h4>Read</h4>
+          <ul className="study-read">
+            {plan.read.map((entry) => (
+              <li key={entry.ref}><strong>{entry.ref}</strong> — “{entry.line}”</li>
+            ))}
+          </ul>
+          <h4>Ponder</h4>
+          <p className="study-ponder">{plan.ponder}</p>
+          <h4>Practice in the garden</h4>
+          <p className="study-practice">{plan.practice}</p>
+          <button
+            className="secondary-button"
+            onClick={() => askEve(`I'm studying the theme "${plan.topic}" in my garden sanctuary today. Share one more scripture or garden reflection on ${plan.topic.toLowerCase()}, and one gentle question to sit with while I tend the plants.`)}
+          >
+            <Bot size={15} /> Ask Eve to add to this study
+          </button>
+        </article>
+      )}
+      {openTopic && !plan && (
+        <p className="empty-note">A study plan for {openTopic} is coming — ask Eve about it in the meantime.</p>
+      )}
+    </div>
+  );
 }
 
 function Learning() {

@@ -20,6 +20,7 @@ import {
   PanelTop,
   Pickaxe,
   Recycle,
+  Scissors,
   Sprout,
   SunMedium,
   TestTube2,
@@ -36,6 +37,7 @@ export type SectionKey =
   | "zones"
   | "operations"
   | "propagation"
+  | "pruning"
   | "microgreens"
   | "seedtrays"
   | "apothecary"
@@ -63,6 +65,7 @@ export const navItems = [
   { key: "zones", label: "Garden Zones", icon: Trees },
   { key: "operations", label: "Operations", icon: PanelTop },
   { key: "propagation", label: "Propagation", icon: Sprout },
+  { key: "pruning", label: "Pruning", icon: Scissors },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "seedtrays", label: "Seed Trays", icon: Grid3x3 },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },

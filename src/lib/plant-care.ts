@@ -63,6 +63,8 @@ const CARE: { match: RegExp; care: PlantCare }[] = [
   { match: /dill|fennel/i, care: { category: "Herbs", type: "Annual (self-sows)", water: "Moderate", sun: "Full sun, outdoors", propagate: "From seed — direct sow; taproot hates moving" } },
   { match: /lavender/i, care: { category: "Herbs", type: "Perennial (woody, zone 5+)", water: "Low — drought-loving once established; never soggy", sun: "Full sun, outdoors; great in Utah's dry air", propagate: "Yes — semi-hardwood cuttings in late summer" } },
   { match: /chamomile/i, care: { category: "Herbs", type: "Annual (German) — self-sows freely", water: "Moderate", sun: "Full sun–light shade, outdoors", propagate: "From seed — let heads dry and crumble them over soil" } },
+  { match: /curry plant|helichrysum/i, care: { category: "Herbs", type: "Tender perennial (protect below ~20°F — pot it)", water: "Low — silver foliage means drought-adapted; never soggy", sun: "Full sun; loves Utah's dry air like lavender does", propagate: "Yes — semi-hardwood cuttings in summer" } },
+  { match: /bay laurel|sweet bay|laurus/i, care: { category: "Herbs", type: "Tender evergreen tree (pot it; winter indoors below ~20°F)", water: "Low–moderate; let the top inch dry", sun: "Full sun–part shade; summer outside, bright window in winter", propagate: "Slowly — semi-hardwood cuttings (patience required)" } },
   { match: /lemon balm|melissa/i, care: { category: "Herbs", type: "Perennial (zone 4+, spreads like mint)", water: "Moderate", sun: "Sun–part shade, outdoors", propagate: "Yes — cuttings or division" } },
 
   // ——— Vegetables ———
