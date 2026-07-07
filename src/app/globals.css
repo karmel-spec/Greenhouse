@@ -2610,3 +2610,73 @@ button.metric-card.clickable.active {
 }
 .seed-user-chip button { border: none; background: none; cursor: pointer; color: var(--muted); padding: 0; display: inline-flex; }
 .seed-user-chip button:hover { color: var(--terracotta); }
+
+/* ---- Seed Testing lab ---- */
+.brand-bouquet { margin: 0 auto; }
+.seedtest-new { display: flex; flex-direction: column; gap: 0.5rem; }
+.seedtest-new .pest-search { width: 100%; }
+.seedtest-picker { max-height: 260px; }
+.seedtest-card {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+.seedtest-card.done { opacity: 0.88; }
+.seedtest-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.6rem; }
+.seedtest-head strong { font-family: var(--font-display, serif); font-size: 1.05rem; display: block; }
+.seedtest-meta { font-size: 0.76rem; color: var(--muted); }
+.seedtest-head .plant-remove { position: static; }
+.seedtest-plugs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  max-width: 420px;
+}
+.seedtest-plug {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.seedtest-plug:disabled { cursor: default; }
+.seedtest-cone {
+  display: block;
+  width: 34px;
+  height: 40px;
+  background: #d9cdb2;
+  border: 1.5px solid rgba(43, 58, 42, 0.25);
+  clip-path: polygon(8% 0, 92% 0, 66% 100%, 34% 100%);
+  transition: background 0.15s ease;
+}
+.seedtest-plug.plug-sprouted .seedtest-cone { background: #cfe3b8; border-color: var(--moss); }
+.seedtest-plug.plug-failed .seedtest-cone { background: #e6d7d2; border-color: var(--terracotta); }
+.seedtest-plug em {
+  position: absolute;
+  top: 2px;
+  font-style: normal;
+  font-size: 1rem;
+}
+.seedtest-plug.plug-failed em { color: var(--terracotta); font-weight: 700; }
+.seedtest-plug:hover .seedtest-cone { border-color: var(--forest); }
+.seedtest-score { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.7rem 0 0.3rem; font-size: 0.86rem; color: var(--muted); }
+.seedtest-verdict.good strong { color: var(--moss); }
+.seedtest-verdict.poor strong { color: var(--terracotta); }
+.seedtest-overdue { font-size: 0.8rem; color: var(--terracotta); margin: 0.2rem 0; }
+.seedtest-notes {
+  width: 100%;
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 10px;
+  background: var(--cream);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.65rem;
+  margin-top: 0.4rem;
+  resize: vertical;
+}
+.seedtest-actions { display: flex; gap: 0.6rem; margin-top: 0.6rem; align-items: center; }
+.seedtest-final { font-size: 0.84rem; color: var(--forest); }

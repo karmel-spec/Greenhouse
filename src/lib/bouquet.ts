@@ -92,3 +92,9 @@ export function todayKey(now = new Date()): string {
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+export function yesterdayKey(now = new Date()): string {
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  return todayKey(yesterday);
+}

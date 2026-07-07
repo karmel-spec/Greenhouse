@@ -61,7 +61,9 @@ import { TodaysBouquet } from "@/components/TodaysBouquet";
 import { InspirationBanner } from "@/components/InspirationBanner";
 import { MICROGREENS, type Microgreen, microPhoto } from "@/lib/microgreens";
 import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
-import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey } from "@/lib/bouquet";
+import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey, yesterdayKey as bouquetYesterdayKey } from "@/lib/bouquet";
+import { BouquetArrangement } from "@/components/BouquetArrangement";
+import { SeedTesting } from "@/components/SeedTesting";
 import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
 import { PruningSection } from "@/components/PruningSection";
 import { TeaGardenVision, MeditationVision, ApothecaryVision, FairyGardenVision, teaPlantSplit } from "@/components/ZoneVisions";
@@ -331,21 +333,26 @@ export default function Home() {
 }
 
 function Brand() {
-  const [todayFlowers, setTodayFlowers] = useState<string[]>([]);
+  const [flowers, setFlowers] = useState<string[]>([]);
+  const [isYesterdays, setIsYesterdays] = useState(false);
 
   useEffect(() => {
     const load = () =>
       fetch("/api/bouquet")
         .then((response) => response.json())
         .then((data) => {
-          const key = bouquetTodayKey();
-          const keys: string[] = data.history?.[key] ?? [];
           const custom: { key: string; emoji: string }[] = Array.isArray(data.custom) ? data.custom : [];
           const emojiByKey = new Map<string, string>([
             ...ALL_BOUQUET_ACTIONS.map((action) => [action.key, action.emoji] as [string, string]),
             ...custom.map((action) => [action.key, action.emoji] as [string, string]),
           ]);
-          setTodayFlowers(keys.map((entry) => emojiByKey.get(entry) ?? "🌸"));
+          // Show yesterday's finished bouquet (it doesn't rebuild hour by hour);
+          // fall back to today's while the collection is brand new.
+          const yesterdays: string[] = data.history?.[bouquetYesterdayKey()] ?? [];
+          const todays: string[] = data.history?.[bouquetTodayKey()] ?? [];
+          const chosen = yesterdays.length ? yesterdays : todays;
+          setIsYesterdays(yesterdays.length > 0);
+          setFlowers(chosen.map((entry) => emojiByKey.get(entry) ?? "🌸"));
         })
         .catch(() => {});
     load();
@@ -353,36 +360,19 @@ function Brand() {
     return () => window.removeEventListener("bouquet-changed", load);
   }, []);
 
-  const count = todayFlowers.length;
-  // The bouquet literally grows: bigger mark and bigger blooms as the day fills.
-  const markSize = Math.min(64 + count * 7, 140);
-  const flowerSize = Math.min(15 + count * 1.2, 26);
-
   return (
     <div className="brand">
       <div
-        className={`botanical-mark bouquet-mark ${count ? "blooming" : ""}`}
-        style={{ width: markSize, height: markSize }}
-        title={count ? `${count} flower${count === 1 ? "" : "s"} in today's bouquet — keep going!` : "Check off nurturing actions in Today's Bouquet and watch this bloom"}
+        className="brand-bouquet"
+        title={
+          flowers.length
+            ? `${isYesterdays ? "Yesterday's" : "Today's"} bouquet — ${flowers.length} flower${flowers.length === 1 ? "" : "s"}`
+            : "Check off nurturing actions in Today's Bouquet and a bouquet blooms here"
+        }
       >
-        {count ? (
-          todayFlowers.map((emoji, index) => (
-            <span
-              key={`${emoji}-${index}`}
-              className="brand-flower"
-              style={{
-                fontSize: flowerSize,
-                transform: `rotate(${(index - (count - 1) / 2) * (count > 8 ? 11 : 16)}deg) translateY(-${markSize / 3.2}px)`,
-              }}
-            >
-              {emoji}
-            </span>
-          ))
-        ) : (
-          <span className="brand-seed">🌿</span>
-        )}
+        <BouquetArrangement flowers={flowers} width={120} showTag={false} />
       </div>
-      <h2>Greenhouse</h2>
+      <h2>Karmel&apos;s Greenhouse</h2>
     </div>
   );
 }
@@ -543,6 +533,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <OperationsSection nav={nav} />;
     case "seedtrays":
       return <SeedTraysSection />;
+    case "seedtesting":
+      return <SeedTesting />;
     case "microgreens":
       return <MicrogreensSection env={env} />;
     case "apothecary":

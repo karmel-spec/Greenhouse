@@ -4,6 +4,7 @@ import {
   Bug,
   CalendarDays,
   Camera,
+  FlaskConical,
   Flower,
   Flower2,
   Grid3x3,
@@ -40,6 +41,7 @@ export type SectionKey =
   | "pruning"
   | "microgreens"
   | "seedtrays"
+  | "seedtesting"
   | "apothecary"
   | "pest-management"
   | "sfg"
@@ -68,6 +70,7 @@ export const navItems = [
   { key: "pruning", label: "Pruning", icon: Scissors },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "seedtrays", label: "Seed Trays", icon: Grid3x3 },
+  { key: "seedtesting", label: "Seed Testing", icon: FlaskConical },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },

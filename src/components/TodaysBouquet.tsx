@@ -20,51 +20,13 @@ import {
   type BouquetAction,
 } from "@/lib/bouquet";
 import type { BouquetHistory, StoredBouquetAction } from "@/lib/store";
+import { BouquetArrangement } from "@/components/BouquetArrangement";
 
 /** Lets the sidebar mini-bouquet refresh the moment a box is checked. */
 function announceChange() {
   window.dispatchEvent(new CustomEvent("bouquet-changed"));
 }
 
-/**
- * Composed-bouquet layout (modeled on Karmel's watercolor mockups): the first
- * flower takes the center, then blooms fill the flanks and crown so the
- * arrangement reads as a dome at any count. x = px from center, y = px up
- * from the jar mouth, s = font size, r = stem tilt, z = layer.
- */
-const BLOOM_SLOTS: { x: number; y: number; s: number; r: number; z: number }[] = [
-  { x: 0, y: 62, s: 56, r: 0, z: 10 },
-  { x: -38, y: 52, s: 50, r: -12, z: 9 },
-  { x: 38, y: 52, s: 50, r: 12, z: 9 },
-  { x: -20, y: 92, s: 46, r: -6, z: 8 },
-  { x: 20, y: 92, s: 46, r: 6, z: 8 },
-  { x: -60, y: 28, s: 44, r: -20, z: 7 },
-  { x: 60, y: 28, s: 44, r: 20, z: 7 },
-  { x: 0, y: 122, s: 44, r: 0, z: 7 },
-  { x: -46, y: 86, s: 40, r: -16, z: 6 },
-  { x: 46, y: 86, s: 40, r: 16, z: 6 },
-  { x: -76, y: 56, s: 38, r: -28, z: 5 },
-  { x: 76, y: 56, s: 38, r: 28, z: 5 },
-  { x: -24, y: 142, s: 36, r: -8, z: 5 },
-  { x: 24, y: 142, s: 36, r: 8, z: 5 },
-  { x: 0, y: 24, s: 42, r: 0, z: 11 },
-  { x: -6, y: 166, s: 32, r: -3, z: 4 },
-];
-
-const GREENERY_SLOTS: { x: number; y: number; s: number; r: number; leaf: string }[] = [
-  { x: 0, y: 100, s: 34, r: 0, leaf: "🌿" },
-  { x: -52, y: 74, s: 34, r: -30, leaf: "🌿" },
-  { x: 52, y: 74, s: 34, r: 30, leaf: "🌿" },
-  { x: -28, y: 120, s: 32, r: -15, leaf: "🍃" },
-  { x: 28, y: 120, s: 32, r: 15, leaf: "🍃" },
-  { x: -84, y: 42, s: 30, r: -45, leaf: "🍃" },
-  { x: 84, y: 42, s: 30, r: 45, leaf: "🍃" },
-  { x: 0, y: 152, s: 30, r: 0, leaf: "🌿" },
-  { x: -62, y: 106, s: 28, r: -35, leaf: "🌿" },
-  { x: 62, y: 106, s: 28, r: 35, leaf: "🌿" },
-  { x: -98, y: 66, s: 26, r: -55, leaf: "🌱" },
-  { x: 98, y: 66, s: 26, r: 55, leaf: "🌱" },
-];
 
 export function TodaysBouquet() {
   const [history, setHistory] = useState<BouquetHistory>({});
@@ -206,53 +168,15 @@ export function TodaysBouquet() {
         </p>
       </div>
 
-      {/* The vase — a composed arrangement that fills like a real bouquet */}
+      {/* A hand-tied bouquet: blooms, stems, bow, and the note on twine */}
       <div className="bouquet-vase-card">
         <p className="bouquet-date">{dateLabel}</p>
-        <div className={`bouquet-vase ${todays.length ? "" : "empty"}`}>
-          <div className="bouquet-arrangement">
-            {/* greenery fills in behind the blooms as the bouquet grows */}
-            {GREENERY_SLOTS.slice(0, todays.length ? Math.min(3 + todays.length, GREENERY_SLOTS.length) : 1).map((slot, index) => (
-              <span
-                key={`green-${index}`}
-                className="bouquet-greenery"
-                style={{
-                  left: `calc(50% + ${slot.x}px)`,
-                  bottom: slot.y,
-                  fontSize: slot.s,
-                  transform: `translateX(-50%) rotate(${slot.r}deg)`,
-                }}
-              >
-                {slot.leaf}
-              </span>
-            ))}
-            {todays.map((key, index) => {
-              const action = actionByKey.get(key);
-              const slot = BLOOM_SLOTS[index % BLOOM_SLOTS.length];
-              if (!action) return null;
-              return (
-                <span
-                  key={key}
-                  className="bouquet-bloom"
-                  style={{
-                    left: `calc(50% + ${slot.x}px)`,
-                    bottom: slot.y,
-                    fontSize: slot.s,
-                    zIndex: slot.z,
-                    transform: `translateX(-50%) rotate(${slot.r}deg)`,
-                  }}
-                  title={`${action.flower} — ${action.label}`}
-                >
-                  {action.emoji}
-                </span>
-              );
-            })}
-          </div>
-          <div className="bouquet-jar">
-            <span className="bouquet-ribbon">🎀</span>
-            <span className="bouquet-tagline">{bouquetTag(todays.length)}</span>
-          </div>
-        </div>
+        <BouquetArrangement
+          flowers={todays.map((key) => actionByKey.get(key)?.emoji ?? "🌸")}
+          width={340}
+          showTag
+          tagline={bouquetTag(todays.length)}
+        />
         <p className="bouquet-earned">
           <strong>{todays.length}</strong> flower{todays.length === 1 ? "" : "s"} earned today
         </p>

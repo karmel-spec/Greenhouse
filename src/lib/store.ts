@@ -177,6 +177,22 @@ export type StoredSeedPacket = {
   createdAt: string;
 };
 
+/** A run of Karmel's 12-plug hydroponic seed tester. */
+export type SeedTestPlug = "sown" | "sprouted" | "failed";
+
+export type StoredSeedTest = {
+  id: string;
+  seedName: string;
+  variety?: string;
+  claimedGermination?: number; // what the packet promises, for comparison
+  daysToGermination?: number;
+  startedAt: string;
+  plugs: SeedTestPlug[]; // 12 cone plugs
+  notes: string;
+  status: "active" | "done";
+  createdAt: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -191,6 +207,7 @@ export type GardenStore = {
   bouquet: BouquetHistory;
   bouquetCustom: StoredBouquetAction[];
   userSeeds: StoredSeedPacket[];
+  seedTests: StoredSeedTest[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -229,6 +246,7 @@ export async function readStore(): Promise<GardenStore> {
       bouquet: parsed.bouquet && typeof parsed.bouquet === "object" ? parsed.bouquet : {},
       bouquetCustom: Array.isArray(parsed.bouquetCustom) ? parsed.bouquetCustom : [],
       userSeeds: Array.isArray(parsed.userSeeds) ? parsed.userSeeds : [],
+      seedTests: Array.isArray(parsed.seedTests) ? parsed.seedTests : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -250,6 +268,7 @@ export async function readStore(): Promise<GardenStore> {
       bouquet: {},
       bouquetCustom: [],
       userSeeds: [],
+      seedTests: [],
     };
     await persist(initial);
     return initial;
