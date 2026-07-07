@@ -7,6 +7,7 @@
 
 import { promises as fs } from "fs";
 import path from "path";
+import { downloadStoreJson, hasSupabase, uploadStoreJson } from "@/lib/supabase-backend";
 
 export type StoredTask = {
   id: string;
@@ -225,9 +226,25 @@ const seedTasks: Omit<StoredTask, "id" | "done" | "createdAt">[] = [
 
 let writeQueue: Promise<unknown> = Promise.resolve();
 
+// In cloud mode, cache reads briefly so a dashboard load (many GET routes)
+// doesn't re-download the store for every request.
+let cloudCache: { json: string; at: number } | null = null;
+const CLOUD_CACHE_MS = 2000;
+
+async function readRawStore(): Promise<string> {
+  if (hasSupabase()) {
+    if (cloudCache && Date.now() - cloudCache.at < CLOUD_CACHE_MS) return cloudCache.json;
+    const json = await downloadStoreJson();
+    if (json === null) throw new Error("no cloud store yet");
+    cloudCache = { json, at: Date.now() };
+    return json;
+  }
+  return fs.readFile(STORE_PATH, "utf8");
+}
+
 export async function readStore(): Promise<GardenStore> {
   try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
+    const raw = await readRawStore();
     const parsed = JSON.parse(raw) as Partial<GardenStore>;
     return {
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
@@ -276,8 +293,14 @@ export async function readStore(): Promise<GardenStore> {
 }
 
 async function persist(store: GardenStore) {
+  const json = JSON.stringify(store, null, 2);
+  if (hasSupabase()) {
+    await uploadStoreJson(json);
+    cloudCache = { json, at: Date.now() };
+    return;
+  }
   await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
+  await fs.writeFile(STORE_PATH, json, "utf8");
 }
 
 // Serialize mutations so concurrent requests don't clobber each other.
