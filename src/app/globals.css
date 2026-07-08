@@ -2885,3 +2885,434 @@ button.metric-card.clickable.active {
 }
 .hydro-noshow { font-style: normal; color: var(--terracotta); font-weight: 800; font-size: 1rem; }
 .hydro-caption { font-size: 0.75rem; color: var(--muted); margin: 0.4rem 0 0; text-align: center; }
+
+/* ---- Quart Jar Hydroponics ---- */
+.hydrojar-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.9rem;
+}
+.hydrojar-card {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+}
+.hydrojar-card.done { opacity: 0.88; }
+.hydrojar {
+  border: none;
+  background: none;
+  padding: 0.3rem 0 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0 auto;
+}
+.hydrojar:disabled { cursor: default; }
+.hydrojar-plant {
+  font-size: 1.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(20, 40, 38, 0.25));
+  margin-bottom: -4px;
+  z-index: 1;
+}
+.hydrojar-lid {
+  width: 74px;
+  height: 14px;
+  border-radius: 5px 5px 2px 2px;
+  background: linear-gradient(180deg, #d7d2c2, #b9b3a0);
+  border: 1.5px solid rgba(43, 58, 42, 0.3);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.hydrojar-netcup {
+  width: 30px;
+  height: 8px;
+  border-radius: 0 0 6px 6px;
+  background: repeating-linear-gradient(90deg, #efe7d2 0 4px, #d9cdb2 4px 8px);
+  border: 1px solid rgba(43, 58, 42, 0.25);
+  border-top: none;
+  margin-top: 10px;
+}
+.hydrojar-glass {
+  position: relative;
+  width: 88px;
+  height: 108px;
+  margin-top: -2px;
+  border: 2px solid rgba(87, 105, 82, 0.35);
+  border-top-color: rgba(87, 105, 82, 0.2);
+  border-radius: 8px 8px 22px 22px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(213, 228, 224, 0.25) 45%, rgba(255, 255, 255, 0.4));
+  box-shadow: inset 8px 0 14px rgba(255, 255, 255, 0.55), inset 0 -4px 10px rgba(20, 40, 38, 0.08);
+  overflow: hidden;
+}
+.hydrojar-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 85%;
+  background: linear-gradient(180deg, rgba(154, 196, 183, 0.55), rgba(110, 160, 148, 0.65));
+  border-top: 2px solid rgba(255, 255, 255, 0.65);
+  transition: height 0.25s ease;
+}
+.hydrojar.level-half .hydrojar-water { height: 50%; }
+.hydrojar.level-low .hydrojar-water { height: 18%; }
+.hydrojar-roots {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 82%;
+  background: repeating-linear-gradient(
+    100deg,
+    transparent 0 5px,
+    rgba(250, 247, 236, 0.75) 5px 6.5px,
+    transparent 6.5px 11px
+  );
+  filter: blur(0.3px);
+  opacity: 0.9;
+}
+.hydrojar-level {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.hydrojar-level.warn { color: var(--terracotta); font-weight: 600; }
+.hydrojar:not(:disabled):hover .hydrojar-glass { border-color: var(--forest); }
+.hydrojar-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hydrojar-picks button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--cream);
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+.hydrojar-picks button:hover { border-color: var(--forest); }
+.hydrojar-picks em { font-style: normal; color: var(--muted); font-size: 0.76rem; }
+.hydrojar-form { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hydrojar-form .pest-search { flex: 1 1 150px; }
+.hydrojar-form input[type="number"] { flex: 0 1 130px; }
+
+/* ---- Propagation Station (10 spots) ---- */
+.prop-station {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+.prop-station-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.7rem;
+}
+.prop-station-head h3 {
+  font-family: var(--font-display, serif);
+  font-size: 1.05rem;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.prop-station-head span { font-size: 0.78rem; color: var(--muted); }
+.prop-station-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.55rem;
+}
+@media (max-width: 700px) {
+  .prop-station-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.prop-spot {
+  position: relative;
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 12px;
+  background: #fffdf8;
+  padding: 0.5rem 0.55rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  text-align: center;
+  min-height: 108px;
+}
+.prop-spot header {
+  display: flex;
+  justify-content: space-between;
+  align-self: stretch;
+  align-items: center;
+}
+.prop-spot header .plant-remove { position: static; }
+.prop-spot.empty {
+  border-style: dashed;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  justify-content: center;
+}
+.prop-spot.empty:hover { border-color: var(--forest); color: var(--forest); }
+.prop-spot-number {
+  font-size: 0.68rem;
+  color: var(--muted);
+  border: 1px solid rgba(43, 58, 42, 0.18);
+  border-radius: 999px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+}
+.prop-spot.empty .prop-spot-number { position: absolute; top: 0.5rem; left: 0.55rem; }
+.prop-spot strong { font-size: 0.86rem; line-height: 1.15; }
+.prop-spot em { font-style: normal; font-size: 0.68rem; color: var(--muted); line-height: 1.2; }
+.prop-spot-day { font-size: 0.7rem; color: var(--muted); }
+.prop-spot-status {
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  margin-top: auto;
+}
+.prop-spot-status.rooting { background: #f3ecd7; color: #8a6b42; }
+.prop-spot-status.rooted { background: #dcebc8; color: #3f6b39; }
+.prop-spot-status.potted { background: #cfe0d2; color: #274a2d; }
+.prop-spot-status.failed { background: #e6d7d2; color: var(--terracotta); }
+.prop-spot.failed { opacity: 0.8; }
+.prop-spot-fail {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.66rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+.prop-spot-fail:hover { color: var(--terracotta); }
+.prop-station-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.8rem;
+}
+.prop-station-form .pest-search { flex: 1 1 180px; }
+
+/* ---- The Greenhouse ---- */
+.gh-card {
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
+}
+.gh-card h3 {
+  font-family: var(--font-display, serif);
+  font-size: 1.05rem;
+  margin: 0 0 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.gh-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+.gh-specs dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.gh-specs dd { margin: 0.1rem 0 0; font-size: 0.88rem; }
+.gh-hint { font-size: 0.82rem; color: var(--muted); margin: 0.2rem 0 0.6rem; }
+.gh-stations { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.gh-station-chip {
+  background: var(--cream);
+  border: 1px dashed rgba(43, 58, 42, 0.25);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.gh-album-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.gh-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+.gh-photo {
+  position: relative;
+  margin: 0;
+  background: #fffdf8;
+  border: 1px solid rgba(76, 61, 43, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.gh-photo img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.gh-photo figcaption { padding: 0.35rem 0.5rem 0.5rem; }
+.gh-photo figcaption input {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.gh-photo figcaption input:focus { outline: none; border-bottom: 1px solid var(--moss); }
+.gh-photo-remove { position: absolute; top: 6px; right: 6px; z-index: 1; background: rgba(255, 253, 248, 0.9); border-radius: 999px; }
+.gh-notes { margin-top: 0; }
+
+/* ---- Wishlist boards ---- */
+.wish-boards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.9rem;
+}
+.wish-board {
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  background: var(--paper);
+  padding: 0.6rem 0.6rem 0.75rem;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.wish-board:hover { transform: translateY(-2px); border-color: var(--forest); }
+.wish-board-collage {
+  display: grid;
+  gap: 3px;
+  border-radius: 11px;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  background: var(--cream);
+  margin-bottom: 0.4rem;
+}
+.wish-board-collage img { width: 100%; height: 100%; object-fit: cover; }
+.wish-board-collage.tiles-1 { grid-template-columns: 1fr; }
+.wish-board-collage.tiles-2 { grid-template-columns: 1fr 1fr; }
+.wish-board-collage.tiles-3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+.wish-board-collage.tiles-3 img:first-child { grid-row: span 2; }
+.wish-board-collage.tiles-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.wish-board-empty {
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  opacity: 0.8;
+}
+.wish-board strong { font-size: 0.92rem; line-height: 1.2; }
+.wish-board em { font-style: normal; font-size: 0.75rem; color: var(--muted); }
+
+/* ---- Storage health warning ---- */
+.storage-warning {
+  background: #f7e2d8;
+  border: 1px solid var(--terracotta);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.86rem;
+  color: #7c3a24;
+}
+
+/* ---- Shared reference-section kit (grow lights, soil, fertilizers, climate, suppliers) ---- */
+.ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.9rem;
+}
+.ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--cream);
+  border: 1px solid rgba(43, 58, 42, 0.15);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+}
+.ref-table-wrap { overflow-x: auto; border: 1px solid rgba(43, 58, 42, 0.12); border-radius: 14px; background: var(--paper); }
+.ref-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; min-width: 560px; }
+.ref-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid rgba(43, 58, 42, 0.15);
+  background: var(--cream);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ref-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(43, 58, 42, 0.07); vertical-align: top; }
+.ref-table tr:last-child td { border-bottom: none; }
+.alert-card {
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  font-size: 0.86rem;
+  border: 1px solid;
+}
+.alert-card.heat { background: #f7e2d8; border-color: var(--terracotta); color: #7c3a24; }
+.alert-card.frost { background: #e3edf2; border-color: #7fa3ae; color: #2e4a54; }
+.alert-card h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.alert-card ul { margin: 0.3rem 0 0; padding-left: 1.1rem; }
+.spectrum-bar {
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+  border: 1px solid rgba(43, 58, 42, 0.2);
+}
+.spectrum-bar span { height: 100%; }
+.ref-figure { font-size: 1.6rem; line-height: 1; }
+.ref-kv { display: flex; justify-content: space-between; gap: 0.8rem; font-size: 0.84rem; padding: 0.25rem 0; border-bottom: 1px dashed rgba(43, 58, 42, 0.1); }
+.ref-kv:last-child { border-bottom: none; }
+.ref-kv strong { white-space: nowrap; }
+.ref-kv span { color: var(--muted); text-align: right; }
+
+/* ---- Culinary Garden Journal ---- */
+.culinary-form { display: flex; flex-direction: column; gap: 0.55rem; }
+.culinary-costs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.culinary-costs .pest-search { flex: 1 1 150px; }
+.culinary-form-actions { display: flex; gap: 0.6rem; align-items: center; }
+.culinary-entry .culinary-photo {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 0.5rem 0;
+}
+.culinary-ingredients { margin: 0.4rem 0; padding-left: 1.2rem; font-size: 0.86rem; }
+.culinary-flavor { font-size: 0.86rem; font-style: italic; color: var(--muted); margin: 0.4rem 0; }
+.culinary-cost-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.5rem 0; }
+.culinary-cost-row .ref-chip.savings { border-color: var(--moss); background: #eaf2df; }
+.culinary-insight {
+  background: var(--cream);
+  border-left: 3px solid var(--moss);
+  border-radius: 0 10px 10px 0;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.87rem;
+  margin: 0.5rem 0;
+}
+.culinary-entry .secondary-button { margin-top: 0.3rem; }

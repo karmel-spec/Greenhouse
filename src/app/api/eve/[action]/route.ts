@@ -197,6 +197,8 @@ async function buildEveSystemPrompt() {
   let plantLines = "";
   let needsAttentionLines = "";
   let trayLines = "";
+  let jarLines = "";
+  let propStartLines = "";
   try {
     const store = await readStore();
     taskLines = store.tasks
@@ -228,6 +230,21 @@ async function buildEveSystemPrompt() {
         return `- ${tray.name}: day ${days} of ${tray.harvestDays} (${remaining <= 0 ? "ready to harvest" : `${remaining} days to harvest`})`;
       })
       .join("\n");
+    jarLines = store.hydroJars
+      .filter((jar) => jar.status === "growing")
+      .map((jar) => {
+        const days = Math.max(1, Math.ceil((Date.now() - Date.parse(jar.startedAt)) / 86_400_000));
+        return `- ${jar.plant}${jar.variety ? ` '${jar.variety}'` : ""}: day ${days}${jar.daysToHarvest ? ` of ~${jar.daysToHarvest}` : ""}, water ${jar.waterLevel}`;
+      })
+      .join("\n");
+    propStartLines = store.propStarts
+      .map((start, index) =>
+        start
+          ? `- Spot ${index + 1}: ${start.plant} (${start.method}), day ${Math.max(1, Math.ceil((Date.now() - Date.parse(start.startedAt)) / 86_400_000))}, ${start.status}`
+          : null,
+      )
+      .filter(Boolean)
+      .join("\n");
   } catch {
     taskLines = "(task list unavailable)";
   }
@@ -258,6 +275,10 @@ async function buildEveSystemPrompt() {
     needsAttentionLines ? `Plants your photo diagnosis flagged as needing attention:\n${needsAttentionLines}` : "",
     "",
     trayLines ? `Active microgreen trays:\n${trayLines}` : "",
+    "",
+    jarLines ? `Quart jar hydroponics (kratky, windowsill):\n${jarLines}` : "",
+    "",
+    propStartLines ? `Propagation station (10 spots):\n${propStartLines}` : "",
     "",
     plantLines
       ? `Karmel's plant library (from her own photo uploads):\n${plantLines}`

@@ -935,3 +935,64 @@ export function getPestsByPlant(plantId: string): Pest[] {
 export function getPestsBySeverity(minSeverity: number): Pest[] {
   return pestDatabase.filter((pest) => pest.severity >= minSeverity);
 }
+
+// ---- Products on Karmel's shelf, linked to the pests they treat ----
+
+export interface PestControlProduct {
+  id: string;
+  name: string;
+  emoji: string;
+  type: string;
+  activeIngredient: string;
+  treats: string[]; // pest ids from pestDatabase
+  coverage?: string;
+  application: string[];
+  safety: string[];
+  utahNote?: string;
+}
+
+export const pestControlProducts: PestControlProduct[] = [
+  {
+    id: "corrys-slug-snail",
+    name: "Corry's Slug & Snail Killer",
+    emoji: "🐌",
+    type: "Granules",
+    activeIngredient: "Sodium Ferric EDTA (iron-based — not a nerve toxin)",
+    treats: ["slugs-snails"],
+    coverage: "8,750 sq ft per container",
+    application: [
+      "Scatter granules on the soil around vulnerable plants (hostas first).",
+      "Water in gently so the granules settle at slug level.",
+      "Reapply after rain or heavy watering.",
+    ],
+    safety: [
+      "Safe around edibles right up to harvest day.",
+      "Safe once dried — but store the container away from children.",
+    ],
+    utahNote:
+      "The hosta damage in the Photo Journal (eve-0014) has slug written all over it — bait the moist, shaded beds and re-check in a week.",
+  },
+  {
+    id: "corrys-gopher-gasser",
+    name: "Corry's Gopher Gasser",
+    emoji: "🕳️",
+    type: "Burrow canister",
+    activeIngredient: "Gas cartridge (ignite and place in the burrow)",
+    treats: [],
+    application: [
+      "Find the freshest mound and probe for the tunnel.",
+      "Light the cartridge, place it in the tunnel, and seal the opening with soil.",
+      "Watch nearby exits and seal any that start smoking.",
+    ],
+    safety: [
+      "Outdoor burrow use only — never in or near the greenhouse, sheds, or anything occupied.",
+      "Keep children and pets away during treatment.",
+    ],
+    utahNote: "For the lawn and beds outside — gophers tunnel the parking strips in Orem all summer.",
+  },
+];
+
+/** Products that treat a given pest id. */
+export function productsForPest(pestId: string): PestControlProduct[] {
+  return pestControlProducts.filter((product) => product.treats.includes(pestId));
+}

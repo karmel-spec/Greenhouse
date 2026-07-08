@@ -64,12 +64,22 @@ import { LANDSCAPE_PROJECTS } from "@/lib/landscape";
 import { ALL_ACTIONS as ALL_BOUQUET_ACTIONS, todayKey as bouquetTodayKey, yesterdayKey as bouquetYesterdayKey } from "@/lib/bouquet";
 import { BouquetStage } from "@/components/BouquetStage";
 import { SeedTesting } from "@/components/SeedTesting";
+import { QuartJars } from "@/components/QuartJars";
+import { PropagationStation } from "@/components/PropagationStation";
+import { TheGreenhouse } from "@/components/TheGreenhouse";
+import { GrowLights } from "@/components/GrowLights";
+import { SoilTesting } from "@/components/SoilTesting";
+import { Fertilizers } from "@/components/Fertilizers";
+import { ClimateControl } from "@/components/ClimateControl";
+import { CulinaryJournal } from "@/components/CulinaryJournal";
+import { Suppliers } from "@/components/Suppliers";
 import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
 import { PruningSection } from "@/components/PruningSection";
 import { TeaGardenVision, MeditationVision, ApothecaryVision, FairyGardenVision, teaPlantSplit } from "@/components/ZoneVisions";
 import { plantPhoto } from "@/lib/crop-photos";
 import { plantCare, CATEGORY_ORDER, PlantCategory } from "@/lib/plant-care";
 import { propagationGuide } from "@/lib/propagation";
+import { pestControlProducts, productsForPest } from "@/lib/pest-data";
 import { Lesson, lessons, lessonOfTheDay, squareFootLesson } from "@/lib/lessons";
 import { SFG_PLANTS, SFG_BY_KEY, SfgCategory, analyzeBed } from "@/lib/sfg";
 
@@ -545,6 +555,20 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <SeedTraysSection />;
     case "seedtesting":
       return <SeedTesting />;
+    case "hydrojars":
+      return <QuartJars />;
+    case "growlights":
+      return <GrowLights />;
+    case "climate":
+      return <ClimateControl />;
+    case "soiltesting":
+      return <SoilTesting />;
+    case "fertilizers":
+      return <Fertilizers />;
+    case "culinary":
+      return <CulinaryJournal />;
+    case "suppliers":
+      return <Suppliers />;
     case "microgreens":
       return <MicrogreensSection env={env} />;
     case "apothecary":
@@ -559,6 +583,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <PlantLibrary />;
     case "zones":
       return <ZonesSection focus={nav.zoneFocus} />;
+    case "greenhouse":
+      return <TheGreenhouse />;
     case "seeds":
       return <SeedLibrary />;
     case "seed-vault":
@@ -1176,6 +1202,42 @@ function MicrogreensSection({ env }: { env: Environment }) {
           />
         )}
       </div>
+
+      {/* Eve's complete mat-tray method */}
+      <h3 className="apothecary-subhead">The complete method</h3>
+      <div className="ref-grid">
+        <article className="gh-card">
+          <h3>Mat to harvest in 7 steps</h3>
+          <ol className="gh-hint" style={{ paddingLeft: "1.2rem", fontSize: "0.86rem" }}>
+            <li>Pre-wet the Micro-Mat for 24 hours; drain the excess.</li>
+            <li>Sow seeds densely across the mat — never bury them.</li>
+            <li>Stack an empty tray loosely on top: darkness + humidity.</li>
+            <li>Keep covered 3–5 days, peeking daily for mold.</li>
+            <li>Uncover when the sprouts start pushing the top tray up.</li>
+            <li>Bright indirect light + a light daily mist, days 5–10.</li>
+            <li>Harvest in the morning — cut 1–2&quot; above the mat.</li>
+          </ol>
+        </article>
+        <article className="gh-card">
+          <h3>Daily rhythm</h3>
+          <div className="ref-kv"><strong>Morning</strong><span>Light mist, or water the bottom tray</span></div>
+          <div className="ref-kv"><strong>Light</strong><span>Bright indirect, or 12–16 h under grow lights</span></div>
+          <div className="ref-kv"><strong>Airflow</strong><span>Gentle fan 2–3 h/day — mold&apos;s worst enemy</span></div>
+          <div className="ref-kv"><strong>Check</strong><span>Pull any moldy patch the moment you see it</span></div>
+          <p className="gh-hint">
+            The stacked-tray trick does three jobs at once: perfect humidity, total darkness, and enough weight to grow
+            strong stems. When the sprouts lift the tray themselves, they&apos;re announcing they&apos;re ready for light.
+          </p>
+        </article>
+        <article className="gh-card">
+          <h3>Never-empty rotation</h3>
+          <div className="ref-kv"><strong>Week 1</strong><span>Sow pea shoots</span></div>
+          <div className="ref-kv"><strong>Week 2</strong><span>Sow brassica mix</span></div>
+          <div className="ref-kv"><strong>Week 3</strong><span>Harvest peas (day 8–10) · re-sow peas</span></div>
+          <div className="ref-kv"><strong>Week 4</strong><span>Harvest brassica (day 10–14) · re-sow brassica</span></div>
+          <p className="gh-hint">Two trays, alternating fortnights — the kitchen is never without fresh microgreens.</p>
+        </article>
+      </div>
     </div>
   );
 }
@@ -1384,11 +1446,41 @@ function enrichPlant(
   };
 }
 
+/** Eve's July 2026 plant intake — one tap files them all into the library. */
+const EVE_JULY_PLANTS = [
+  { name: "Sweet Marjoram", zone: "Greenhouse", health: "Thriving", notes: "Culinary herb — milder, sweeter cousin of oregano for Italian cooking. Propagates easily from cuttings. (eve-0054)" },
+  { name: "Syngonium", variety: "Variegated Pink & White", zone: "Houseplants", health: "Thriving", notes: "Tropical arrowhead vine with pink-and-white variegation. Loves humidity. ⚠️ Toxic — keep away from grandkids and pets. (eve-0055)" },
+  { name: "Curry Plant", zone: "Greenhouse", health: "Thriving", notes: "Silvery-gray aromatic needles — smells like curry, isn't for cooking. Full sun + dry soil: made for Utah. From Gourmet Grow. (eve-0056)" },
+  { name: "Mesclun Salad Mix", variety: "Transplant A", zone: "Greenhouse", health: "Thriving", notes: "Cool-season greens mix (arugula, endive, kale, lettuce) at 4–6 true leaves — cut-and-come-again harvest. (eve-0057)" },
+  { name: "Mesclun Salad Mix", variety: "Transplant B", zone: "Greenhouse", health: "Thriving", notes: "Second mesclun transplant, same cut-and-come-again plan. (eve-0058)" },
+  { name: "Louis Watermelon", variety: "Seedling 1", zone: "Greenhouse", health: "Watch", notes: "1800s heirloom, 8–12 lb fruit, black seeds, exceptional sweetness. 75–85 days to maturity; currently 2–3 true leaves. (eve-0059)" },
+  { name: "Louis Watermelon", variety: "Seedling 2", zone: "Greenhouse", health: "Watch", notes: "Sister seedling — same heirloom line, same timeline. (eve-0060)" },
+];
+
 function PlantLibrary() {
   const [libraryPlants, setLibraryPlants] = useState<LibraryPlant[]>([]);
   const [journalById, setJournalById] = useState<Map<string, PlantPhotoRecord>>(new Map());
   const [loaded, setLoaded] = useState(false);
   const [detail, setDetail] = useState<PlantDetail | null>(null);
+  const [addingBatch, setAddingBatch] = useState(false);
+
+  const addEveBatch = async () => {
+    setAddingBatch(true);
+    for (const plant of EVE_JULY_PLANTS) {
+      try {
+        const response = await fetch("/api/plants", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(plant),
+        });
+        const data = await response.json();
+        if (Array.isArray(data.plants)) setLibraryPlants(data.plants);
+      } catch {
+        // keep filing the rest
+      }
+    }
+    setAddingBatch(false);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -1414,6 +1506,13 @@ function PlantLibrary() {
         title="Plant Library"
         subtitle="Your real plants — populated from Photo Journal uploads. Tap any plant for its full diagnosis and care notes."
       />
+      {loaded && !libraryPlants.some((plant) => plant.notes?.includes("eve-0054")) && (
+        <div className="toolbar">
+          <button className="secondary-button" onClick={addEveBatch} disabled={addingBatch}>
+            <Sprout size={15} /> {addingBatch ? "Filing Eve's plants…" : "Add Eve's July intake — 7 new plants"}
+          </button>
+        </div>
+      )}
       {loaded && !libraryPlants.length && (
         <div className="empty-library">
           <Camera size={30} />
@@ -1969,11 +2068,38 @@ type WishItem = {
   image?: string;
 };
 
+/** The boards Karmel wants ready even before they have items. */
+const WISHLIST_BOARDS = [
+  "Seeds Wishlist",
+  "Plant Wishlist",
+  "Tools Wishlist",
+  "Winterization Wishlist",
+  "Grandkids Fun Wishlist",
+  "Furniture Wishlist",
+];
+
+function boardEmoji(board: string) {
+  const name = board.toLowerCase();
+  if (name.includes("seed")) return "🌱";
+  if (name.includes("plant")) return "🪴";
+  if (name.includes("tool")) return "🛠️";
+  if (name.includes("winter")) return "❄️";
+  if (name.includes("grandkid") || name.includes("fun")) return "🎈";
+  if (name.includes("furniture")) return "🪑";
+  if (name.includes("apothecary") || name.includes("herb")) return "🌿";
+  if (name.includes("tea")) return "🍵";
+  if (name.includes("compost")) return "♻️";
+  if (name.includes("greenhouse")) return "🏡";
+  if (name.includes("decor")) return "🕊️";
+  return "💚";
+}
+
 function Wishlist({ focus }: { focus: string | null }) {
   const highlightRef = useRef<HTMLElement | null>(null);
   const [items, setItems] = useState<WishItem[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "Greenhouse", price: "", priority: "Medium", note: "", link: "", image: "" });
+  const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", category: "Seeds Wishlist", price: "", priority: "Medium", note: "", link: "", image: "" });
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importNote, setImportNote] = useState("");
@@ -2024,11 +2150,18 @@ function Wishlist({ focus }: { focus: string | null }) {
 
   const isFocused = (name: string) => !!focus && name.toLowerCase().includes(focus.toLowerCase());
 
+  // A focused item (opened from another section) pulls its board open first.
+  useEffect(() => {
+    if (!focus || !items.length) return;
+    const match = items.find((item) => item.name.toLowerCase().includes(focus.toLowerCase()));
+    if (match) setSelectedBoard(match.category);
+  }, [focus, items]);
+
   useEffect(() => {
     if (focus && highlightRef.current) {
       highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [focus, items]);
+  }, [focus, items, selectedBoard]);
 
   const addItem = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -2050,19 +2183,34 @@ function Wishlist({ focus }: { focus: string | null }) {
     await fetch(`/api/wishlist?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   };
 
-  const categories = Array.from(new Set(items.map((item) => item.category)));
   const zoneNames = zones.map((z) => z.name);
-  const categoryOptions = Array.from(new Set([...zoneNames, "Outdoor Decor", "Compost Area", "Tools", "General"]));
+  const categoryOptions = Array.from(
+    new Set([...WISHLIST_BOARDS, ...zoneNames, "Outdoor Decor", "Compost Area", "General", ...items.map((item) => item.category)]),
+  );
+  // Boards: the pinned six first, then whatever other categories items live in.
+  const boards = Array.from(new Set([...WISHLIST_BOARDS, ...items.map((item) => item.category)]));
+  const boardItems = (board: string) => items.filter((item) => item.category === board);
 
   return (
     <div className="section-stack">
       <SectionIntro
         title="Wishlist & Garden Dreams Board"
-        subtitle="Everything on the someday list — what it's for, what it costs, and how much you want it."
+        subtitle="Someday-list pinboards — every dream sorted onto its own board, with photos, prices, and purchase links."
       />
       <div className="toolbar">
-        <button className="primary-button" onClick={() => setShowForm((v) => !v)}>
-          <Plus size={16} /> Add wishlist item
+        {selectedBoard ? (
+          <button className="secondary-button" onClick={() => { setSelectedBoard(null); setShowForm(false); }}>
+            ← All boards
+          </button>
+        ) : null}
+        <button
+          className="primary-button"
+          onClick={() => {
+            if (selectedBoard) setForm((current) => ({ ...current, category: selectedBoard }));
+            setShowForm((v) => !v);
+          }}
+        >
+          <Plus size={16} /> {selectedBoard ? `Pin to ${selectedBoard}` : "Add wishlist item"}
         </button>
       </div>
 
@@ -2123,52 +2271,79 @@ function Wishlist({ focus }: { focus: string | null }) {
         </form>
       )}
 
-      {categories.map((category) => (
-        <div key={category}>
-          <h3 className="apothecary-subhead">{category}</h3>
+      {!selectedBoard && (
+        <div className="wish-boards">
+          {boards.map((board) => {
+            const list = boardItems(board);
+            const covers = list.filter((item) => item.image).slice(0, 4);
+            return (
+              <button key={board} className="wish-board" onClick={() => setSelectedBoard(board)}>
+                <span className={`wish-board-collage tiles-${Math.min(covers.length, 4)}`}>
+                  {covers.length ? (
+                    covers.map((item) => (
+                      <img key={item.id} src={item.image} alt="" loading="lazy" onError={(e) => { e.currentTarget.style.visibility = "hidden"; }} />
+                    ))
+                  ) : (
+                    <span className="wish-board-empty" aria-hidden>{boardEmoji(board)}</span>
+                  )}
+                </span>
+                <strong>{boardEmoji(board)} {board}</strong>
+                <em>{list.length ? `${list.length} ${list.length === 1 ? "dream" : "dreams"} pinned` : "Empty — start pinning"}</em>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {selectedBoard && (
+        <div>
+          <h3 className="apothecary-subhead">{boardEmoji(selectedBoard)} {selectedBoard}</h3>
+          {!boardItems(selectedBoard).length && (
+            <p className="empty-note">
+              Nothing pinned here yet — paste a product link above or tap <strong>Pin to {selectedBoard}</strong>.
+            </p>
+          )}
           <div className="wishlist-grid">
-            {items
-              .filter((item) => item.category === category)
-              .map((item) => {
-                const focused = isFocused(item.name);
-                const deletable = !item.id.startsWith("default-");
-                return (
-                  <article
-                    className={`wish-card ${focused ? "focused" : ""} ${item.image ? "has-photo" : ""}`}
-                    key={item.id}
-                    ref={focused ? (node) => { highlightRef.current = node; } : undefined}
-                  >
-                    {item.image && (
-                      <span className="wish-photo">
-                        <img src={item.image} alt={item.name} loading="lazy" onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }} />
-                      </span>
+            {boardItems(selectedBoard).map((item) => {
+              const focused = isFocused(item.name);
+              const deletable = !item.id.startsWith("default-");
+              return (
+                <article
+                  className={`wish-card ${focused ? "focused" : ""} ${item.image ? "has-photo" : ""}`}
+                  key={item.id}
+                  ref={focused ? (node) => { highlightRef.current = node; } : undefined}
+                >
+                  {item.image && (
+                    <span className="wish-photo">
+                      <img src={item.image} alt={item.name} loading="lazy" onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }} />
+                    </span>
+                  )}
+                  <header>
+                    <h4>{item.name}</h4>
+                    <span className={`prop-badge ${item.priority === "High" ? "ready" : item.priority === "Medium" ? "soon" : "wait"}`}>
+                      {item.priority}
+                    </span>
+                  </header>
+                  {item.note && <p>{item.note}</p>}
+                  <footer>
+                    <span>{item.price}</span>
+                    {item.link && (
+                      <a className="wish-buy" href={item.link} target="_blank" rel="noreferrer">
+                        Purchase <ExternalLink size={12} />
+                      </a>
                     )}
-                    <header>
-                      <h4>{item.name}</h4>
-                      <span className={`prop-badge ${item.priority === "High" ? "ready" : item.priority === "Medium" ? "soon" : "wait"}`}>
-                        {item.priority}
-                      </span>
-                    </header>
-                    {item.note && <p>{item.note}</p>}
-                    <footer>
-                      <span>{item.price}</span>
-                      {item.link && (
-                        <a className="wish-buy" href={item.link} target="_blank" rel="noreferrer">
-                          Purchase <ExternalLink size={12} />
-                        </a>
-                      )}
-                      {deletable && (
-                        <button className="wish-delete" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`}>
-                          <X size={13} />
-                        </button>
-                      )}
-                    </footer>
-                  </article>
-                );
-              })}
+                    {deletable && (
+                      <button className="wish-delete" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name}`}>
+                        <X size={13} />
+                      </button>
+                    )}
+                  </footer>
+                </article>
+              );
+            })}
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 }
@@ -2280,6 +2455,7 @@ function Propagation() {
         title="Propagation Lab"
         subtitle="A to-do list built from your actual plants: what's ready to propagate now, what needs time, and exactly how to do each one."
       />
+      <PropagationStation />
       {usingStarters && loaded && (
         <p className="apothecary-note">
           Showing your starter plants for now — as you add plants through the Photo Journal, this plan
@@ -2520,6 +2696,23 @@ function Photos({ focus = null }: { focus?: string | null }) {
     setTimeout(() => boardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   };
   const [batchNote, setBatchNote] = useState("Upload photos of every plant — greenhouse, garden, house, and yard. Photos now save permanently to your garden data.");
+  const [storageWarning, setStorageWarning] = useState("");
+
+  useEffect(() => {
+    // Netlify without Supabase = uploads silently vanish; warn loudly instead.
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((health) => {
+        if (health && health.persistent === false) {
+          setStorageWarning(
+            "Heads up: this deployment has no cloud storage connected (SUPABASE_URL / SUPABASE_SERVICE_KEY), " +
+              "so uploaded photos will NOT survive — they'll disappear within minutes. Fix the Supabase " +
+              "environment variables in Netlify before uploading.",
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -2761,6 +2954,8 @@ function Photos({ focus = null }: { focus?: string | null }) {
         title="Daily Photo Health Check"
         subtitle="Upload a batch of garden photos, label what each photo shows, save the observation to plant history, and prepare the same flow for real Eve vision analysis."
       />
+
+      {storageWarning && <p className="storage-warning">{storageWarning}</p>}
 
       <div className="photo-health-layout">
         <article className="batch-upload-card">
@@ -3423,6 +3618,22 @@ function PestManagementSection() {
         </div>
       </div>
 
+      {/* Karmel's pest-control shelf — the products on hand, before the field guide */}
+      <div className="ref-grid">
+        {pestControlProducts.map((product) => (
+          <article key={product.id} className="gh-card">
+            <h3>{product.emoji} {product.name}</h3>
+            <div className="ref-kv"><strong>Type</strong><span>{product.type}</span></div>
+            <div className="ref-kv"><strong>Active</strong><span>{product.activeIngredient}</span></div>
+            {product.coverage && <div className="ref-kv"><strong>Coverage</strong><span>{product.coverage}</span></div>}
+            <ul className="gh-hint" style={{ paddingLeft: "1.1rem", marginTop: "0.5rem" }}>
+              {product.application.map((step) => <li key={step}>{step}</li>)}
+            </ul>
+            {product.utahNote && <p className="gh-hint">🏜️ {product.utahNote}</p>}
+          </article>
+        ))}
+      </div>
+
       <div className="pest-list">
         {filteredPests.map((pest) => {
           const open = openPestId === pest.id;
@@ -3494,6 +3705,21 @@ function PestManagementSection() {
                       </p>
                     </div>
                   </div>
+
+                  {productsForPest(pest.id).length > 0 && (
+                    <>
+                      <h4>On the shelf for this one</h4>
+                      <div className="pest-treatments">
+                        {productsForPest(pest.id).map((product) => (
+                          <div key={product.id} className="pest-treatment">
+                            <strong>{product.emoji} {product.name}</strong>
+                            <p>{product.activeIngredient}. {product.application[0]}</p>
+                            <span>{product.safety[0]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                   {readablePlants(pest.affectedPlants).length > 0 && (
                     <p className="pest-hosts">

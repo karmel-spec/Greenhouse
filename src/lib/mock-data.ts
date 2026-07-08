@@ -1,12 +1,19 @@
 import {
+  Beaker,
   BookOpen,
   Bot,
   Bug,
   CalendarDays,
   Camera,
+  ChefHat,
   FlaskConical,
+  Gauge,
+  Lightbulb,
+  Store,
+  Thermometer,
   Flower,
   Flower2,
+  GlassWater,
   Grid3x3,
   GalleryHorizontalEnd,
   Heart,
@@ -28,6 +35,7 @@ import {
   Trees,
   Users,
   WandSparkles,
+  Warehouse,
 } from "lucide-react";
 
 export type SectionKey =
@@ -36,12 +44,20 @@ export type SectionKey =
   | "eve"
   | "plants"
   | "zones"
+  | "greenhouse"
   | "operations"
   | "propagation"
   | "pruning"
   | "microgreens"
   | "seedtrays"
   | "seedtesting"
+  | "hydrojars"
+  | "growlights"
+  | "climate"
+  | "soiltesting"
+  | "fertilizers"
+  | "culinary"
+  | "suppliers"
   | "apothecary"
   | "pest-management"
   | "sfg"
@@ -65,25 +81,33 @@ export const navItems = [
   { key: "eve", label: "Ask Eve", icon: Bot },
   { key: "plants", label: "Plant Library", icon: Leaf },
   { key: "zones", label: "Garden Zones", icon: Trees },
+  { key: "greenhouse", label: "The Greenhouse", icon: Warehouse },
+  { key: "climate", label: "Heating & Cooling", icon: Thermometer },
+  { key: "growlights", label: "Grow Lights", icon: Lightbulb },
   { key: "operations", label: "Operations", icon: PanelTop },
   { key: "propagation", label: "Propagation", icon: Sprout },
   { key: "pruning", label: "Pruning", icon: Scissors },
   { key: "microgreens", label: "Microgreens", icon: TestTube2 },
   { key: "seedtrays", label: "Seed Trays", icon: Grid3x3 },
   { key: "seedtesting", label: "Seed Testing", icon: FlaskConical },
+  { key: "hydrojars", label: "Quart Jar Hydro", icon: GlassWater },
   { key: "apothecary", label: "Apothecary", icon: Flower2 },
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
   { key: "community", label: "Community Garden", icon: Users },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
+  { key: "soiltesting", label: "Soil Testing", icon: Gauge },
+  { key: "fertilizers", label: "Plant Food", icon: Beaker },
   { key: "compost", label: "Composting", icon: Recycle },
   { key: "photos", label: "Photo Journal", icon: Camera },
+  { key: "culinary", label: "Culinary Journal", icon: ChefHat },
   { key: "wishlist", label: "Wishlist", icon: Heart },
   { key: "landscape", label: "Edible Landscape", icon: SunMedium },
   { key: "map", label: "Aerial Map", icon: Map },
   { key: "quotes", label: "Scriptures", icon: BookOpen },
   { key: "learning", label: "Learning", icon: LibraryBig },
+  { key: "suppliers", label: "Suppliers", icon: Store },
   { key: "reminders", label: "Text Reminders", icon: MessageCircle },
 ] satisfies { key: SectionKey; label: string; icon: typeof Home }[];
 
@@ -216,6 +240,14 @@ export const reminderTypes = [
 ];
 
 export const wishlistItems = [
+  // Eve's July 2026 intake — pinned to the new boards, links ready to shop
+  { name: "3-in-1 Soil Tester", category: "Tools Wishlist", price: "~$15", priority: "High", note: "pH, moisture, and light readings in one probe — the diagnostics the Soil Testing Lab is built around.", link: "https://a.co/d/0c6jaJAM" },
+  { name: "Solar-Powered 3-Fan Cooling Kit", category: "Tools Wishlist", price: "~$70", priority: "High", note: "25W panel, 3 IP67 fans — essential for keeping the greenhouse under 85°F in peak summer.", link: "https://a.co/d/08tQrkl7" },
+  { name: "Infrared Greenhouse Heater", category: "Winterization Wishlist", price: "~$90", priority: "Medium", note: "Digital thermostat control, clean efficient warmth — the winter half of the climate plan.", link: "https://a.co/d/09i1QBx4" },
+  { name: "Withniture Outdoor Bistro Table & Chairs", category: "Furniture Wishlist", price: "~$180", priority: "Medium", note: "Two cast-aluminum chairs, umbrella hole, bronze finish — morning herbal tea beside the greenhouse.", link: "https://a.co/d/021jqwDR" },
+  { name: "7.5-ft Patio Umbrella", category: "Furniture Wishlist", price: "~$60", priority: "Medium", note: "Push-button tilt, crank lift, fade-resistant — shade for the bistro set.", link: "https://a.co/d/0iMHK9l9" },
+  { name: "Personalized Metal Greenhouse Sign", category: "Outdoor Decor", price: "~$30", priority: "Medium", note: "Custom hanging sign — because Karmel's Greenhouse deserves a nameplate.", link: "https://a.co/d/0fc9iQDX" },
+  { name: "ROBUD Kids Wheelbarrow Set", category: "Grandkids Fun Wishlist", price: "~$45", priority: "Medium", note: "Green metal wheelbarrow with shovel, hoe, broom, and gloves — a real tool set for little gardeners.", link: "https://a.co/d/00PhRX88" },
   { name: "Garden arch", category: "Tea Garden", price: "$128.99", priority: "High", note: "Entry arch for the tea garden path — train a climbing rose or honeysuckle over it." },
   { name: "Solar fountain", category: "Gratitude Garden", price: "$89.00", priority: "High", note: "Gentle moving water for birds and a living-water moment in the gratitude garden." },
   { name: "Greenhouse shelf", category: "Greenhouse", price: "$64.09", priority: "Medium", note: "One more tier of propagation space along the north wall." },

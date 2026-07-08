@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#fdfaf0"/>
+      <stop offset="65%" stop-color="#f6efdc"/>
+      <stop offset="100%" stop-color="#eadfc4"/>
+    </radialGradient>
+    <radialGradient id="roseG" cx="45%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#f9d3da"/>
+      <stop offset="55%" stop-color="#e88ca1"/>
+      <stop offset="100%" stop-color="#c25a79"/>
+    </radialGradient>
+    <radialGradient id="peachG" cx="45%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#fce4c8"/>
+      <stop offset="55%" stop-color="#f2ad7c"/>
+      <stop offset="100%" stop-color="#cf7a4e"/>
+    </radialGradient>
+    <radialGradient id="lavG" cx="45%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#e3daf2"/>
+      <stop offset="55%" stop-color="#af9ad4"/>
+      <stop offset="100%" stop-color="#7f68ab"/>
+    </radialGradient>
+    <radialGradient id="butterG" cx="45%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#fdf4cd"/>
+      <stop offset="60%" stop-color="#f3d573"/>
+      <stop offset="100%" stop-color="#d3a844"/>
+    </radialGradient>
+    <radialGradient id="creamG" cx="45%" cy="42%" r="70%">
+      <stop offset="0%" stop-color="#fffdf5"/>
+      <stop offset="60%" stop-color="#f7ecd2"/>
+      <stop offset="100%" stop-color="#dcc9a0"/>
+    </radialGradient>
+    <linearGradient id="leafG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8fae72"/>
+      <stop offset="100%" stop-color="#55743f"/>
+    </linearGradient>
+    <linearGradient id="leafL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#bccf9d"/>
+      <stop offset="100%" stop-color="#7c9a62"/>
+    </linearGradient>
+    <linearGradient id="vaseG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e3f1f4" stop-opacity="0.9"/>
+      <stop offset="55%" stop-color="#bcd8e0" stop-opacity="0.92"/>
+      <stop offset="100%" stop-color="#8db3be"/>
+    </linearGradient>
+
+    <!-- one watercolor flower = layered petal blobs; reused at different scales/hues -->
+    <g id="bloom">
+      <!-- outer wash -->
+      <path d="M0,-118 C55,-112 96,-78 112,-30 C124,20 100,74 52,102 C10,124 -44,120 -84,88 C-118,58 -128,4 -110,-44 C-92,-92 -52,-122 0,-118 Z" opacity="0.45"/>
+      <!-- petals -->
+      <ellipse cx="0" cy="-78" rx="46" ry="62"/>
+      <ellipse cx="72" cy="-28" rx="46" ry="62" transform="rotate(68 72 -28)"/>
+      <ellipse cx="46" cy="62" rx="46" ry="62" transform="rotate(140 46 62)"/>
+      <ellipse cx="-46" cy="62" rx="46" ry="62" transform="rotate(-140 -46 62)"/>
+      <ellipse cx="-72" cy="-28" rx="46" ry="62" transform="rotate(-68 -72 -28)"/>
+      <!-- inner petals -->
+      <ellipse cx="0" cy="-38" rx="30" ry="40" opacity="0.85"/>
+      <ellipse cx="34" cy="18" rx="30" ry="40" transform="rotate(110 34 18)" opacity="0.85"/>
+      <ellipse cx="-34" cy="18" rx="30" ry="40" transform="rotate(-110 -34 18)" opacity="0.85"/>
+    </g>
+    <g id="leafPair">
+      <path d="M0,0 C-46,-18 -66,-58 -60,-96 C-20,-84 4,-46 6,-4 Z"/>
+      <path d="M10,6 C56,-8 80,-44 78,-84 C36,-74 10,-38 4,2 Z" opacity="0.85"/>
+    </g>
+  </defs>
+
+  <!-- background -->
+  <rect width="1024" height="1024" fill="url(#paper)"/>
+  <ellipse cx="512" cy="430" rx="460" ry="380" fill="#aec69a" opacity="0.10"/>
+  <ellipse cx="290" cy="300" rx="190" ry="150" fill="#e88ca1" opacity="0.08"/>
+  <ellipse cx="750" cy="330" rx="180" ry="140" fill="#af9ad4" opacity="0.08"/>
+
+  <g transform="translate(512 520) scale(1.12) translate(-512 -520)">
+  <!-- stems -->
+  <g stroke="#5d7f4d" stroke-width="16" stroke-linecap="round" fill="none" opacity="0.95">
+    <path d="M512 700 C 495 590, 465 500, 400 420"/>
+    <path d="M512 700 C 528 590, 560 500, 630 425"/>
+    <path d="M512 700 C 512 590, 510 480, 505 385"/>
+    <path d="M512 700 C 470 620, 380 560, 305 520"/>
+    <path d="M512 700 C 556 620, 650 565, 725 525"/>
+  </g>
+
+  <!-- leaves -->
+  <g>
+    <use href="#leafPair" x="0" y="0" transform="translate(370 600)" fill="url(#leafG)"/>
+    <use href="#leafPair" x="0" y="0" transform="translate(640 600) scale(-1 1)" fill="url(#leafL)"/>
+    <path d="M505 585 C 460 560, 440 515, 448 478 C 492 496, 512 540, 512 582 Z" fill="url(#leafL)" opacity="0.9"/>
+    <path d="M520 585 C 565 560, 585 515, 577 478 C 533 496, 513 540, 513 582 Z" fill="url(#leafG)" opacity="0.9"/>
+  </g>
+
+  <!-- filler florets behind main blooms -->
+  <g fill="#f6c7cf" opacity="0.85">
+    <circle cx="300" cy="352" r="24"/><circle cx="738" cy="360" r="24"/>
+    <circle cx="420" cy="200" r="20"/><circle cx="620" cy="196" r="20"/>
+  </g>
+  <g fill="#fdf4cd" opacity="0.9">
+    <circle cx="352" cy="252" r="18"/><circle cx="688" cy="256" r="18"/><circle cx="512" cy="160" r="20"/>
+  </g>
+
+  <!-- side blooms -->
+  <use href="#bloom" transform="translate(340 430) scale(0.78)" fill="url(#peachG)"/>
+  <use href="#bloom" transform="translate(688 428) scale(0.80) rotate(18)" fill="url(#lavG)"/>
+  <!-- upper blooms -->
+  <use href="#bloom" transform="translate(400 268) scale(0.55) rotate(-12)" fill="url(#butterG)"/>
+  <use href="#bloom" transform="translate(636 262) scale(0.52) rotate(24)" fill="url(#creamG)"/>
+  <!-- center rose, largest, on top -->
+  <use href="#bloom" transform="translate(512 340) scale(1.02)" fill="url(#roseG)"/>
+
+  <!-- flower centers -->
+  <g>
+    <circle cx="512" cy="340" r="34" fill="#b3486a"/>
+    <circle cx="512" cy="340" r="16" fill="#f9d3da" opacity="0.8"/>
+    <circle cx="340" cy="430" r="26" fill="#c06a3e"/>
+    <circle cx="688" cy="428" r="26" fill="#5c4487"/>
+    <circle cx="400" cy="268" r="18" fill="#c39434"/>
+    <circle cx="636" cy="262" r="17" fill="#cdb069"/>
+  </g>
+
+  <!-- glass vase -->
+  <g>
+    <path d="M418 690 C 410 770, 424 838, 452 884 L 572 884 C 600 838, 614 770, 606 690 Z"
+          fill="url(#vaseG)" stroke="#78a0ac" stroke-width="9" stroke-opacity="0.55"/>
+    <ellipse cx="512" cy="692" rx="94" ry="20" fill="#eaf6f8"/>
+    <ellipse cx="512" cy="736" rx="78" ry="13" fill="#ffffff" opacity="0.4"/>
+    <path d="M448 726 C 440 780, 448 826, 464 858" stroke="#ffffff" stroke-width="14"
+          stroke-linecap="round" fill="none" opacity="0.6"/>
+    <!-- stems visible through glass -->
+    <g stroke="#6f8f5c" stroke-width="10" stroke-linecap="round" opacity="0.5">
+      <path d="M492 700 L 486 850"/>
+      <path d="M516 700 L 520 852"/>
+      <path d="M538 700 L 546 844"/>
+    </g>
+  </g>
+  </g>
+</svg>

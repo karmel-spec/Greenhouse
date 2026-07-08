@@ -194,6 +194,78 @@ export type StoredSeedTest = {
   createdAt: string;
 };
 
+/** A quart mason jar growing kratky-style hydroponics on the windowsill. */
+export type HydroWaterLevel = "full" | "half" | "low";
+
+export type StoredHydroJar = {
+  id: string;
+  plant: string;
+  variety?: string;
+  startedAt: string; // ISO date
+  daysToHarvest?: number;
+  waterLevel: HydroWaterLevel;
+  notes: string;
+  status: "growing" | "harvested";
+  harvestedAt?: string;
+  createdAt: string;
+};
+
+/** One occupied spot on the 10-spot propagation station. */
+export type StoredPropStart = {
+  plant: string;
+  method: string;
+  startedAt: string; // ISO date
+  status: "rooting" | "rooted" | "potted" | "failed";
+  notes?: string;
+};
+
+export const PROP_STATION_SPOTS = 10;
+
+/** A photo of the greenhouse itself (structure, stations, seasonal shots). */
+export type StoredGreenhousePhoto = {
+  id: string;
+  photo: string; // /api/photos/<file>
+  caption: string;
+  addedAt: string;
+};
+
+export type StoredGreenhouse = {
+  notes: string;
+  photos: StoredGreenhousePhoto[];
+};
+
+export const DEFAULT_GREENHOUSE: StoredGreenhouse = { notes: "", photos: [] };
+
+/** A farm-to-table record: what was cooked, what the garden contributed,
+ *  and what the meal really cost. */
+export type StoredCulinaryEntry = {
+  id: string;
+  dish: string;
+  photo?: string; // /api/photos/<file>
+  ingredients: string[]; // garden + store, one per line
+  flavorProfile?: string;
+  mealCost?: string; // e.g. "$3–6"
+  storeCost?: string; // what the same meal would cost bought
+  savings?: string;
+  timeline?: string; // farm-to-plate timeline
+  insight?: string; // the "why it matters" note
+  cookedAt: string; // ISO date
+  createdAt: string;
+};
+
+/** Latest greenhouse sensor reading, mirrored into the store so the live
+ *  (Netlify) site can show what the Mac's Bluetooth bridge hears. */
+export type StoredSensorReading = {
+  tempF: number;
+  tempC: number;
+  humidity: number;
+  battery?: number;
+  rssi?: number;
+  name?: string;
+  address?: string;
+  at: string;
+};
+
 export type GardenStore = {
   tasks: StoredTask[];
   reminders: StoredReminder[];
@@ -211,6 +283,12 @@ export type GardenStore = {
   bouquetArt: Record<string, string>;
   userSeeds: StoredSeedPacket[];
   seedTests: StoredSeedTest[];
+  hydroJars: StoredHydroJar[];
+  /** Fixed 10 spots on the propagation station; null = empty spot. */
+  propStarts: (StoredPropStart | null)[];
+  greenhouse: StoredGreenhouse;
+  sensorReading: StoredSensorReading | null;
+  culinaryEntries: StoredCulinaryEntry[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -267,6 +345,20 @@ export async function readStore(): Promise<GardenStore> {
       bouquetArt: parsed.bouquetArt && typeof parsed.bouquetArt === "object" ? parsed.bouquetArt : {},
       userSeeds: Array.isArray(parsed.userSeeds) ? parsed.userSeeds : [],
       seedTests: Array.isArray(parsed.seedTests) ? parsed.seedTests : [],
+      hydroJars: Array.isArray(parsed.hydroJars) ? parsed.hydroJars : [],
+      propStarts: normalizePropStarts(parsed.propStarts),
+      greenhouse:
+        parsed.greenhouse && typeof parsed.greenhouse === "object"
+          ? {
+              notes: typeof parsed.greenhouse.notes === "string" ? parsed.greenhouse.notes : "",
+              photos: Array.isArray(parsed.greenhouse.photos) ? parsed.greenhouse.photos : [],
+            }
+          : { ...DEFAULT_GREENHOUSE },
+      sensorReading:
+        parsed.sensorReading && typeof parsed.sensorReading === "object" && typeof parsed.sensorReading.tempF === "number"
+          ? parsed.sensorReading
+          : null,
+      culinaryEntries: Array.isArray(parsed.culinaryEntries) ? parsed.culinaryEntries : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -290,10 +382,25 @@ export async function readStore(): Promise<GardenStore> {
       bouquetArt: {},
       userSeeds: [],
       seedTests: [],
+      hydroJars: [],
+      propStarts: Array.from({ length: PROP_STATION_SPOTS }, () => null),
+      greenhouse: { ...DEFAULT_GREENHOUSE },
+      sensorReading: null,
+      culinaryEntries: [],
     };
     await persist(initial);
     return initial;
   }
+}
+
+function normalizePropStarts(value: unknown): (StoredPropStart | null)[] {
+  const source = Array.isArray(value) ? value : [];
+  return Array.from({ length: PROP_STATION_SPOTS }, (_, index) => {
+    const spot = source[index];
+    return spot && typeof spot === "object" && typeof (spot as StoredPropStart).plant === "string"
+      ? (spot as StoredPropStart)
+      : null;
+  });
 }
 
 async function persist(store: GardenStore) {

@@ -6,6 +6,27 @@
 
 export type DiagnoseImage = { fileName: string; dataUrl: string };
 
+/**
+ * Catch the classic env mix-up before it becomes OpenAI's cryptic
+ * "Your authentication token is not from a valid issuer": a Supabase key
+ * (a JWT starting "eyJ" or "sb_...") or an Anthropic key pasted into
+ * OPENAI_API_KEY. Returns a human fix-it message, or null if the key looks right.
+ */
+export function openaiKeyProblem(): string | null {
+  const key = process.env.OPENAI_API_KEY ?? "";
+  if (!key) return null; // "not configured" is handled separately
+  if (key.startsWith("eyJ") || key.startsWith("sb_")) {
+    return "OPENAI_API_KEY is set to a Supabase key (it looks like a JWT). Swap in your real OpenAI key (starts with sk-) — the Supabase key belongs in SUPABASE_SERVICE_KEY.";
+  }
+  if (key.startsWith("sk-ant-")) {
+    return "OPENAI_API_KEY is set to an Anthropic key (sk-ant-...). That belongs in ANTHROPIC_API_KEY; vision needs a real OpenAI key (starts with sk-).";
+  }
+  if (!key.startsWith("sk-")) {
+    return "OPENAI_API_KEY doesn't look like an OpenAI key (they start with sk-). Double-check the value in your environment settings.";
+  }
+  return null;
+}
+
 export type Diagnosis = {
   file_name: string;
   plant_candidates: { name: string; confidence: number; why: string }[];
@@ -32,6 +53,11 @@ export async function diagnoseImages(
 ): Promise<DiagnoseResult> {
   if (!images.length) {
     return { mode: "error", provider: "none", error: "No images were provided.", status: 400 };
+  }
+
+  const keyProblem = openaiKeyProblem();
+  if (keyProblem) {
+    return { mode: "error", provider: "openai", error: keyProblem, status: 401 };
   }
 
   if (!process.env.OPENAI_API_KEY) {

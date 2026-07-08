@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { openaiKeyProblem } from "@/lib/vision";
 
 /**
  * Reads seed-packet photos (front and back) with OpenAI vision and returns
@@ -16,6 +17,10 @@ export async function POST(request: NextRequest) {
   }
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: "OPENAI_API_KEY is not configured, so I can't read the packet." }, { status: 503 });
+  }
+  const keyProblem = openaiKeyProblem();
+  if (keyProblem) {
+    return NextResponse.json({ error: keyProblem }, { status: 401 });
   }
 
   const prompt = [

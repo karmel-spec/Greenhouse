@@ -16,10 +16,31 @@ import json
 import sys
 import time
 import urllib.request
+from pathlib import Path
 
 from bleak import BleakScanner
 
-APP_URL = "http://localhost:3005/api/govee/local"
+
+def read_env():
+    env = {}
+    path = Path(__file__).resolve().parent.parent / ".env.local"
+    if path.exists():
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, value = line.partition("=")
+                env[key.strip()] = value.strip()
+    return env
+
+
+# Readings go to the app on this Mac, and — if GARDEN_APP_URL is set in
+# .env.local (your live site, e.g. https://your-site.netlify.app) — to the
+# live site too, so the dashboard works away from home.
+APP_URLS = ["http://localhost:3005/api/govee/local"]
+_live = read_env().get("GARDEN_APP_URL", "").rstrip("/")
+if _live:
+    APP_URLS.append(f"{_live}/api/govee/local")
+
 POST_EVERY_SECONDS = 30
 GOVEE_MFG_KEY = 0xEC88  # manufacturer-data key used by Govee H5075 adverts
 
@@ -72,22 +93,30 @@ def post_reading():
     global last_post
     if not latest or time.time() - last_post < POST_EVERY_SECONDS:
         return
-    try:
-        request = urllib.request.Request(
-            APP_URL,
-            data=json.dumps(latest).encode(),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        urllib.request.urlopen(request, timeout=5)
-        last_post = time.time()
+    delivered = []
+    for url in APP_URLS:
+        try:
+            request = urllib.request.Request(
+                url,
+                data=json.dumps(latest).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(request, timeout=10)
+            delivered.append("live site" if url.startswith("https") else "local app")
+        except Exception:
+            pass
+    last_post = time.time()  # don't spam retries every second
+    if delivered:
         print(
             f"  ✓ {time.strftime('%H:%M:%S')}  {latest['tempF']}°F · {latest['humidity']}% humidity"
-            f" · battery {latest['battery']}% · signal {latest['rssi']} dBm → sent to the app"
+            f" · battery {latest['battery']}% · signal {latest['rssi']} dBm → sent to {' + '.join(delivered)}"
         )
-    except Exception as error:  # app not running yet — keep listening
-        print(f"  … heard the sensor but couldn't reach the app ({error}). Is the garden app running?")
-        last_post = time.time()  # don't spam retries every second
+    else:
+        print(
+            "  … heard the sensor but couldn't deliver the reading. Start the garden app on this Mac, "
+            "or set GARDEN_APP_URL=https://your-site.netlify.app in .env.local to send straight to the live site."
+        )
 
 
 async def main():

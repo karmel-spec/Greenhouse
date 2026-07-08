@@ -17,13 +17,23 @@ export type LocalSensorReading = {
 };
 
 export async function readLocalSensor(): Promise<LocalSensorReading | null> {
+  // Fresh file from the bridge posting to this same machine wins…
   try {
     const parsed = JSON.parse(await fs.readFile(LOCAL_SENSOR_FILE, "utf8")) as LocalSensorReading;
-    if (typeof parsed.tempF !== "number" || typeof parsed.at !== "string") return null;
-    return parsed;
+    if (typeof parsed.tempF === "number" && typeof parsed.at === "string") return parsed;
   } catch {
-    return null;
+    // no local file — fall through to the cloud store
   }
+  // …otherwise the reading mirrored into the store (how the live site sees
+  // what the Mac's bridge heard).
+  try {
+    const { readStore } = await import("@/lib/store");
+    const stored = (await readStore()).sensorReading;
+    if (stored && typeof stored.tempF === "number" && typeof stored.at === "string") return stored;
+  } catch {
+    // store unavailable
+  }
+  return null;
 }
 
 /** Minutes since the bridge last heard the sensor; null if never. */

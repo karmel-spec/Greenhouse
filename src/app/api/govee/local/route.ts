@@ -34,7 +34,20 @@ export async function POST(request: NextRequest) {
     at: new Date().toISOString(),
   };
 
-  await fs.mkdir(path.dirname(LOCAL_SENSOR_FILE), { recursive: true });
-  await fs.writeFile(LOCAL_SENSOR_FILE, JSON.stringify(reading, null, 2), "utf8");
+  // Local file for the app on this Mac (fast path, works offline)…
+  try {
+    await fs.mkdir(path.dirname(LOCAL_SENSOR_FILE), { recursive: true });
+    await fs.writeFile(LOCAL_SENSOR_FILE, JSON.stringify(reading, null, 2), "utf8");
+  } catch {
+    // read-only filesystem (Netlify) — the store below is what matters there
+  }
+  // …and mirrored into the store so the live site shows the same reading.
+  const { hasSupabase } = await import("@/lib/supabase-backend");
+  if (hasSupabase()) {
+    const { updateStore } = await import("@/lib/store");
+    await updateStore((store) => {
+      store.sensorReading = reading;
+    });
+  }
   return NextResponse.json({ ok: true, reading });
 }

@@ -23,6 +23,24 @@ const TRAY_SIZES = [
   { label: "18-cell (3 × 6)", rows: 3, cols: 6 },
 ];
 
+/** The Ferry-Morse 72-cell tray Karmel sowed July 7, 2026 — row by row. */
+const FERRY_MORSE_ROWS: { seed: string; variety?: string; care: string }[] = [
+  { seed: "Green Bean", variety: "Blue Lake Pole", care: "2 seeds/cell ½\" deep · heat mat ON 70–75°F · sprouts 7–10d · blue light until 3–4 true leaves, then red · transplant after last frost (May 25–Jun 1) with a trellis waiting" },
+  { seed: "Pumpkin", variety: "Jack O'Lantern", care: "2 seeds/cell ½–¾\" deep · heat mat ON 75–80°F · sprouts 7–10d · thin to strongest · 100–120 days after transplant — carving pumpkins by mid-September" },
+  { seed: "Pumpkin", variety: "Small Sugar", care: "Same as Jack O'Lantern, but this row is for pies — smaller, sweeter fruit for cooking" },
+  { seed: "Mesclun", variety: "Gourmet Greens Mix", care: "3–4 seeds/cell scattered, don't bury · heat mat OFF (cool = tender) · sprouts 5–7d · salad-ready in 30–45 days · long 14–16h photoperiod prevents bolting" },
+  { seed: "Spinach", variety: "Baby's Leaf Hybrid", care: "2–3 seeds/cell ½\" deep · heat mat OFF · sprouts 5–7d · 40–50 days to harvest · transplant before June — spinach bolts in Utah summer heat" },
+  { seed: "Salad Mix", variety: "Ferry-Morse", care: "3–4 seeds/cell scattered · same cool-and-bright care as the mesclun row · arugula, endive, kale, red Russian, lettuce" },
+];
+
+/** The day-by-day playbook for the tray's first three weeks. */
+const TRAY_CARE_PHASES = [
+  { phase: "Days 1–3 · Germination", steps: ["Dome or plastic wrap on — moist, never soggy.", "Heat mat ON under the bean & pumpkin rows only; the greens rows germinate cool.", "No light needed yet — seeds sprout in the dark.", "Lift the dome once a day to ventilate and check for mold."] },
+  { phase: "Days 4–7 · Sprouting", steps: ["Dome comes off the moment sprouts show.", "Straight under vegetative (blue) light, 14–16 hours.", "Ease off the watering — damping-off loves soggy cells.", "If stems flop at the soil line, add airflow immediately."] },
+  { phase: "Days 8–14 · Establishment", steps: ["Thin to the strongest seedling per cell — snip, don't pull.", "Lower lights to 1–2\" above the canopy so nothing gets leggy.", "Heat mat stays ON for beans & pumpkins (70°F day / 65°F night), OFF for greens.", "Water when the top of the cell feels dry."] },
+  { phase: "Days 15–21 · True leaves", steps: ["Start quarter-strength liquid feed once a week.", "Greens rows are nearly transplant size — plan their beds.", "Begin hardening-off prep: a breezy fan hour daily builds stem strength.", "Beans switch to fruiting (red) light once they carry 3–4 true leaves."] },
+];
+
 type Brush =
   | { mode: "sow"; seed: string; variety?: string }
   | { mode: "sprouted" }
@@ -32,17 +50,25 @@ type Brush =
 
 const STATE_GLYPH: Record<string, string> = { sown: "·", sprouted: "🌱", failed: "✕", transplanted: "✓" };
 
-// unique seed entries, alphabetized
-const SEED_CHOICES = [...completeSeedVaultDatabase]
-  .sort((a, b) => a.commonName.localeCompare(b.commonName) || (a.variety ?? "").localeCompare(b.variety ?? ""))
-  .map((packet) => ({
-    key: `${packet.commonName}|${packet.variety ?? ""}`,
-    seed: packet.commonName,
-    variety: packet.variety,
-    daysToGermination: packet.daysToGermination,
-    germinationRate: packet.germinationRate,
-    startIndoors: packet.startIndoors,
-  }));
+// unique seed entries, alphabetized (the vault holds a few duplicate packets —
+// keep the first of each name+variety so React keys stay unique)
+const SEED_CHOICES = [
+  ...new Map(
+    [...completeSeedVaultDatabase]
+      .sort((a, b) => a.commonName.localeCompare(b.commonName) || (a.variety ?? "").localeCompare(b.variety ?? ""))
+      .map((packet) => [
+        `${packet.commonName}|${packet.variety ?? ""}`,
+        {
+          key: `${packet.commonName}|${packet.variety ?? ""}`,
+          seed: packet.commonName,
+          variety: packet.variety,
+          daysToGermination: packet.daysToGermination,
+          germinationRate: packet.germinationRate,
+          startIndoors: packet.startIndoors,
+        },
+      ] as const),
+  ).values(),
+];
 
 export function SeedTraysSection() {
   const [trays, setTrays] = useState<StoredSeedTray[]>([]);
@@ -99,6 +125,24 @@ export function SeedTraysSection() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName.trim() || "New tray", rows: size.rows, cols: size.cols }),
+    }).catch(() => null);
+    const data = await response?.json();
+    if (data?.tray) {
+      setTrays(data.trays);
+      setActiveId(data.tray.id);
+      setShowNew(false);
+    }
+  };
+
+  // One tap recreates the real Ferry-Morse tray: 6 rows × 12 cells, all sown.
+  const createFerryMorseTray = async () => {
+    const cells: SeedTrayCell[] = FERRY_MORSE_ROWS.flatMap((row) =>
+      Array.from({ length: 12 }, () => ({ seed: row.seed, variety: row.variety, state: "sown" as const })),
+    );
+    const response = await fetch("/api/seedtrays", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Ferry-Morse 72 — July 7 sowing", rows: 6, cols: 12, cells }),
     }).catch(() => null);
     const data = await response?.json();
     if (data?.tray) {
@@ -178,6 +222,11 @@ export function SeedTraysSection() {
         <button className="primary-button" onClick={() => setShowNew((value) => !value)}>
           <Plus size={16} /> New seed tray
         </button>
+        {loaded && !trays.some((tray) => tray.name.startsWith("Ferry-Morse 72")) && (
+          <button className="secondary-button" onClick={createFerryMorseTray}>
+            <Sprout size={15} /> Set up the Ferry-Morse 72 (July 7 sowing)
+          </button>
+        )}
       </div>
 
       {showNew && (
@@ -321,6 +370,37 @@ export function SeedTraysSection() {
                 <Bot size={15} /> Ask Eve about this tray
               </button>
             </div>
+          )}
+
+          {active.name.startsWith("Ferry-Morse 72") && (
+            <>
+              <article className="gh-card">
+                <h3>Row-by-row field notes</h3>
+                {FERRY_MORSE_ROWS.map((row, index) => (
+                  <div key={index} className="ref-kv">
+                    <strong>Row {index + 1} · {row.seed}{row.variety ? ` '${row.variety}'` : ""}</strong>
+                    <span>{row.care}</span>
+                  </div>
+                ))}
+                <p className="gh-hint">
+                  Transplant plan: greens & spinach out April–early May before the heat; beans & pumpkins harden off May
+                  15–25 and go out after last frost (May 25–June 1).
+                </p>
+              </article>
+              <article className="gh-card">
+                <h3>The first three weeks, day by day</h3>
+                <div className="ref-grid">
+                  {TRAY_CARE_PHASES.map((phase) => (
+                    <div key={phase.phase}>
+                      <h4 className="apothecary-subhead">{phase.phase}</h4>
+                      <ul className="gh-hint" style={{ paddingLeft: "1.1rem" }}>
+                        {phase.steps.map((step) => <li key={step}>{step}</li>)}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </>
           )}
         </>
       )}

@@ -25,7 +25,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-APP = "http://localhost:3005"
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -44,6 +43,9 @@ def read_env():
 ENV = read_env()
 TOKEN = ENV.get("TELEGRAM_BOT_TOKEN", "")
 OPENAI_KEY = ENV.get("OPENAI_API_KEY", "")
+# Prefer the live site (GARDEN_APP_URL in .env.local) so Eve's updates land in
+# the cloud store your phone sees; fall back to the app on this Mac.
+APP = ENV.get("GARDEN_APP_URL", "").rstrip("/") or "http://localhost:3005"
 TG = f"https://api.telegram.org/bot{TOKEN}"
 
 
