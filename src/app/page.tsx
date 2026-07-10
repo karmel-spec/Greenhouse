@@ -367,8 +367,12 @@ function Brand() {
           const chosen = useYesterday ? yesterdays : todays;
           setIsYesterdays(useYesterday);
           setFlowers(chosen.map((entry) => emojiByKey.get(entry) ?? "🌸"));
-          // Prefer the AI-painted watercolor when one exists for that day.
-          setArtUrl(data.art?.[useYesterday ? yKey : tKey] ?? null);
+          // Show the most recent AI-painted watercolor, however long ago it was
+          // painted — it stays up until the next painting replaces it.
+          const art: Record<string, string> =
+            data.art && typeof data.art === "object" ? data.art : {};
+          const latestArtDay = Object.keys(art).sort().pop();
+          setArtUrl(latestArtDay ? art[latestArtDay] : null);
         })
         .catch(() => {});
     load();
