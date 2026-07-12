@@ -253,6 +253,16 @@ export type StoredCulinaryEntry = {
   createdAt: string;
 };
 
+/** A visit to the greenhouse — who came, when, and the photo to remember it by. */
+export type StoredVisit = {
+  id: string;
+  photo?: string; // /api/photos/<file>
+  name: string; // who visited or helped
+  note?: string; // what they did, or the memory worth keeping
+  visitedAt: string; // ISO date
+  createdAt: string;
+};
+
 /** Latest greenhouse sensor reading, mirrored into the store so the live
  *  (Netlify) site can show what the Mac's Bluetooth bridge hears. */
 export type StoredSensorReading = {
@@ -289,6 +299,7 @@ export type GardenStore = {
   greenhouse: StoredGreenhouse;
   sensorReading: StoredSensorReading | null;
   culinaryEntries: StoredCulinaryEntry[];
+  visits: StoredVisit[];
 };
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -359,6 +370,7 @@ export async function readStore(): Promise<GardenStore> {
           ? parsed.sensorReading
           : null,
       culinaryEntries: Array.isArray(parsed.culinaryEntries) ? parsed.culinaryEntries : [],
+      visits: Array.isArray(parsed.visits) ? parsed.visits : [],
     };
   } catch {
     const initial: GardenStore = {
@@ -387,6 +399,7 @@ export async function readStore(): Promise<GardenStore> {
       greenhouse: { ...DEFAULT_GREENHOUSE },
       sensorReading: null,
       culinaryEntries: [],
+      visits: [],
     };
     await persist(initial);
     return initial;

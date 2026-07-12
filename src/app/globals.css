@@ -3316,3 +3316,55 @@ button.metric-card.clickable.active {
   margin: 0.5rem 0;
 }
 .culinary-entry .secondary-button { margin-top: 0.3rem; }
+
+/* ---- Greenhouse Visitors guest book ---- */
+.visitor-form { display: flex; flex-direction: column; gap: 0.55rem; }
+.visitor-form-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.visitor-form-row .pest-search { flex: 0 1 170px; }
+.visitor-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.9rem;
+}
+.visitor-card {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid rgba(43, 58, 42, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.visitor-card img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  display: block;
+}
+.visitor-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  display: grid;
+  place-items: center;
+  font-size: 2.4rem;
+  background: var(--cream);
+}
+.visitor-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  background: rgba(255, 253, 248, 0.92);
+  border-radius: 999px;
+}
+.visitor-body { padding: 0.6rem 0.75rem 0.7rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.visitor-body strong { font-family: var(--font-display, serif); font-size: 1rem; }
+.visitor-date { font-size: 0.74rem; color: var(--muted); }
+.visitor-note {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  resize: none;
+  padding: 0.2rem 0 0;
+}
+.visitor-note:focus { outline: none; border-bottom: 1px solid var(--moss); }

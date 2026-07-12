@@ -73,6 +73,7 @@ import { Fertilizers } from "@/components/Fertilizers";
 import { ClimateControl } from "@/components/ClimateControl";
 import { CulinaryJournal } from "@/components/CulinaryJournal";
 import { Suppliers } from "@/components/Suppliers";
+import { GreenhouseVisitors } from "@/components/GreenhouseVisitors";
 import { STUDY_PLAN_BY_TOPIC } from "@/lib/study-plans";
 import { PruningSection } from "@/components/PruningSection";
 import { TeaGardenVision, MeditationVision, ApothecaryVision, FairyGardenVision, teaPlantSplit } from "@/components/ZoneVisions";
@@ -583,6 +584,8 @@ function renderSection(active: SectionKey, env: Environment, nav: SectionNav) {
       return <SquareFootPlanner />;
     case "community":
       return <CommunityGarden />;
+    case "visitors":
+      return <GreenhouseVisitors />;
     case "plants":
       return <PlantLibrary />;
     case "zones":

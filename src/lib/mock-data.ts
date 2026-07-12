@@ -8,6 +8,7 @@ import {
   ChefHat,
   FlaskConical,
   Gauge,
+  HeartHandshake,
   Lightbulb,
   Store,
   Thermometer,
@@ -62,6 +63,7 @@ export type SectionKey =
   | "pest-management"
   | "sfg"
   | "community"
+  | "visitors"
   | "seeds"
   | "seed-vault"
   | "saving"
@@ -95,6 +97,7 @@ export const navItems = [
   { key: "pest-management", label: "Pest Management", icon: Bug },
   { key: "sfg", label: "Square Foot Planner", icon: LayoutGrid },
   { key: "community", label: "Community Garden", icon: Users },
+  { key: "visitors", label: "Visitors", icon: HeartHandshake },
   { key: "seeds", label: "Seed Library", icon: PackagePlus },
   { key: "soil-prep", label: "Soil Prep", icon: Pickaxe },
   { key: "soiltesting", label: "Soil Testing", icon: Gauge },
