@@ -96,7 +96,7 @@ export function GreenhouseVisitors() {
 
       <div className="toolbar">
         <button className="primary-button" onClick={() => setShowForm((value) => !value)}>
-          <Plus size={16} /> Add a visit
+          <Plus size={16} /> Add a guest
         </button>
       </div>
       {formNote && <p className="gh-hint">{formNote}</p>}
@@ -150,7 +150,7 @@ export function GreenhouseVisitors() {
           <HeartHandshake size={30} />
           <h3>The guest book is open</h3>
           <p>
-            Tap <strong>Add a visit</strong> after the next helper or friend stops by — a photo, their name, and what
+            Tap <strong>Add a guest</strong> after the next helper or friend stops by — a photo, their name, and what
             you grew together that day.
           </p>
         </div>
